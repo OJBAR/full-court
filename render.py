@@ -450,6 +450,48 @@ TEMPLATE = """<!DOCTYPE html>
     min-height: 2.6em;
   }}
 
+  .bracket-conf-block {{ margin-bottom: 18px; }}
+  .bracket-conf-block:last-child {{ margin-bottom: 0; }}
+  .bracket-conf-label {{
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-align: center;
+    direction: rtl;
+    margin: 0 0 6px;
+  }}
+  .bracket-pager-page {{ display: none; }}
+  .bracket-pager-page.active {{ display: block; }}
+  .bracket-pager-nav {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 4px;
+  }}
+  .bracket-pager-arrow {{
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-heading);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }}
+  .bracket-pager-arrow:disabled {{ opacity: 0.35; cursor: default; }}
+  .bracket-pager-label {{
+    font-size: 11px;
+    color: var(--text-muted);
+    direction: rtl;
+    min-width: 110px;
+    text-align: center;
+  }}
+
   .a11y-overlay {{
     position: fixed;
     inset: 0;
@@ -845,7 +887,7 @@ TEMPLATE = """<!DOCTYPE html>
       </div>
 
       <details class="settings-about">
-        <summary>אודות</summary>
+        <summary>יצירת קשר</summary>
         <div class="details-body">
           <p class="settings-about-text">יש הערה, באג, או הצעה לשיפור? אשמח לשמוע.</p>
           <a class="a11y-link-btn" href="https://github.com/OJBAR/full-court/issues/new" target="_blank" rel="noopener">GitHub Issues</a>
@@ -853,6 +895,12 @@ TEMPLATE = """<!DOCTYPE html>
             <a class="a11y-link-btn" href="mailto:ojbar30@gmail.com?subject=%D7%A4%D7%A0%D7%99%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT:+%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%99%D7%94">ojbar30@gmail.com</a>
             <button type="button" class="copy-email-btn" onclick="copyEmailAddress(this)" aria-label="העתק את כתובת המייל">📋</button>
           </div>
+        </div>
+      </details>
+
+      <details class="settings-about">
+        <summary>אודות</summary>
+        <div class="details-body">
           <button type="button" class="a11y-link-btn" onclick="openA11yStatement()">הצהרת נגישות</button>
         </div>
       </details>
@@ -900,6 +948,30 @@ TEMPLATE = """<!DOCTYPE html>
       if (savedFontSize) {{
         applyFontSize(savedFontSize);
       }}
+    }})();
+
+    (function initBracketPagers() {{
+      var pagers = document.querySelectorAll(".bracket-pager");
+      pagers.forEach(function(pager) {{
+        var pages = Array.prototype.slice.call(pager.querySelectorAll(".bracket-pager-page"));
+        var prevBtn = pager.querySelector(".bracket-pager-prev");
+        var nextBtn = pager.querySelector(".bracket-pager-next");
+        var label = pager.querySelector(".bracket-pager-label");
+        var index = pages.findIndex(function(p) {{ return p.classList.contains("active"); }});
+        if (index < 0) index = 0;
+
+        function render() {{
+          pages.forEach(function(p, i) {{ p.classList.toggle("active", i === index); }});
+          if (label) label.textContent = pages[index].getAttribute("data-label") || "";
+          prevBtn.disabled = index === 0;
+          nextBtn.disabled = index === pages.length - 1;
+        }}
+
+        prevBtn.addEventListener("click", function() {{ if (index > 0) {{ index -= 1; render(); }} }});
+        nextBtn.addEventListener("click", function() {{ if (index < pages.length - 1) {{ index += 1; render(); }} }});
+
+        render();
+      }});
     }})();
 
     var settingsLastFocused = null;
@@ -1470,12 +1542,12 @@ def _bracket_half_for_series(series: dict) -> str | None:
     return None
 
 
-def _build_conference_bracket_html(playoff_series: list[dict], conference: str) -> str:
+def _conference_bracket_columns(playoff_series: list[dict], conference: str) -> dict[str, str]:
     """
-    One conference's playoff bracket: 1st Round (4 series, in the 2 seed-based
-    pairs described above) -> Conf. Semifinals (2 series, 1 pair) -> Conf.
-    Finals (1 series). Same shape as the Cup bracket, so it reuses the same
-    CSS and TBD-placeholder handling for anything not decided/started yet.
+    One conference's three playoff-round columns (1st Round -> Conf.
+    Semifinals -> Conf. Finals), each returned separately (keyed by round
+    name) so a caller can combine any two adjacent rounds onto one page
+    instead of always showing the full three-round bracket at once.
     """
     conf_series = [s for s in playoff_series if s.get("conference") == conference]
     round1 = [s for s in conf_series if s.get("round") == "1st Round"]
@@ -1505,12 +1577,11 @@ def _build_conference_bracket_html(playoff_series: list[dict], conference: str) 
 
     final_column = _bracket_series_html(finals[0] if finals else None)
 
-    columns = [
-        _bracket_column_html("1st Round", f'<div class="bracket-round">{"".join(round1_pairs)}</div>'),
-        _bracket_column_html("Conf. Semifinals", f'<div class="bracket-round">{semis_pair}</div>'),
-        _bracket_column_html("Conf. Finals", f'<div class="bracket-round bracket-final">{final_column}</div>'),
-    ]
-    return f'<div class="bracket">{"".join(columns)}</div>'
+    return {
+        "1st Round": _bracket_column_html("1st Round", f'<div class="bracket-round">{"".join(round1_pairs)}</div>'),
+        "Conf. Semifinals": _bracket_column_html("Conf. Semifinals", f'<div class="bracket-round">{semis_pair}</div>'),
+        "Conf. Finals": _bracket_column_html("Conf. Finals", f'<div class="bracket-round bracket-final">{final_column}</div>'),
+    }
 
 
 def _finals_match_html(series: dict | None, conf_by_team: dict) -> str:
@@ -1548,29 +1619,103 @@ def _finals_match_html(series: dict | None, conf_by_team: dict) -> str:
     return '<div class="bracket-match">' + "".join(_team(t) for t in teams) + "</div>"
 
 
-def _build_finals_html(playoff_series: list[dict]) -> str:
+def _finals_champion_line(series: dict | None) -> str:
+    if series and series["is_over"]:
+        champion = series["teams"][0]
+        return f'<p class="game-sub" dir="rtl">{html.escape(champion["tricode"])} אלופת ה-NBA!</p>'
+    return ""
+
+
+_PLAYOFF_ROUNDS = ["1st Round", "Conf. Semifinals", "Conf. Finals", "NBA Finals"]
+_PLAYOFF_ROUND_LABELS_HE = {
+    "1st Round": "סיבוב 1",
+    "Conf. Semifinals": "סיבוב 2",
+    "Conf. Finals": "חצי גמר",
+    "NBA Finals": "גמר ה-NBA",
+}
+
+
+def _bracket_conf_block(conf_label: str, columns_html: str) -> str:
+    return (
+        '<div class="bracket-conf-block">'
+        f'<div class="bracket-conf-label">{html.escape(conf_label)}</div>'
+        f'<div class="bracket">{columns_html}</div>'
+        "</div>"
+    )
+
+
+def _bracket_page_two_rounds(columns_by_conf: dict[str, dict[str, str]], round_a: str, round_b: str) -> str:
+    return "".join(
+        _bracket_conf_block(conf_label, columns_by_conf[conf].get(round_a, "") + columns_by_conf[conf].get(round_b, ""))
+        for conf, conf_label in (("West", "מערב"), ("East", "מזרח"))
+    )
+
+
+def _bracket_page_finals(
+    columns_by_conf: dict[str, dict[str, str]], finals_series: dict | None, conf_by_team: dict
+) -> str:
     """
-    The NBA Finals series (East champion vs West champion) - unlike the two
-    conference brackets, this has no "conference" of its own in the data
-    (seriesConference is blank for Finals games), so it's pulled out by round
-    name instead and shown as a single standalone match card. Each Finals
-    team's conference (for the W/E badge) is looked up from whichever other
-    series it appeared in earlier in the same bracket data - the Finals
-    series itself doesn't carry that field.
+    The Conf. Finals -> NBA Finals page: both conferences' Conf. Finals
+    columns flank the NBA Finals column in the middle - the two conference
+    champions visually converging into the Finals, instead of a separate tab
+    for it like before.
     """
-    finals = [s for s in playoff_series if s.get("round") == "NBA Finals"]
-    series = finals[0] if finals else None
+    west_col = columns_by_conf["West"].get("Conf. Finals", "")
+    east_col = columns_by_conf["East"].get("Conf. Finals", "")
+    finals_col = _bracket_column_html(
+        "NBA Finals", f'<div class="bracket-round bracket-final">{_finals_match_html(finals_series, conf_by_team)}</div>'
+    )
+    return f'<div class="bracket">{west_col}{finals_col}{east_col}</div>' + _finals_champion_line(finals_series)
+
+
+def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list[dict]) -> str:
+    """
+    A single paged bracket covering the whole playoffs (both conferences,
+    no separate tab per conference or for the Finals) - only two adjacent
+    rounds are shown at a time, since a full 4-round bracket is too wide for
+    mobile. Defaults to whichever two rounds are relevant tonight: if
+    tonight's games span more than one round (e.g. a 1st Round Game 7 and a
+    Conf. Semifinals Game 1 on the same night), the earliest round wins,
+    since that series isn't fully resolved league-wide yet.
+    """
+    round_index = {r: i for i, r in enumerate(_PLAYOFF_ROUNDS)}
+    current_indices = [round_index[g["po_round"]] for g in games if g.get("po_round") in round_index]
+    current_round = min(current_indices) if current_indices else 0
+    start_page = min(current_round, 2)
+
+    columns_by_conf = {conf: _conference_bracket_columns(playoff_series, conf) for conf in ("West", "East")}
+    finals_series = next((s for s in playoff_series if s.get("round") == "NBA Finals"), None)
     conf_by_team = {
         t["team_id"]: s.get("conference")
         for s in playoff_series
         if s.get("round") != "NBA Finals"
         for t in s["teams"]
     }
-    result = f'<div class="bracket"><div class="bracket-column">{_finals_match_html(series, conf_by_team)}</div></div>'
-    if series and series["is_over"]:
-        champion = series["teams"][0]
-        result += f'<p class="game-sub" dir="rtl">{html.escape(champion["tricode"])} אלופת ה-NBA!</p>'
-    return result
+
+    pages = [
+        _bracket_page_two_rounds(columns_by_conf, "1st Round", "Conf. Semifinals"),
+        _bracket_page_two_rounds(columns_by_conf, "Conf. Semifinals", "Conf. Finals"),
+        _bracket_page_finals(columns_by_conf, finals_series, conf_by_team),
+    ]
+    page_labels = [
+        f"{_PLAYOFF_ROUND_LABELS_HE['1st Round']} · {_PLAYOFF_ROUND_LABELS_HE['Conf. Semifinals']}",
+        f"{_PLAYOFF_ROUND_LABELS_HE['Conf. Semifinals']} · {_PLAYOFF_ROUND_LABELS_HE['Conf. Finals']}",
+        f"{_PLAYOFF_ROUND_LABELS_HE['Conf. Finals']} · {_PLAYOFF_ROUND_LABELS_HE['NBA Finals']}",
+    ]
+
+    pages_html = "".join(
+        f'<div class="bracket-pager-page{" active" if i == start_page else ""}" data-label="{html.escape(page_labels[i])}">{page_html}</div>'
+        for i, page_html in enumerate(pages)
+    )
+    return (
+        f'<div class="bracket-pager" data-page="{start_page}">'
+        f"<div class=\"bracket-pager-pages\">{pages_html}</div>"
+        '<div class="bracket-pager-nav">'
+        '<button type="button" class="bracket-pager-arrow bracket-pager-prev" aria-label="השלב הקודם">›</button>'
+        '<span class="bracket-pager-label"></span>'
+        '<button type="button" class="bracket-pager-arrow bracket-pager-next" aria-label="השלב הבא">‹</button>'
+        "</div></div>"
+    )
 
 
 def _play_in_bracket_match_html(game: dict | None, caption: str) -> str:
@@ -1867,9 +2012,10 @@ def _details_block(title: str, inner_html: str) -> str:
 
 def _build_secondary_section(data: dict) -> str:
     """
-    Playoffs: two tabs, one connected bracket per conference (1st Round ->
-    Conf. Semifinals -> Conf. Finals) - there's no regular-season standings
-    concept during playoffs. NBA Cup days (group stage or knockout): the
+    Playoffs: one tab, a single paged bracket covering both conferences and
+    the Finals together (see _build_combined_playoff_bracket_html) - there's
+    no regular-season standings concept during playoffs. NBA Cup days
+    (group stage or knockout): the
     regular league standings always show first, since every Cup game except
     the Championship counts toward the regular season - plus a group-standings
     tab on group-stage days and a connected bracket tab on knockout days.
@@ -1877,11 +2023,7 @@ def _build_secondary_section(data: dict) -> str:
     """
     if data.get("is_playoffs"):
         playoff_series = data.get("playoff_series", [])
-        sections = []
-        if any(s.get("round") == "NBA Finals" for s in playoff_series):
-            sections.append(("גמר ה-NBA", _build_finals_html(playoff_series)))
-        sections.append(("בראקט מערב", _build_conference_bracket_html(playoff_series, "West")))
-        sections.append(("בראקט מזרח", _build_conference_bracket_html(playoff_series, "East")))
+        sections = [("בראקט הפלייאוף", _build_combined_playoff_bracket_html(playoff_series, data["games"]))]
     else:
         standings_section = (
             "טבלת הליגה",
