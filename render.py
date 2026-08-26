@@ -1231,9 +1231,14 @@ TEMPLATE = """<!DOCTYPE html>
       // round shared between them (e.g. Conf. Semis, visible at both
       // stops) is the same element throughout, never two overlapping
       // copies mid-transition. Stop 2 (the Finals) swaps to a separate,
-      // differently-shaped page instead - it isn't part of either
-      // conference's strip, so that one transition is a swap rather than
-      // a pan (same cards, same swipe gesture, just not a shared element).
+      // differently-shaped page - it isn't part of either conference's
+      // strip, so this can't be a simple pan - but the two Conf. Finals
+      // matches themselves are still the exact same elements the whole
+      // time: relocateConfFinals() physically moves them into the Finals
+      // page's empty slots (and back), animated with a FLIP transform
+      // (record the old screen position, move it, then transition away
+      // the resulting offset) so it reads as one continuous slide rather
+      // than one element disappearing while a second one appears.
       var wrap = document.querySelector(".bracket-pager");
       if (!wrap) return;
 
@@ -1244,6 +1249,12 @@ TEMPLATE = """<!DOCTYPE html>
       var tracks = Array.prototype.slice.call(wrap.querySelectorAll(".strip-track"));
       var prevBtn = wrap.querySelector(".pager-prev");
       var nextBtn = wrap.querySelector(".pager-next");
+      // Always starts false regardless of the initial step, so the very
+      // first render() call below still detects "entering finals" (if
+      // data-step is already 2) and relocates the real match elements out
+      // of the strips into the Finals page's slots - just without
+      // animating that first move (animate=false is passed to render()).
+      var inFinals = false;
 
       function unitShift() {{
         var track = tracks[0];
@@ -1260,8 +1271,46 @@ TEMPLATE = """<!DOCTYPE html>
         }});
       }}
 
+      function relocateConfFinals(conference, animate) {{
+        var slots = Array.prototype.slice.call(wrap.querySelectorAll(".conf-finals-slot-" + conference));
+        var source = slots.filter(function(s) {{ return s.children.length > 0; }})[0];
+        var dest = slots.filter(function(s) {{ return s.children.length === 0; }})[0];
+        if (!source || !dest || source === dest) return;
+        var match = source.firstElementChild;
+        var before = animate ? match.getBoundingClientRect() : null;
+        dest.appendChild(match);
+        if (!animate || !before) return;
+        var after = match.getBoundingClientRect();
+        var dx = before.left - after.left;
+        var dy = before.top - after.top;
+        match.style.transition = "none";
+        match.style.transform = "translate(" + dx + "px, " + dy + "px)";
+        match.getBoundingClientRect();
+        match.style.transition = "transform 0.35s ease";
+        match.style.transform = "translate(0, 0)";
+        match.addEventListener("transitionend", function done() {{
+          match.style.transition = "";
+          match.style.transform = "";
+          match.removeEventListener("transitionend", done);
+        }});
+      }}
+
       function render(animate) {{
-        if (step < 2) {{
+        var enteringFinals = step === 2 && !inFinals;
+        var leavingFinals = step < 2 && inFinals;
+
+        if (enteringFinals) {{
+          finalsEl.hidden = false;
+          relocateConfFinals("west", animate);
+          relocateConfFinals("east", animate);
+          stripsEl.hidden = true;
+        }} else if (leavingFinals) {{
+          stripsEl.hidden = false;
+          setTracks(Math.min(step, 1) * unitShift(), false);
+          relocateConfFinals("west", animate);
+          relocateConfFinals("east", animate);
+          finalsEl.hidden = true;
+        }} else if (step < 2) {{
           stripsEl.hidden = false;
           finalsEl.hidden = true;
           setTracks(Math.min(step, 1) * unitShift(), animate);
@@ -1269,6 +1318,8 @@ TEMPLATE = """<!DOCTYPE html>
           stripsEl.hidden = true;
           finalsEl.hidden = false;
         }}
+
+        inFinals = step === 2;
         prevBtn.disabled = step === 0;
         nextBtn.disabled = step === maxStep;
       }}
@@ -2090,10 +2141,17 @@ def _conference_bracket_columns(playoff_series: list[dict], conference: str) -> 
 
     final_column = _bracket_series_html(finals[0] if finals else None)
 
+    # "conf-finals-slot-{conference}" marks this specific element as the
+    # movable home of this conference's Conf. Finals match - see
+    # initPlayoffBracketPager()'s relocateConfFinals(), which physically
+    # moves the real match element between here and its empty twin in
+    # _bracket_finals_row_html() as the user pans past this round, instead
+    # of keeping two separate copies of it and swapping which is visible.
+    slot_class = f"conf-finals-slot conf-finals-slot-{conference.lower()}"
     return {
         "1st Round": f'<div class="bracket-round">{"".join(round1_pairs)}</div>',
         "Conf. Semifinals": f'<div class="bracket-round">{semis_pair}</div>',
-        "Conf. Finals": f'<div class="bracket-round bracket-final">{final_column}</div>',
+        "Conf. Finals": f'<div class="bracket-round bracket-final {slot_class}">{final_column}</div>',
     }
 
 
@@ -2198,7 +2256,7 @@ def _bracket_strip_html(conf_label: str, columns: dict[str, str]) -> str:
     )
 
 
-def _bracket_finals_row_html(playoff_series: list[dict], finals_series: dict | None, conf_by_team: dict) -> str:
+def _bracket_finals_row_html(finals_series: dict | None, conf_by_team: dict) -> str:
     """
     The last stop (Conf. Finals -> NBA Finals) isn't part of either
     conference's own strip - the Finals combine both conferences. Built as
@@ -2209,16 +2267,22 @@ def _bracket_finals_row_html(playoff_series: list[dict], finals_series: dict | N
     already-proven connector geometry (and its fixed width) means this
     page is exactly as wide as every other 2-column bracket page, with no
     separate shrink-to-fit needed the way three side-by-side columns did.
+
+    The two "conf-finals-slot" cells start out empty - they aren't given
+    the match content directly (that would be a second, separate copy of
+    it - see _conference_bracket_columns, where the real match already
+    lives inside each conference's own strip). initPlayoffBracketPager()
+    physically moves the actual match element into these slots as the
+    user pans past this round, so it's always exactly one element, never
+    two - which is also what lets the transition animate as a real move
+    instead of two elements swapping visibility.
     """
-
-    def _conf_finals_match(conference: str) -> str:
-        series = next(
-            (s for s in playoff_series if s.get("round") == "Conf. Finals" and s.get("conference") == conference),
-            None,
-        )
-        return _bracket_series_html(series)
-
-    pair = f'<div class="bracket-pair bracket-pair-r2">{_conf_finals_match("West")}{_conf_finals_match("East")}</div>'
+    pair = (
+        '<div class="bracket-pair bracket-pair-r2">'
+        '<div class="bracket-round bracket-final conf-finals-slot conf-finals-slot-west"></div>'
+        '<div class="bracket-round bracket-final conf-finals-slot conf-finals-slot-east"></div>'
+        "</div>"
+    )
     pair_column = f'<div class="bracket-column"><div class="bracket-round">{pair}</div></div>'
     finals_col = _bracket_column_html(
         "NBA Finals", f'<div class="bracket-round bracket-final">{_finals_match_html(finals_series, conf_by_team)}</div>'
@@ -2261,7 +2325,7 @@ def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list
     round_header = _bracket_round_header_track(_PLAYOFF_ROUNDS[:3])
     west_strip = _bracket_strip_html("מערב", columns_by_conf["West"])
     east_strip = _bracket_strip_html("מזרח", columns_by_conf["East"])
-    finals_row = _bracket_finals_row_html(playoff_series, finals_series, conf_by_team)
+    finals_row = _bracket_finals_row_html(finals_series, conf_by_team)
 
     strips_hidden = " hidden" if start_step == 2 else ""
     finals_hidden = "" if start_step == 2 else " hidden"
