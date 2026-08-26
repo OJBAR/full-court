@@ -332,7 +332,7 @@ TEMPLATE = """<!DOCTYPE html>
     gap: 16px;
     position: relative;
     padding-right: 16px;
-    border-right: 1px solid var(--border);
+    border-right: 1px solid var(--text-muted);
   }}
   .bracket-pair::after {{
     content: "";
@@ -341,7 +341,7 @@ TEMPLATE = """<!DOCTYPE html>
     left: 100%;
     width: 25px;
     height: 1px;
-    background: var(--border);
+    background: var(--text-muted);
   }}
   .bracket-match {{
     width: 128px;
@@ -535,7 +535,7 @@ TEMPLATE = """<!DOCTYPE html>
     font-size: 11px;
     color: var(--text-muted);
   }}
-  .beta-note a {{ color: var(--text-muted); text-decoration: underline; }}
+  .beta-note a {{ color: var(--accent); text-decoration: underline; }}
 </style>
 </head>
 <body>
@@ -1085,17 +1085,21 @@ def _play_in_bracket_match_html(game: dict | None, caption: str) -> str:
         )
     else:
         line_score = game["line_score"]
-        team_a, team_b = line_score
-        a_wins = team_a["score"] > team_b["score"]
+        # Lower seed on top, same convention as the playoff conference brackets.
+        ordered = sorted(line_score, key=lambda t: t.get("seed") if t.get("seed") is not None else 99)
+        max_score = max(t["score"] for t in line_score)
 
-        def _team(team: dict, is_winner: bool) -> str:
-            cls = " winner" if is_winner else ""
+        def _team(team: dict) -> str:
+            cls = " winner" if team["score"] == max_score else ""
+            seed = team.get("seed")
+            seed_html = f'<span class="bracket-seed">{seed}</span>' if seed else ""
             return (
-                f'<div class="bracket-team{cls}"><span>{html.escape(team["teamTricode"])}</span>'
+                f'<div class="bracket-team{cls}">'
+                f'<span class="bracket-team-label">{seed_html}<span>{html.escape(team["teamTricode"])}</span></span>'
                 f'<span class="bracket-score">{team["score"]}</span></div>'
             )
 
-        match_html = f'<div class="bracket-match">{_team(team_a, a_wins)}{_team(team_b, not a_wins)}</div>'
+        match_html = '<div class="bracket-match">' + "".join(_team(t) for t in ordered) + "</div>"
     return (
         '<div class="bracket-match-wrap">'
         f"{match_html}"
