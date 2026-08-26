@@ -742,6 +742,15 @@ TEMPLATE = """<!DOCTYPE html>
     margin-bottom: 6px;
   }}
   :root.tabs-mode .header .logo-img {{ height: 22px; margin: 0; }}
+  /* The settings button is absolutely positioned against .wrapper, not
+     .header, so shrinking the header left it too tall/low - it spilled
+     past the header's bottom border instead of sitting inside it. Shrink
+     and raise it to match the new compact header height. */
+  :root.tabs-mode .settings-toggle {{
+    width: 28px;
+    height: 28px;
+    top: 20px;
+  }}
   /* Title and date both move out of the header entirely in app mode - just
      the logo remains, as compact as possible - the date reappears at the
      top of the summary screen instead (see .summary-date below). */
