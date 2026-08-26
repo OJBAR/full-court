@@ -183,6 +183,16 @@
   }
   .score { width: 2.2em; text-align: center; color: var(--text-muted); font-variant-numeric: tabular-nums; }
   .score.winner { color: var(--accent); font-weight: 700; }
+  .ot-tag {
+    margin-inline-start: 6px;
+    padding: 1px 5px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--card-bg);
+    font-size: 9px;
+    font-weight: 700;
+    vertical-align: middle;
+  }
   .game-sub {
     text-align: center;
     font-size: 11px;
@@ -311,8 +321,8 @@
     content: "";
     position: absolute;
     top: 50%;
-    right: -16px;
-    width: 16px;
+    left: 100%;
+    width: 25px;
     height: 1px;
     background: var(--border);
   }
@@ -347,7 +357,24 @@
     font-size: 10px;
     color: var(--text-muted);
     min-width: 1.2em;
+    text-align: center;
+    padding: 0 3px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
   }
+  .conf-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .conf-badge-east { background: #3b6fd6; }
+  .conf-badge-west { background: #c0392b; }
   .bracket-record {
     font-size: 9px;
     font-weight: 400;
@@ -528,42 +555,6 @@
       </details>
 
       <details>
-      <summary>טבלת הליגה</summary>
-      <div class="details-body" dir="ltr">
-        <div class="conferences"><div class="conference standings-block"><h3>מערב</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Oklahoma City Thunder</span><span class="standing-record">64-18</span><span class="standing-streak loss">L 2</span></div>
-          <div class="standing-row"><span class="standing-rank">2</span><span class="standing-team">San Antonio Spurs</span><span class="standing-record">62-20</span><span class="standing-streak loss">L 1</span></div>
-          <div class="standing-row"><span class="standing-rank">3</span><span class="standing-team">Denver Nuggets</span><span class="standing-record">54-28</span><span class="standing-streak win">W 12</span></div>
-          <div class="standing-row"><span class="standing-rank">4</span><span class="standing-team">Los Angeles Lakers</span><span class="standing-record">53-29</span><span class="standing-streak win">W 3</span></div>
-          <div class="standing-row"><span class="standing-rank">5</span><span class="standing-team">Houston Rockets</span><span class="standing-record">52-30</span><span class="standing-streak win">W 1</span></div>
-          <div class="standing-row boundary"><span class="standing-rank">6</span><span class="standing-team">Minnesota Timberwolves</span><span class="standing-record">49-33</span><span class="standing-streak win">W 2</span></div>
-          <div class="standing-row"><span class="standing-rank">7</span><span class="standing-team">Phoenix Suns</span><span class="standing-record">45-37</span><span class="standing-streak win">W 1</span></div>
-          <div class="standing-row"><span class="standing-rank">8</span><span class="standing-team">Portland Trail Blazers</span><span class="standing-record">42-40</span><span class="standing-streak win">W 2</span></div>
-          <div class="standing-row"><span class="standing-rank">9</span><span class="standing-team">LA Clippers</span><span class="standing-record">42-40</span><span class="standing-streak win">W 1</span></div>
-          <div class="standing-row boundary"><span class="standing-rank">10</span><span class="standing-team">Golden State Warriors</span><span class="standing-record">37-45</span><span class="standing-streak loss">L 3</span></div>
-          <div class="standing-row"><span class="standing-rank">11</span><span class="standing-team">New Orleans Pelicans</span><span class="standing-record">26-56</span><span class="standing-streak loss">L 2</span></div>
-          <div class="standing-row"><span class="standing-rank">12</span><span class="standing-team">Dallas Mavericks</span><span class="standing-record">26-56</span><span class="standing-streak win">W 1</span></div>
-          <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Memphis Grizzlies</span><span class="standing-record">25-57</span><span class="standing-streak loss">L 8</span></div>
-          <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Sacramento Kings</span><span class="standing-record">22-60</span><span class="standing-streak loss">L 1</span></div>
-          <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Utah Jazz</span><span class="standing-record">22-60</span><span class="standing-streak loss">L 1</span></div></div>
-      <div class="conference standings-block"><h3>מזרח</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Detroit Pistons</span><span class="standing-record">60-22</span><span class="standing-streak win">W 3</span></div>
-          <div class="standing-row"><span class="standing-rank">2</span><span class="standing-team">Boston Celtics</span><span class="standing-record">56-26</span><span class="standing-streak win">W 2</span></div>
-          <div class="standing-row"><span class="standing-rank">3</span><span class="standing-team">New York Knicks</span><span class="standing-record">53-29</span><span class="standing-streak loss">L 1</span></div>
-          <div class="standing-row"><span class="standing-rank">4</span><span class="standing-team">Cleveland Cavaliers</span><span class="standing-record">52-30</span><span class="standing-streak win">W 1</span></div>
-          <div class="standing-row"><span class="standing-rank">5</span><span class="standing-team">Toronto Raptors</span><span class="standing-record">46-36</span><span class="standing-streak win">W 1</span></div>
-          <div class="standing-row boundary"><span class="standing-rank">6</span><span class="standing-team">Atlanta Hawks</span><span class="standing-record">46-36</span><span class="standing-streak loss">L 1</span></div>
-          <div class="standing-row"><span class="standing-rank">7</span><span class="standing-team">Philadelphia 76ers</span><span class="standing-record">45-37</span><span class="standing-streak win">W 2</span></div>
-          <div class="standing-row"><span class="standing-rank">8</span><span class="standing-team">Orlando Magic</span><span class="standing-record">45-37</span><span class="standing-streak loss">L 1</span></div>
-          <div class="standing-row"><span class="standing-rank">9</span><span class="standing-team">Charlotte Hornets</span><span class="standing-record">44-38</span><span class="standing-streak win">W 1</span></div>
-          <div class="standing-row boundary"><span class="standing-rank">10</span><span class="standing-team">Miami Heat</span><span class="standing-record">43-39</span><span class="standing-streak win">W 2</span></div>
-          <div class="standing-row"><span class="standing-rank">11</span><span class="standing-team">Milwaukee Bucks</span><span class="standing-record">32-50</span><span class="standing-streak loss">L 1</span></div>
-          <div class="standing-row"><span class="standing-rank">12</span><span class="standing-team">Chicago Bulls</span><span class="standing-record">31-51</span><span class="standing-streak loss">L 2</span></div>
-          <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Brooklyn Nets</span><span class="standing-record">20-62</span><span class="standing-streak loss">L 3</span></div>
-          <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Indiana Pacers</span><span class="standing-record">19-63</span><span class="standing-streak loss">L 2</span></div>
-          <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Washington Wizards</span><span class="standing-record">17-65</span><span class="standing-streak loss">L 10</span></div></div></div>
-      </div>
-    </details>
-
-    <details>
       <summary>בתי הגביע</summary>
       <div class="details-body" dir="ltr">
         <div class="conferences"><div class="conference standings-block"><h3>מערב</h3><div class="cup-group"><h4>Group A</h4><div class="standing-row boundary"><span class="standing-team">Oklahoma City Thunder</span><span class="standing-record">2-0</span><span class="standing-diff">+63</span></div>
@@ -596,7 +587,43 @@
             <div class="standing-row"><span class="standing-team">New York Knicks</span><span class="standing-record">1-1</span><span class="standing-diff">-2</span></div>
             <div class="standing-row"><span class="standing-team">Chicago Bulls</span><span class="standing-record">1-2</span><span class="standing-diff">-42</span></div>
             <div class="standing-row"><span class="standing-team">Charlotte Hornets</span><span class="standing-record">0-2</span><span class="standing-diff">-31</span></div></div></div>
-      <p class="wildcard-legend" dir="rtl">WC = הסגנית הכי טובה בקונפרנס, עולה גם היא לנוקאאוט</p></div>
+      <p class="wildcard-legend" dir="rtl">WC - הסגנית הכי טובה בכל אזור, עולה לשלב הנוקאאוט</p></div>
+      </div>
+    </details>
+
+    <details>
+      <summary>טבלת הליגה</summary>
+      <div class="details-body" dir="ltr">
+        <div class="conferences"><div class="conference standings-block"><h3>מערב</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Oklahoma City Thunder</span><span class="standing-record">64-18</span><span class="standing-streak loss">L 2</span></div>
+          <div class="standing-row"><span class="standing-rank">2</span><span class="standing-team">San Antonio Spurs</span><span class="standing-record">62-20</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">3</span><span class="standing-team">Denver Nuggets</span><span class="standing-record">54-28</span><span class="standing-streak win">W 12</span></div>
+          <div class="standing-row"><span class="standing-rank">4</span><span class="standing-team">Los Angeles Lakers</span><span class="standing-record">53-29</span><span class="standing-streak win">W 3</span></div>
+          <div class="standing-row"><span class="standing-rank">5</span><span class="standing-team">Houston Rockets</span><span class="standing-record">52-30</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row boundary"><span class="standing-rank">6</span><span class="standing-team">Minnesota Timberwolves</span><span class="standing-record">49-33</span><span class="standing-streak win">W 2</span></div>
+          <div class="standing-row"><span class="standing-rank">7</span><span class="standing-team">Phoenix Suns</span><span class="standing-record">45-37</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row"><span class="standing-rank">8</span><span class="standing-team">Portland Trail Blazers</span><span class="standing-record">42-40</span><span class="standing-streak win">W 2</span></div>
+          <div class="standing-row"><span class="standing-rank">9</span><span class="standing-team">LA Clippers</span><span class="standing-record">42-40</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row boundary"><span class="standing-rank">10</span><span class="standing-team">Golden State Warriors</span><span class="standing-record">37-45</span><span class="standing-streak loss">L 3</span></div>
+          <div class="standing-row"><span class="standing-rank">11</span><span class="standing-team">New Orleans Pelicans</span><span class="standing-record">26-56</span><span class="standing-streak loss">L 2</span></div>
+          <div class="standing-row"><span class="standing-rank">12</span><span class="standing-team">Dallas Mavericks</span><span class="standing-record">26-56</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Memphis Grizzlies</span><span class="standing-record">25-57</span><span class="standing-streak loss">L 8</span></div>
+          <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Sacramento Kings</span><span class="standing-record">22-60</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Utah Jazz</span><span class="standing-record">22-60</span><span class="standing-streak loss">L 1</span></div></div>
+      <div class="conference standings-block"><h3>מזרח</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Detroit Pistons</span><span class="standing-record">60-22</span><span class="standing-streak win">W 3</span></div>
+          <div class="standing-row"><span class="standing-rank">2</span><span class="standing-team">Boston Celtics</span><span class="standing-record">56-26</span><span class="standing-streak win">W 2</span></div>
+          <div class="standing-row"><span class="standing-rank">3</span><span class="standing-team">New York Knicks</span><span class="standing-record">53-29</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">4</span><span class="standing-team">Cleveland Cavaliers</span><span class="standing-record">52-30</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row"><span class="standing-rank">5</span><span class="standing-team">Toronto Raptors</span><span class="standing-record">46-36</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row boundary"><span class="standing-rank">6</span><span class="standing-team">Atlanta Hawks</span><span class="standing-record">46-36</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">7</span><span class="standing-team">Philadelphia 76ers</span><span class="standing-record">45-37</span><span class="standing-streak win">W 2</span></div>
+          <div class="standing-row"><span class="standing-rank">8</span><span class="standing-team">Orlando Magic</span><span class="standing-record">45-37</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">9</span><span class="standing-team">Charlotte Hornets</span><span class="standing-record">44-38</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row boundary"><span class="standing-rank">10</span><span class="standing-team">Miami Heat</span><span class="standing-record">43-39</span><span class="standing-streak win">W 2</span></div>
+          <div class="standing-row"><span class="standing-rank">11</span><span class="standing-team">Milwaukee Bucks</span><span class="standing-record">32-50</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">12</span><span class="standing-team">Chicago Bulls</span><span class="standing-record">31-51</span><span class="standing-streak loss">L 2</span></div>
+          <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Brooklyn Nets</span><span class="standing-record">20-62</span><span class="standing-streak loss">L 3</span></div>
+          <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Indiana Pacers</span><span class="standing-record">19-63</span><span class="standing-streak loss">L 2</span></div>
+          <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Washington Wizards</span><span class="standing-record">17-65</span><span class="standing-streak loss">L 10</span></div></div></div>
       </div>
     </details>
     </main>
