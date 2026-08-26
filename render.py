@@ -200,6 +200,16 @@ TEMPLATE = """<!DOCTYPE html>
   }}
   .score {{ width: 2.2em; text-align: center; color: var(--text-muted); font-variant-numeric: tabular-nums; }}
   .score.winner {{ color: var(--accent); font-weight: 700; }}
+  .ot-tag {{
+    margin-inline-start: 6px;
+    padding: 1px 5px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--card-bg);
+    font-size: 9px;
+    font-weight: 700;
+    vertical-align: middle;
+  }}
   .game-sub {{
     text-align: center;
     font-size: 11px;
@@ -328,8 +338,8 @@ TEMPLATE = """<!DOCTYPE html>
     content: "";
     position: absolute;
     top: 50%;
-    right: -16px;
-    width: 16px;
+    left: 100%;
+    width: 25px;
     height: 1px;
     background: var(--border);
   }}
@@ -364,7 +374,24 @@ TEMPLATE = """<!DOCTYPE html>
     font-size: 10px;
     color: var(--text-muted);
     min-width: 1.2em;
+    text-align: center;
+    padding: 0 3px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
   }}
+  .conf-badge {{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+  }}
+  .conf-badge-east {{ background: #3b6fd6; }}
+  .conf-badge-west {{ background: #c0392b; }}
   .bracket-record {{
     font-size: 9px;
     font-weight: 400;
@@ -767,10 +794,11 @@ def _paragraphs_to_html(summary: str) -> str:
     return "\n      ".join(f"<p>{html.escape(p)}</p>" for p in paragraphs)
 
 
-def _build_results_html(games: list[dict]) -> str:
+def _build_results_html(games: list[dict], standings: list[dict]) -> str:
     if not games:
         return '<p style="color:var(--text-muted); font-size:14px;">אין משחקים ללילה הזה.</p>'
 
+    standings_by_team_id = {s["TeamID"]: s for s in standings}
     rows = []
     for game in games:
         line_score = game["line_score"]
@@ -778,14 +806,30 @@ def _build_results_html(games: list[dict]) -> str:
             continue
         team_a, team_b = line_score
         a_wins = team_a["score"] > team_b["score"]
-        # Season record next to the team code - not during playoffs, where the
-        # series score (shown in the caption below) is the relevant number instead.
-        show_record = not game.get("po_round")
+        is_play_in_game = game["game_id"].startswith("005")
+        is_cup_knockout_game = game.get("cup_subtype") == "in-season-knockout"
+        # Season record next to the team code - not during playoffs or Play-In,
+        # where the series score / seed context (shown in the caption below) is
+        # the relevant number instead, not the season record.
+        show_record = not game.get("po_round") and not is_play_in_game
 
         def _team_span(team: dict, is_winner: bool) -> str:
+            if show_record and is_cup_knockout_game:
+                # Cup knockout games report "wins"/"losses" scoped to the
+                # knockout stage itself (e.g. 1-0 for a Championship-game
+                # team), not the real season record - look the real record up
+                # from standings instead.
+                standing = standings_by_team_id.get(team["teamId"])
+                wins = standing["WINS"] if standing else None
+                losses = standing["LOSSES"] if standing else None
+            elif show_record:
+                wins = team.get("wins")
+                losses = team.get("losses")
+            else:
+                wins = losses = None
             record = (
-                f'<span class="team-record">{team["wins"]}-{team["losses"]}</span>'
-                if show_record and "wins" in team and "losses" in team
+                f'<span class="team-record">{wins}-{losses}</span>'
+                if wins is not None and losses is not None
                 else ""
             )
             return (
@@ -793,6 +837,13 @@ def _build_results_html(games: list[dict]) -> str:
                 f'{html.escape(team["teamTricode"])}{record}</span>'
             )
 
+        period = game.get("period", 4)
+        ot_count = period - 4
+        ot_html = (
+            f'<span class="ot-tag">{"OT" if ot_count == 1 else f"{ot_count}OT"}</span>'
+            if ot_count > 0
+            else ""
+        )
         block = (
             '<div class="game-row">'
             f'{_team_span(team_a, a_wins)}'
@@ -800,6 +851,7 @@ def _build_results_html(games: list[dict]) -> str:
             f'<span class="score">–</span>'
             f'<span class="score{"" if a_wins else " winner"}">{team_b["score"]}</span>'
             f'{_team_span(team_b, not a_wins)}'
+            f'{ot_html}'
             "</div>"
         )
         if game.get("po_round"):
@@ -953,20 +1005,63 @@ def _build_conference_bracket_html(playoff_series: list[dict], conference: str) 
     return f'<div class="bracket">{"".join(columns)}</div>'
 
 
+def _finals_match_html(series: dict | None, conf_by_team: dict) -> str:
+    """
+    Finals-specific version of _bracket_series_html: shows a colored W/E
+    conference badge instead of a seed number, since the two teams' seeds
+    (1-8 independently within each conference) aren't a meaningful basis for
+    comparison across conferences the way they are within a single bracket -
+    knowing which conference each team is from is the more useful signal here.
+    """
+    if series is None:
+        return (
+            '<div class="bracket-match bracket-match-tbd">'
+            '<div class="bracket-team"><span>TBD</span></div>'
+            '<div class="bracket-team"><span>TBD</span></div>'
+            "</div>"
+        )
+    teams = series["teams"]
+    if len(teams) != 2:
+        return _finals_match_html(None, conf_by_team)
+    max_wins = max(t["wins"] for t in teams)
+
+    def _team(team: dict) -> str:
+        cls = " winner" if series["is_over"] and team["wins"] == max_wins else ""
+        conf = conf_by_team.get(team["team_id"])
+        badge_html = (
+            f'<span class="conf-badge conf-badge-{conf.lower()}">{conf[0]}</span>' if conf else ""
+        )
+        return (
+            f'<div class="bracket-team{cls}">'
+            f'<span class="bracket-team-label">{badge_html}<span>{html.escape(team["tricode"])}</span></span>'
+            f'<span class="bracket-score">{team["wins"]}</span></div>'
+        )
+
+    return '<div class="bracket-match">' + "".join(_team(t) for t in teams) + "</div>"
+
+
 def _build_finals_html(playoff_series: list[dict]) -> str:
     """
     The NBA Finals series (East champion vs West champion) - unlike the two
     conference brackets, this has no "conference" of its own in the data
     (seriesConference is blank for Finals games), so it's pulled out by round
-    name instead and shown as a single standalone match card, reusing the
-    same cell used inside the conference brackets.
+    name instead and shown as a single standalone match card. Each Finals
+    team's conference (for the W/E badge) is looked up from whichever other
+    series it appeared in earlier in the same bracket data - the Finals
+    series itself doesn't carry that field.
     """
     finals = [s for s in playoff_series if s.get("round") == "NBA Finals"]
     series = finals[0] if finals else None
-    result = f'<div class="bracket"><div class="bracket-column">{_bracket_series_html(series)}</div></div>'
+    conf_by_team = {
+        t["team_id"]: s.get("conference")
+        for s in playoff_series
+        if s.get("round") != "NBA Finals"
+        for t in s["teams"]
+    }
+    result = f'<div class="bracket"><div class="bracket-column">{_finals_match_html(series, conf_by_team)}</div></div>'
     if series and series["is_over"]:
         champion = series["teams"][0]
-        result += f'<p class="game-sub">{html.escape(champion["tricode"])} אלופת ה-NBA!</p>'
+        result += f'<p class="game-sub" dir="rtl">{html.escape(champion["tricode"])} אלופת ה-NBA!</p>'
     return result
 
 
@@ -1242,7 +1337,7 @@ def _build_cup_group_standings_html(cup_group_standings: list[dict]) -> str:
     if found_wildcard:
         result += (
             '\n      <p class="wildcard-legend" dir="rtl">'
-            "WC = הסגנית הכי טובה בקונפרנס, עולה גם היא לנוקאאוט</p>"
+            "WC - הסגנית הכי טובה בכל אזור, עולה לשלב הנוקאאוט</p>"
         )
     return result
 
@@ -1272,13 +1367,15 @@ def _build_secondary_section(data: dict) -> str:
         playoff_series = data.get("playoff_series", [])
         sections = []
         if any(s.get("round") == "NBA Finals" for s in playoff_series):
-            sections.append(("גמר NBA", _build_finals_html(playoff_series)))
-        sections.append(("בראקט מזרח", _build_conference_bracket_html(playoff_series, "East")))
+            sections.append(("גמר ה-NBA", _build_finals_html(playoff_series)))
         sections.append(("בראקט מערב", _build_conference_bracket_html(playoff_series, "West")))
+        sections.append(("בראקט מזרח", _build_conference_bracket_html(playoff_series, "East")))
     else:
-        sections = [
-            ("טבלת הליגה", f'<div class="conferences">{_build_standings_html(data["standings"])}</div>')
-        ]
+        standings_section = (
+            "טבלת הליגה",
+            f'<div class="conferences">{_build_standings_html(data["standings"])}</div>',
+        )
+        sections = []
         if data.get("is_cup_groups"):
             sections.append(
                 (
@@ -1290,8 +1387,9 @@ def _build_secondary_section(data: dict) -> str:
             sections.append(("בראקט הגביע", _build_cup_bracket_html(data.get("cup_bracket", []))))
         if data.get("is_play_in"):
             games = data.get("play_in_bracket", [])
-            sections.append(("פלייאין מזרח", _build_play_in_html(games, "East")))
             sections.append(("פלייאין מערב", _build_play_in_html(games, "West")))
+            sections.append(("פלייאין מזרח", _build_play_in_html(games, "East")))
+        sections.append(standings_section)
 
     return "\n\n    ".join(_details_block(title, body_html) for title, body_html in sections)
 
@@ -1309,7 +1407,7 @@ def render(data: dict, summary: str) -> str:
         page_date_label=f"{display_date}, {night_label}",
         summary_html=_paragraphs_to_html(summary),
         results_title=results_title,
-        results_html=_build_results_html(data["games"]),
+        results_html=_build_results_html(data["games"], data["standings"]),
         secondary_section_html=_build_secondary_section(data),
     )
 

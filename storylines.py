@@ -347,6 +347,43 @@ def find_star_weak_performances(games: list[dict], power_ratings: dict[str, dict
     return storylines
 
 
+def find_play_in_context(games: list[dict]) -> list[dict]:
+    """
+    Play-In Tournament context for tonight's games: which of the three game
+    types this is (7-vs-8 opener, 9-vs-10 loser-out, or the decider for the
+    8 seed) and who's advancing/eliminated - without this, a Play-In game
+    reads to the model like an ordinary regular-season game with no stakes.
+    """
+    storylines = []
+    for game in games:
+        if not game["game_id"].startswith("005"):
+            continue
+        line_score = game["line_score"]
+        if len(line_score) != 2:
+            continue
+        team_a, team_b = line_score
+        seeds = {t.get("seed") for t in line_score}
+        winner, loser = (
+            (team_a, team_b) if team_a["score"] > team_b["score"] else (team_b, team_a)
+        )
+        if seeds == {7, 8}:
+            game_type = "seven_vs_eight"
+        elif seeds == {9, 10}:
+            game_type = "nine_vs_ten"
+        else:
+            game_type = "decider"
+        storylines.append(
+            {
+                "type": "play_in_context",
+                "matchup": game["matchup"],
+                "game_type": game_type,
+                "winner": winner["teamTricode"],
+                "loser": loser["teamTricode"],
+            }
+        )
+    return storylines
+
+
 def find_storylines(data: dict) -> dict:
     """Runs all storyline detectors over a fetch.py-shaped data dict."""
     games = data["games"]
@@ -374,4 +411,6 @@ def find_storylines(data: dict) -> dict:
     }
     if data.get("is_cup_knockout"):
         storylines["cup_advancements"] = find_cup_advancements(games)
+    if data.get("is_play_in"):
+        storylines["play_in_context"] = find_play_in_context(games)
     return storylines

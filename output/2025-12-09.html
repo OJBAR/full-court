@@ -183,6 +183,16 @@
   }
   .score { width: 2.2em; text-align: center; color: var(--text-muted); font-variant-numeric: tabular-nums; }
   .score.winner { color: var(--accent); font-weight: 700; }
+  .ot-tag {
+    margin-inline-start: 6px;
+    padding: 1px 5px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--card-bg);
+    font-size: 9px;
+    font-weight: 700;
+    vertical-align: middle;
+  }
   .game-sub {
     text-align: center;
     font-size: 11px;
@@ -311,8 +321,8 @@
     content: "";
     position: absolute;
     top: 50%;
-    right: -16px;
-    width: 16px;
+    left: 100%;
+    width: 25px;
     height: 1px;
     background: var(--border);
   }
@@ -347,7 +357,24 @@
     font-size: 10px;
     color: var(--text-muted);
     min-width: 1.2em;
+    text-align: center;
+    padding: 0 3px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
   }
+  .conf-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .conf-badge-east { background: #3b6fd6; }
+  .conf-badge-west { background: #c0392b; }
   .bracket-record {
     font-size: 9px;
     font-weight: 400;
@@ -514,12 +541,19 @@
       <details>
         <summary>כל תוצאות הלילה</summary>
         <div class="details-body">
-          <div class="game-block"><div class="game-row"><span class="team winner">ORL<span class="team-record">15-10</span></span><span class="score winner">117</span><span class="score">–</span><span class="score">108</span><span class="team">MIA<span class="team-record">14-11</span></span></div><div class="game-sub">NBA Cup · East Quarterfinal</div></div>
-        <div class="game-block"><div class="game-row"><span class="team">TOR<span class="team-record">15-11</span></span><span class="score">101</span><span class="score">–</span><span class="score winner">117</span><span class="team winner">NYK<span class="team-record">17-7</span></span></div><div class="game-sub">NBA Cup · East Quarterfinal</div></div>
+          <div class="game-block"><div class="game-row"><span class="team winner">ORL<span class="team-record">45-37</span></span><span class="score winner">117</span><span class="score">–</span><span class="score">108</span><span class="team">MIA<span class="team-record">43-39</span></span></div><div class="game-sub">NBA Cup · East Quarterfinal</div></div>
+        <div class="game-block"><div class="game-row"><span class="team">TOR<span class="team-record">46-36</span></span><span class="score">101</span><span class="score">–</span><span class="score winner">117</span><span class="team winner">NYK<span class="team-record">53-29</span></span></div><div class="game-sub">NBA Cup · East Quarterfinal</div></div>
         </div>
       </details>
 
       <details>
+      <summary>בראקט הגביע</summary>
+      <div class="details-body" dir="ltr">
+        <div class="bracket"><div class="bracket-column"><h4 class="bracket-round-label">Quarterfinals</h4><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div></div><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-name">ORL</span><span class="bracket-score">117</span></div><div class="bracket-team"><span class="bracket-team-name">MIA</span><span class="bracket-score">108</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-name">NYK</span><span class="bracket-score">117</span></div><div class="bracket-team"><span class="bracket-team-name">TOR</span><span class="bracket-score">101</span></div></div></div></div></div><div class="bracket-column"><h4 class="bracket-round-label">Semifinals</h4><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div><div class="bracket-match bracket-match-projected"><div class="bracket-team"><span class="bracket-team-name">ORL</span></div><div class="bracket-team"><span class="bracket-team-name">NYK</span></div></div></div></div></div><div class="bracket-column"><h4 class="bracket-round-label">Championship</h4><div class="bracket-round bracket-final"><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div></div></div></div>
+      </div>
+    </details>
+
+    <details>
       <summary>טבלת הליגה</summary>
       <div class="details-body" dir="ltr">
         <div class="conferences"><div class="conference standings-block"><h3>מערב</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Oklahoma City Thunder</span><span class="standing-record">64-18</span><span class="standing-streak loss">L 2</span></div>
@@ -552,13 +586,6 @@
           <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Brooklyn Nets</span><span class="standing-record">20-62</span><span class="standing-streak loss">L 3</span></div>
           <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Indiana Pacers</span><span class="standing-record">19-63</span><span class="standing-streak loss">L 2</span></div>
           <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Washington Wizards</span><span class="standing-record">17-65</span><span class="standing-streak loss">L 10</span></div></div></div>
-      </div>
-    </details>
-
-    <details>
-      <summary>בראקט הגביע</summary>
-      <div class="details-body" dir="ltr">
-        <div class="bracket"><div class="bracket-column"><h4 class="bracket-round-label">Quarterfinals</h4><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div></div><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-name">ORL</span><span class="bracket-score">117</span></div><div class="bracket-team"><span class="bracket-team-name">MIA</span><span class="bracket-score">108</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-name">NYK</span><span class="bracket-score">117</span></div><div class="bracket-team"><span class="bracket-team-name">TOR</span><span class="bracket-score">101</span></div></div></div></div></div><div class="bracket-column"><h4 class="bracket-round-label">Semifinals</h4><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div><div class="bracket-match bracket-match-projected"><div class="bracket-team"><span class="bracket-team-name">ORL</span></div><div class="bracket-team"><span class="bracket-team-name">NYK</span></div></div></div></div></div><div class="bracket-column"><h4 class="bracket-round-label">Championship</h4><div class="bracket-round bracket-final"><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div></div></div></div>
       </div>
     </details>
     </main>

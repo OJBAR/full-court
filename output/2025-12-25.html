@@ -183,6 +183,16 @@
   }
   .score { width: 2.2em; text-align: center; color: var(--text-muted); font-variant-numeric: tabular-nums; }
   .score.winner { color: var(--accent); font-weight: 700; }
+  .ot-tag {
+    margin-inline-start: 6px;
+    padding: 1px 5px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--card-bg);
+    font-size: 9px;
+    font-weight: 700;
+    vertical-align: middle;
+  }
   .game-sub {
     text-align: center;
     font-size: 11px;
@@ -311,8 +321,8 @@
     content: "";
     position: absolute;
     top: 50%;
-    right: -16px;
-    width: 16px;
+    left: 100%;
+    width: 25px;
     height: 1px;
     background: var(--border);
   }
@@ -347,7 +357,24 @@
     font-size: 10px;
     color: var(--text-muted);
     min-width: 1.2em;
+    text-align: center;
+    padding: 0 3px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
   }
+  .conf-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .conf-badge-east { background: #3b6fd6; }
+  .conf-badge-west { background: #c0392b; }
   .bracket-record {
     font-size: 9px;
     font-weight: 400;
@@ -521,7 +548,7 @@
         <div class="game-block"><div class="game-row"><span class="team">OKC<span class="team-record">26-5</span></span><span class="score">102</span><span class="score">–</span><span class="score winner">117</span><span class="team winner">SAS<span class="team-record">23-7</span></span></div></div>
         <div class="game-block"><div class="game-row"><span class="team winner">GSW<span class="team-record">16-15</span></span><span class="score winner">126</span><span class="score">–</span><span class="score">116</span><span class="team">DAL<span class="team-record">12-20</span></span></div></div>
         <div class="game-block"><div class="game-row"><span class="team">LAL<span class="team-record">19-10</span></span><span class="score">96</span><span class="score">–</span><span class="score winner">119</span><span class="team winner">HOU<span class="team-record">18-10</span></span></div></div>
-        <div class="game-block"><div class="game-row"><span class="team winner">DEN<span class="team-record">22-8</span></span><span class="score winner">142</span><span class="score">–</span><span class="score">138</span><span class="team">MIN<span class="team-record">20-11</span></span></div></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">DEN<span class="team-record">22-8</span></span><span class="score winner">142</span><span class="score">–</span><span class="score">138</span><span class="team">MIN<span class="team-record">20-11</span></span><span class="ot-tag">OT</span></div></div>
         </div>
       </details>
 

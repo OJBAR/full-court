@@ -183,6 +183,16 @@
   }
   .score { width: 2.2em; text-align: center; color: var(--text-muted); font-variant-numeric: tabular-nums; }
   .score.winner { color: var(--accent); font-weight: 700; }
+  .ot-tag {
+    margin-inline-start: 6px;
+    padding: 1px 5px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--card-bg);
+    font-size: 9px;
+    font-weight: 700;
+    vertical-align: middle;
+  }
   .game-sub {
     text-align: center;
     font-size: 11px;
@@ -311,8 +321,8 @@
     content: "";
     position: absolute;
     top: 50%;
-    right: -16px;
-    width: 16px;
+    left: 100%;
+    width: 25px;
     height: 1px;
     background: var(--border);
   }
@@ -347,7 +357,24 @@
     font-size: 10px;
     color: var(--text-muted);
     min-width: 1.2em;
+    text-align: center;
+    padding: 0 3px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
   }
+  .conf-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .conf-badge-east { background: #3b6fd6; }
+  .conf-badge-west { background: #c0392b; }
   .bracket-record {
     font-size: 9px;
     font-weight: 400;
@@ -506,20 +533,34 @@
     </header>
     <main>
       <div class="summary">
-        <p>לילה רגוע יחסית ב-NBA עם שני משחקים בלבד על הפרק, ושתי תוצאות שהוכרעו בנוחות למארחות ולאורחות בהתאמה.</p>
-      <p>באורלנדו, המאג&#x27;יק לא הותירו מקום לספק מול שרלוט והביסו את ההורנטס 90-121 בניצחון מוחץ שהיה ברור עוד הרבה לפני הסיום. משחק חסר עניין מיוחד מבחינת דרמה, אבל תוצאה שממחישה את הפער הגדול בין הקבוצות באותו ערב.</p>
-      <p>המשחק השני, בין פיניקס לגולדן סטייט, סיפק קצת יותר בשר על האש. הסאנס גברו על הוואריורס 96-111, כשג&#x27;יילן גרין היה הכוכב הבולט של הערב עם 36 נקודות, לצד 6 ריבאונדים ו-4 אסיסטים - לילה מעולה מבחינתו שדחף את פיניקס לניצחון נוח. עבור גולדן סטייט מדובר בהפסד שלישי ברציפות, המשכיך למגמה שלילית שהקבוצה מתקשה לצאת ממנה בשלב הזה של העונה. להרע את המצב, הוואריורס ממשיכים להתמודד עם בעיות בריאות משמעותיות במסגרת השורה: ג&#x27;ימי באטלר, שנמצא עדיין בשלבים המוקדמים יחסית של החזרה מפציעת ברך, לא היה זמין למשחק, וגם מוזס מודי נעדר לאחר שאובחן עם קרע בגיד הפיקה בברך שמאל - פציעה שעלולה להרחיק אותו לתקופה ארוכה. שילוב של תוצאה גרועה וחדשות רפואיות לא פשוטות הופך את הערב הזה לאחד מהמאתגרים שבהם נתקלה גולדן סטייט העונה.</p>
+        <p>ליל פליי-אין שקבע סופית מי ממשיך הלילה לפלייאוף ומי הולך הביתה - שני משחקי הכרעה על ה-seed השמיני, בלי מקום לטעויות.</p>
+      <p>באורלנדו לא היה הרבה מתח: המג&#x27;יק דהרו קדימה מהצלצול הראשון וסיימו עם ניצחון מוחץ 121-90 על שרלוט. הורנטס, שהגיעו למשחק ההכרעה הזה אחרי דרך ארוכה, נשארו מאחור לאורך כל המפגש ומסיימים בכך את העונה שלהם, בעוד אורלנדו מבטיחים את המקום השמיני ועולים לפלייאוף.</p>
+      <p>הרבה יותר מעניין קרה בפיניקס, שם הסאנס גברו על גולדן סטייט 111-96 ובכך שלחו את הוריורס הביתה במה שהיה עבורם המשחק השלישי ברצף שהסתיים בהפסד. ג&#x27;יילן גרין היה הכוכב הבולט של הערב עם 36 נקודות, 6 ריבאונדים ו-4 אסיסטים, וסחף את פיניקס למקום השמיני בפלייאוף. אצל גולדן סטייט, העונה מסתיימת בצל פציעות כואבות: ג&#x27;ימי באטלר נעדר כשהוא עדיין בשלבים המוקדמים של שיקום הברך, ומוזס מודי לא שיחק בעקבות קרע בגיד הפיקה בברך שמאל - שני חסרים משמעותיים שליוו את הקבוצה בסיום עונה מאכזב.</p>
       </div>
 
       <details>
         <summary>כל תוצאות הלילה</summary>
         <div class="details-body">
-          <div class="game-block"><div class="game-row"><span class="team winner">ORL<span class="team-record">1-1</span></span><span class="score winner">121</span><span class="score">–</span><span class="score">90</span><span class="team">CHA<span class="team-record">1-1</span></span></div><div class="game-sub">Play-In · ORL clinch 8 seed</div></div>
-        <div class="game-block"><div class="game-row"><span class="team winner">PHX<span class="team-record">1-1</span></span><span class="score winner">111</span><span class="score">–</span><span class="score">96</span><span class="team">GSW<span class="team-record">1-1</span></span></div><div class="game-sub">Play-In · PHX clinch 8 seed</div></div>
+          <div class="game-block"><div class="game-row"><span class="team winner">ORL</span><span class="score winner">121</span><span class="score">–</span><span class="score">90</span><span class="team">CHA</span></div><div class="game-sub">Play-In · ORL clinch 8 seed</div></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">PHX</span><span class="score winner">111</span><span class="score">–</span><span class="score">96</span><span class="team">GSW</span></div><div class="game-sub">Play-In · PHX clinch 8 seed</div></div>
         </div>
       </details>
 
       <details>
+      <summary>פלייאין מערב</summary>
+      <div class="details-body" dir="ltr">
+        <div class="bracket"><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team"><span>PHX</span><span class="bracket-score">110</span></div><div class="bracket-team winner"><span>POR</span><span class="bracket-score">114</span></div></div><div class="bracket-caption">המנצחת עולה לפלייאוף מהמקום ה-7</div></div><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team"><span>LAC</span><span class="bracket-score">121</span></div><div class="bracket-team winner"><span>GSW</span><span class="bracket-score">126</span></div></div><div class="bracket-caption">המפסידה מודחת</div></div></div></div></div><div class="bracket-column"><div class="bracket-round bracket-final"><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team winner"><span>PHX</span><span class="bracket-score">111</span></div><div class="bracket-team"><span>GSW</span><span class="bracket-score">96</span></div></div><div class="bracket-caption">המנצחת עולה לפלייאוף מהמקום ה-8</div></div></div></div></div>
+      </div>
+    </details>
+
+    <details>
+      <summary>פלייאין מזרח</summary>
+      <div class="details-body" dir="ltr">
+        <div class="bracket"><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team winner"><span>PHI</span><span class="bracket-score">109</span></div><div class="bracket-team"><span>ORL</span><span class="bracket-score">97</span></div></div><div class="bracket-caption">המנצחת עולה לפלייאוף מהמקום ה-7</div></div><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team winner"><span>CHA</span><span class="bracket-score">127</span></div><div class="bracket-team"><span>MIA</span><span class="bracket-score">126</span></div></div><div class="bracket-caption">המפסידה מודחת</div></div></div></div></div><div class="bracket-column"><div class="bracket-round bracket-final"><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team winner"><span>ORL</span><span class="bracket-score">121</span></div><div class="bracket-team"><span>CHA</span><span class="bracket-score">90</span></div></div><div class="bracket-caption">המנצחת עולה לפלייאוף מהמקום ה-8</div></div></div></div></div>
+      </div>
+    </details>
+
+    <details>
       <summary>טבלת הליגה</summary>
       <div class="details-body" dir="ltr">
         <div class="conferences"><div class="conference standings-block"><h3>מערב</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Oklahoma City Thunder</span><span class="standing-record">64-18</span><span class="standing-streak loss">L 2</span></div>
@@ -552,20 +593,6 @@
           <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Brooklyn Nets</span><span class="standing-record">20-62</span><span class="standing-streak loss">L 3</span></div>
           <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Indiana Pacers</span><span class="standing-record">19-63</span><span class="standing-streak loss">L 2</span></div>
           <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Washington Wizards</span><span class="standing-record">17-65</span><span class="standing-streak loss">L 10</span></div></div></div>
-      </div>
-    </details>
-
-    <details>
-      <summary>פלייאין מזרח</summary>
-      <div class="details-body" dir="ltr">
-        <div class="bracket"><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team winner"><span>PHI</span><span class="bracket-score">109</span></div><div class="bracket-team"><span>ORL</span><span class="bracket-score">97</span></div></div><div class="bracket-caption">המנצחת עולה לפלייאוף מהמקום ה-7</div></div><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team winner"><span>CHA</span><span class="bracket-score">127</span></div><div class="bracket-team"><span>MIA</span><span class="bracket-score">126</span></div></div><div class="bracket-caption">המפסידה מודחת</div></div></div></div></div><div class="bracket-column"><div class="bracket-round bracket-final"><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team winner"><span>ORL</span><span class="bracket-score">121</span></div><div class="bracket-team"><span>CHA</span><span class="bracket-score">90</span></div></div><div class="bracket-caption">המנצחת עולה לפלייאוף מהמקום ה-8</div></div></div></div></div>
-      </div>
-    </details>
-
-    <details>
-      <summary>פלייאין מערב</summary>
-      <div class="details-body" dir="ltr">
-        <div class="bracket"><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team"><span>PHX</span><span class="bracket-score">110</span></div><div class="bracket-team winner"><span>POR</span><span class="bracket-score">114</span></div></div><div class="bracket-caption">המנצחת עולה לפלייאוף מהמקום ה-7</div></div><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team"><span>LAC</span><span class="bracket-score">121</span></div><div class="bracket-team winner"><span>GSW</span><span class="bracket-score">126</span></div></div><div class="bracket-caption">המפסידה מודחת</div></div></div></div></div><div class="bracket-column"><div class="bracket-round bracket-final"><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team winner"><span>PHX</span><span class="bracket-score">111</span></div><div class="bracket-team"><span>GSW</span><span class="bracket-score">96</span></div></div><div class="bracket-caption">המנצחת עולה לפלייאוף מהמקום ה-8</div></div></div></div></div>
       </div>
     </details>
     </main>
