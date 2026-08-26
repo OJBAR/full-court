@@ -1288,36 +1288,23 @@
     })();
 
     (function initPlayoffBracketPager() {
-      // The playoff bracket's pager: stops 0/1 pan a continuous strip per
-      // conference (see _bracket_strip_html, plus the shared round-name
-      // header track) by exactly one column's real measured width, so a
-      // round shared between them (e.g. Conf. Semis, visible at both
-      // stops) is the same element throughout, never two overlapping
-      // copies mid-transition. Stop 2 (the Finals) swaps to a separate,
-      // differently-shaped page - it isn't part of either conference's
-      // strip, so this can't be a simple pan - but the two Conf. Finals
-      // matches themselves are still the exact same elements the whole
-      // time: relocateConfFinals() physically moves them into the Finals
-      // page's empty slots (and back), animated with a FLIP transform
-      // (record the old screen position, move it, then transition away
-      // the resulting offset) so it reads as one continuous slide rather
-      // than one element disappearing while a second one appears.
+      // The playoff bracket's pager: all 3 stops pan a continuous strip
+      // per conference (see _bracket_strip_html) by exactly one column's
+      // real measured width, so a round shared between two adjacent
+      // stops (e.g. Conf. Semis, visible at stops 0 and 1) is the same
+      // element throughout, never two overlapping copies mid-transition.
+      // The Finals column is just the 4th column (identical content in
+      // both conferences' strips), so the last stop pans the exact same
+      // simple way as every other one - a single CSS transform on
+      // unchanging content - rather than any kind of swap or DOM move.
       var wrap = document.querySelector(".bracket-pager");
       if (!wrap) return;
 
       var step = parseInt(wrap.getAttribute("data-step"), 10) || 0;
       var maxStep = 2;
-      var stripsEl = wrap.querySelector(".bracket-pager-strips");
-      var finalsEl = wrap.querySelector(".bracket-pager-finals");
       var tracks = Array.prototype.slice.call(wrap.querySelectorAll(".strip-track"));
       var prevBtn = wrap.querySelector(".pager-prev");
       var nextBtn = wrap.querySelector(".pager-next");
-      // Always starts false regardless of the initial step, so the very
-      // first render() call below still detects "entering finals" (if
-      // data-step is already 2) and relocates the real match elements out
-      // of the strips into the Finals page's slots - just without
-      // animating that first move (animate=false is passed to render()).
-      var inFinals = false;
 
       function unitShift() {
         var track = tracks[0];
@@ -1334,55 +1321,8 @@
         });
       }
 
-      function relocateConfFinals(conference, animate) {
-        var slots = Array.prototype.slice.call(wrap.querySelectorAll(".conf-finals-slot-" + conference));
-        var source = slots.filter(function(s) { return s.children.length > 0; })[0];
-        var dest = slots.filter(function(s) { return s.children.length === 0; })[0];
-        if (!source || !dest || source === dest) return;
-        var match = source.firstElementChild;
-        var before = animate ? match.getBoundingClientRect() : null;
-        dest.appendChild(match);
-        if (!animate || !before) return;
-        var after = match.getBoundingClientRect();
-        var dx = before.left - after.left;
-        var dy = before.top - after.top;
-        match.style.transition = "none";
-        match.style.transform = "translate(" + dx + "px, " + dy + "px)";
-        match.getBoundingClientRect();
-        match.style.transition = "transform 0.35s ease";
-        match.style.transform = "translate(0, 0)";
-        match.addEventListener("transitionend", function done() {
-          match.style.transition = "";
-          match.style.transform = "";
-          match.removeEventListener("transitionend", done);
-        });
-      }
-
       function render(animate) {
-        var enteringFinals = step === 2 && !inFinals;
-        var leavingFinals = step < 2 && inFinals;
-
-        if (enteringFinals) {
-          finalsEl.hidden = false;
-          relocateConfFinals("west", animate);
-          relocateConfFinals("east", animate);
-          stripsEl.hidden = true;
-        } else if (leavingFinals) {
-          stripsEl.hidden = false;
-          setTracks(Math.min(step, 1) * unitShift(), false);
-          relocateConfFinals("west", animate);
-          relocateConfFinals("east", animate);
-          finalsEl.hidden = true;
-        } else if (step < 2) {
-          stripsEl.hidden = false;
-          finalsEl.hidden = true;
-          setTracks(Math.min(step, 1) * unitShift(), animate);
-        } else {
-          stripsEl.hidden = true;
-          finalsEl.hidden = false;
-        }
-
-        inFinals = step === 2;
+        setTracks(step * unitShift(), animate);
         prevBtn.disabled = step === 0;
         nextBtn.disabled = step === maxStep;
       }
@@ -1406,24 +1346,23 @@
       }, { passive: true });
 
       wrap.addEventListener("touchmove", function(e) {
-        if (startX === null || step === 2) return;
+        if (startX === null) return;
         var dx = e.touches[0].clientX - startX;
         var dy = e.touches[0].clientY - startY;
         if (!dragging && Math.abs(dx) < Math.abs(dy)) return;
         dragging = true;
         var unit = unitShift();
-        var base = Math.min(step, 1) * unit;
-        var target = Math.max(0, Math.min(base - dx, unit));
+        var target = Math.max(0, Math.min(step * unit - dx, maxStep * unit));
         setTracks(target, false);
       }, { passive: true });
 
       wrap.addEventListener("touchend", function(e) {
-        if (startX === null) return;
+        if (!dragging) { startX = null; startY = null; return; }
         var dx = e.changedTouches[0].clientX - startX;
         var threshold = 40;
         if (dx < -threshold) { goTo(step + 1); }
         else if (dx > threshold) { goTo(step - 1); }
-        else if (dragging) { render(true); }
+        else { render(true); }
         startX = null;
         startY = null;
         dragging = false;
