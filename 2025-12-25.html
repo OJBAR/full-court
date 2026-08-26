@@ -692,6 +692,7 @@
     cursor: pointer;
   }
   .install-banner-hint { font-size: 12px; color: var(--text-muted); text-align: center; }
+  .install-banner-hint a { color: var(--accent); font-weight: 700; }
 
   @media (prefers-reduced-motion: no-preference) {
     .wrapper { animation: fc-fade-in 0.3s ease; }
@@ -1065,7 +1066,7 @@
 
       var text = document.createElement("div");
       text.className = "install-banner-text";
-      text.innerHTML = "<strong>הוסיפו את Full Court למסך הבית</strong>תצוגה מותאמת מובייל וגישה מהירה - ישר מהמסך הבית";
+      text.innerHTML = "<strong>הוסיפו את Full Court למסך הבית</strong>תצוגה מותאמת מובייל וגישה מהירה - ישר ממסך הבית";
 
       var actionBtn = document.createElement("button");
       actionBtn.type = "button";
@@ -1089,14 +1090,30 @@
       row.appendChild(closeBtn);
       banner.appendChild(row);
 
-      if (isIOS) {
+      // Only Safari's own "Add to Home Screen" produces a real standalone
+      // web app on iOS - the same action from Chrome/Firefox/Edge on iOS
+      // (all of which run on Safari's engine but aren't Safari itself) just
+      // adds a plain bookmark that reopens inside that browser's own chrome.
+      var isSafari = isIOS && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+
+      if (isIOS && isSafari) {
         // iOS has no programmatic install API at all - the only way is the
         // manual Share -> Add to Home Screen flow, so this just shows those
         // instructions rather than triggering anything itself.
         var hint = document.createElement("div");
         hint.className = "install-banner-hint";
         hint.hidden = true;
-        hint.textContent = "לחצו על כפתור השיתוף למטה בספארי, ואז ״הוסף למסך הבית״";
+        hint.textContent = "לחצו על כפתור השיתוף למטה בספארי, ואז ״הוסף למסך הבית״.";
+        actionBtn.textContent = "איך?";
+        actionBtn.onclick = function() { hint.hidden = !hint.hidden; };
+        banner.appendChild(hint);
+        banner.classList.add("visible");
+      } else if (isIOS && !isSafari) {
+        var hint = document.createElement("div");
+        hint.className = "install-banner-hint";
+        hint.hidden = true;
+        var safariUrl = "x-safari-" + location.protocol + "//" + location.host + location.pathname + location.search;
+        hint.innerHTML = 'ההוספה למסך הבית זמינה רק דרך ספארי. <a href="' + safariUrl + '">פתחו את הדף בספארי</a> ונסו שוב משם.';
         actionBtn.textContent = "איך?";
         actionBtn.onclick = function() { hint.hidden = !hint.hidden; };
         banner.appendChild(hint);
