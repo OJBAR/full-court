@@ -580,7 +580,6 @@ TEMPLATE = """<!DOCTYPE html>
     color: var(--accent);
     text-decoration: none;
   }}
-  .footer a:hover {{ text-decoration: underline; }}
   .footer-link-btn {{
     color: var(--accent);
     background: none;
@@ -590,13 +589,12 @@ TEMPLATE = """<!DOCTYPE html>
     cursor: pointer;
     text-decoration: none;
   }}
-  .footer-link-btn:hover {{ text-decoration: underline; }}
   .beta-note {{
     margin-top: 8px;
     font-size: 11px;
     color: var(--text-muted);
   }}
-  .beta-note a {{ color: var(--accent); text-decoration: underline; }}
+  .beta-note a {{ color: var(--accent); text-decoration: none; }}
 </style>
 </head>
 <body>
