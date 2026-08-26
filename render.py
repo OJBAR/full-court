@@ -1225,36 +1225,23 @@ TEMPLATE = """<!DOCTYPE html>
     }})();
 
     (function initPlayoffBracketPager() {{
-      // The playoff bracket's pager: stops 0/1 pan a continuous strip per
-      // conference (see _bracket_strip_html, plus the shared round-name
-      // header track) by exactly one column's real measured width, so a
-      // round shared between them (e.g. Conf. Semis, visible at both
-      // stops) is the same element throughout, never two overlapping
-      // copies mid-transition. Stop 2 (the Finals) swaps to a separate,
-      // differently-shaped page - it isn't part of either conference's
-      // strip, so this can't be a simple pan - but the two Conf. Finals
-      // matches themselves are still the exact same elements the whole
-      // time: relocateConfFinals() physically moves them into the Finals
-      // page's empty slots (and back), animated with a FLIP transform
-      // (record the old screen position, move it, then transition away
-      // the resulting offset) so it reads as one continuous slide rather
-      // than one element disappearing while a second one appears.
+      // The playoff bracket's pager: all 3 stops pan a continuous strip
+      // per conference (see _bracket_strip_html) by exactly one column's
+      // real measured width, so a round shared between two adjacent
+      // stops (e.g. Conf. Semis, visible at stops 0 and 1) is the same
+      // element throughout, never two overlapping copies mid-transition.
+      // The Finals column is just the 4th column (identical content in
+      // both conferences' strips), so the last stop pans the exact same
+      // simple way as every other one - a single CSS transform on
+      // unchanging content - rather than any kind of swap or DOM move.
       var wrap = document.querySelector(".bracket-pager");
       if (!wrap) return;
 
       var step = parseInt(wrap.getAttribute("data-step"), 10) || 0;
       var maxStep = 2;
-      var stripsEl = wrap.querySelector(".bracket-pager-strips");
-      var finalsEl = wrap.querySelector(".bracket-pager-finals");
       var tracks = Array.prototype.slice.call(wrap.querySelectorAll(".strip-track"));
       var prevBtn = wrap.querySelector(".pager-prev");
       var nextBtn = wrap.querySelector(".pager-next");
-      // Always starts false regardless of the initial step, so the very
-      // first render() call below still detects "entering finals" (if
-      // data-step is already 2) and relocates the real match elements out
-      // of the strips into the Finals page's slots - just without
-      // animating that first move (animate=false is passed to render()).
-      var inFinals = false;
 
       function unitShift() {{
         var track = tracks[0];
@@ -1271,55 +1258,8 @@ TEMPLATE = """<!DOCTYPE html>
         }});
       }}
 
-      function relocateConfFinals(conference, animate) {{
-        var slots = Array.prototype.slice.call(wrap.querySelectorAll(".conf-finals-slot-" + conference));
-        var source = slots.filter(function(s) {{ return s.children.length > 0; }})[0];
-        var dest = slots.filter(function(s) {{ return s.children.length === 0; }})[0];
-        if (!source || !dest || source === dest) return;
-        var match = source.firstElementChild;
-        var before = animate ? match.getBoundingClientRect() : null;
-        dest.appendChild(match);
-        if (!animate || !before) return;
-        var after = match.getBoundingClientRect();
-        var dx = before.left - after.left;
-        var dy = before.top - after.top;
-        match.style.transition = "none";
-        match.style.transform = "translate(" + dx + "px, " + dy + "px)";
-        match.getBoundingClientRect();
-        match.style.transition = "transform 0.35s ease";
-        match.style.transform = "translate(0, 0)";
-        match.addEventListener("transitionend", function done() {{
-          match.style.transition = "";
-          match.style.transform = "";
-          match.removeEventListener("transitionend", done);
-        }});
-      }}
-
       function render(animate) {{
-        var enteringFinals = step === 2 && !inFinals;
-        var leavingFinals = step < 2 && inFinals;
-
-        if (enteringFinals) {{
-          finalsEl.hidden = false;
-          relocateConfFinals("west", animate);
-          relocateConfFinals("east", animate);
-          stripsEl.hidden = true;
-        }} else if (leavingFinals) {{
-          stripsEl.hidden = false;
-          setTracks(Math.min(step, 1) * unitShift(), false);
-          relocateConfFinals("west", animate);
-          relocateConfFinals("east", animate);
-          finalsEl.hidden = true;
-        }} else if (step < 2) {{
-          stripsEl.hidden = false;
-          finalsEl.hidden = true;
-          setTracks(Math.min(step, 1) * unitShift(), animate);
-        }} else {{
-          stripsEl.hidden = true;
-          finalsEl.hidden = false;
-        }}
-
-        inFinals = step === 2;
+        setTracks(step * unitShift(), animate);
         prevBtn.disabled = step === 0;
         nextBtn.disabled = step === maxStep;
       }}
@@ -1343,24 +1283,23 @@ TEMPLATE = """<!DOCTYPE html>
       }}, {{ passive: true }});
 
       wrap.addEventListener("touchmove", function(e) {{
-        if (startX === null || step === 2) return;
+        if (startX === null) return;
         var dx = e.touches[0].clientX - startX;
         var dy = e.touches[0].clientY - startY;
         if (!dragging && Math.abs(dx) < Math.abs(dy)) return;
         dragging = true;
         var unit = unitShift();
-        var base = Math.min(step, 1) * unit;
-        var target = Math.max(0, Math.min(base - dx, unit));
+        var target = Math.max(0, Math.min(step * unit - dx, maxStep * unit));
         setTracks(target, false);
       }}, {{ passive: true }});
 
       wrap.addEventListener("touchend", function(e) {{
-        if (startX === null) return;
+        if (!dragging) {{ startX = null; startY = null; return; }}
         var dx = e.changedTouches[0].clientX - startX;
         var threshold = 40;
         if (dx < -threshold) {{ goTo(step + 1); }}
         else if (dx > threshold) {{ goTo(step - 1); }}
-        else if (dragging) {{ render(true); }}
+        else {{ render(true); }}
         startX = null;
         startY = null;
         dragging = false;
@@ -2141,17 +2080,10 @@ def _conference_bracket_columns(playoff_series: list[dict], conference: str) -> 
 
     final_column = _bracket_series_html(finals[0] if finals else None)
 
-    # "conf-finals-slot-{conference}" marks this specific element as the
-    # movable home of this conference's Conf. Finals match - see
-    # initPlayoffBracketPager()'s relocateConfFinals(), which physically
-    # moves the real match element between here and its empty twin in
-    # _bracket_finals_row_html() as the user pans past this round, instead
-    # of keeping two separate copies of it and swapping which is visible.
-    slot_class = f"conf-finals-slot conf-finals-slot-{conference.lower()}"
     return {
         "1st Round": f'<div class="bracket-round">{"".join(round1_pairs)}</div>',
         "Conf. Semifinals": f'<div class="bracket-round">{semis_pair}</div>',
-        "Conf. Finals": f'<div class="bracket-round bracket-final {slot_class}">{final_column}</div>',
+        "Conf. Finals": f'<div class="bracket-round bracket-final">{final_column}</div>',
     }
 
 
@@ -2233,21 +2165,26 @@ def _bracket_round_header_track(labels: list[str]) -> str:
     return f'<div class="strip-viewport"><div class="strip-track">{cols}</div></div>'
 
 
-def _bracket_strip_html(conf_label: str, columns: dict[str, str]) -> str:
+def _bracket_strip_html(conf_label: str, columns: dict[str, str], finals_col: str) -> str:
     """
-    One conference's full Round 1 -> Conf. Semis -> Conf. Finals bracket as
-    a single continuous strip (all 3 columns, always in the DOM together,
-    each just wrapped bare in .bracket-column - no per-column round label,
-    see _bracket_round_header_track), instead of splitting it across
-    separate pages. initPlayoffBracketPager() pans a fixed viewport across
-    this strip by exactly one column's width at a time, so a round shared
-    between two stops (e.g. Conf. Semis, visible at both stop 0 and stop 1)
-    is the same element throughout - it just slides from the trailing
-    position to the leading one, instead of two independent copies
-    appearing to overlap mid-transition the way two separate pages sliding
-    past each other would.
+    One conference's full Round 1 -> Conf. Semis -> Conf. Finals -> NBA
+    Finals bracket as a single continuous strip (all 4 columns, always in
+    the DOM together, each just wrapped bare in .bracket-column - no
+    per-column round label, see _bracket_round_header_track), instead of
+    splitting it across separate pages. initPlayoffBracketPager() pans a
+    fixed viewport across this strip by exactly one column's width at a
+    time, so a round shared between two stops (e.g. Conf. Semis, visible
+    at both stop 0 and stop 1) is the same element throughout - it just
+    slides from the trailing position to the leading one. The Finals
+    column is identical content appended to both conferences' strips
+    (it's shared, not conference-specific) - a deliberate simplicity
+    trade-off: this keeps every stop, including the last one, a single
+    continuous CSS transform on unchanging content (the simplest, most
+    robust animation there is) rather than a page swap or a DOM-move
+    animation, at the cost of the Finals match appearing in both strips.
     """
     track_html = "".join(f'<div class="bracket-column">{columns[r]}</div>' for r in _PLAYOFF_ROUNDS[:3])
+    track_html += f'<div class="bracket-column">{finals_col}</div>'
     return (
         '<div class="bracket-conf-block">'
         f'<h4 class="sr-only">{html.escape(conf_label)}</h4>'
@@ -2256,57 +2193,19 @@ def _bracket_strip_html(conf_label: str, columns: dict[str, str]) -> str:
     )
 
 
-def _bracket_finals_row_html(finals_series: dict | None, conf_by_team: dict) -> str:
-    """
-    The last stop (Conf. Finals -> NBA Finals) isn't part of either
-    conference's own strip - the Finals combine both conferences. Built as
-    a real two-column bracket instead of three loose columns: the two
-    Conf. Finals matches (West on top, East below) form one .bracket-pair
-    -r2, connected by the same vertical/horizontal lines used everywhere
-    else a round-2 pair feeds into a single round-3 match - reusing that
-    already-proven connector geometry (and its fixed width) means this
-    page is exactly as wide as every other 2-column bracket page, with no
-    separate shrink-to-fit needed the way three side-by-side columns did.
-
-    The two "conf-finals-slot" cells start out empty - they aren't given
-    the match content directly (that would be a second, separate copy of
-    it - see _conference_bracket_columns, where the real match already
-    lives inside each conference's own strip). initPlayoffBracketPager()
-    physically moves the actual match element into these slots as the
-    user pans past this round, so it's always exactly one element, never
-    two - which is also what lets the transition animate as a real move
-    instead of two elements swapping visibility.
-    """
-    pair = (
-        '<div class="bracket-pair bracket-pair-r2">'
-        '<div class="bracket-round bracket-final conf-finals-slot conf-finals-slot-west"></div>'
-        '<div class="bracket-round bracket-final conf-finals-slot conf-finals-slot-east"></div>'
-        "</div>"
-    )
-    pair_column = f'<div class="bracket-column"><div class="bracket-round">{pair}</div></div>'
-    finals_col = _bracket_column_html(
-        "NBA Finals", f'<div class="bracket-round bracket-final">{_finals_match_html(finals_series, conf_by_team)}</div>'
-    )
-    return f'<div class="bracket">{pair_column}{finals_col}</div>' + _finals_champion_line(finals_series)
-
-
 def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list[dict]) -> str:
     """
     A single bracket covering the whole playoffs (both conferences, no
     separate tab per conference or for the Finals) - only two adjacent
     rounds are shown at a time, since a full 4-round bracket is too wide for
-    mobile. Stops 0 and 1 (1st Round<->Conf. Semis<->Conf. Finals) pan one
-    continuous strip per conference (see _bracket_strip_html), with the
-    round name shown once in a shared header above both strips instead of
-    repeated per conference. Stop 2 (Conf. Finals -> NBA Finals) is a
-    separate, differently-shaped page (see _bracket_finals_row_html) - the
-    Finals combine both conferences, so it can't be part of either strip -
-    same graphic language (same cards, same swipe gesture) even though
-    that one transition is a swap rather than a continuous pan. Defaults to
-    whichever stop is relevant tonight: if tonight's games span more than
-    one round (e.g. a 1st Round Game 7 and a Conf. Semifinals Game 1 on the
-    same night), the earliest round wins, since that series isn't fully
-    resolved league-wide yet.
+    mobile. All 3 stops (1st Round<->Conf. Semis<->Conf. Finals<->NBA
+    Finals) are one continuous pan across a strip per conference (see
+    _bracket_strip_html), with the round name shown once in a shared
+    header above both strips instead of repeated per conference. Defaults
+    to whichever stop is relevant tonight: if tonight's games span more
+    than one round (e.g. a 1st Round Game 7 and a Conf. Semifinals Game 1
+    on the same night), the earliest round wins, since that series isn't
+    fully resolved league-wide yet.
     """
     round_index = {r: i for i, r in enumerate(_PLAYOFF_ROUNDS)}
     current_indices = [round_index[g["po_round"]] for g in games if g.get("po_round") in round_index]
@@ -2321,14 +2220,13 @@ def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list
         if s.get("round") != "NBA Finals"
         for t in s["teams"]
     }
+    finals_col = _bracket_column_html(
+        "NBA Finals", f'<div class="bracket-round bracket-final">{_finals_match_html(finals_series, conf_by_team)}</div>'
+    )
 
-    round_header = _bracket_round_header_track(_PLAYOFF_ROUNDS[:3])
-    west_strip = _bracket_strip_html("מערב", columns_by_conf["West"])
-    east_strip = _bracket_strip_html("מזרח", columns_by_conf["East"])
-    finals_row = _bracket_finals_row_html(finals_series, conf_by_team)
-
-    strips_hidden = " hidden" if start_step == 2 else ""
-    finals_hidden = "" if start_step == 2 else " hidden"
+    round_header = _bracket_round_header_track(_PLAYOFF_ROUNDS)
+    west_strip = _bracket_strip_html("מערב", columns_by_conf["West"], finals_col)
+    east_strip = _bracket_strip_html("מזרח", columns_by_conf["East"], finals_col)
 
     # The content itself (and everything around it) is forced dir="ltr" (see
     # _details_block) since it's mostly seed numbers/English round names, so
@@ -2337,8 +2235,8 @@ def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list
     # RTL-mirrored, since the ambient direction here already isn't RTL.
     return (
         f'<div class="bracket-pager" data-step="{start_step}">'
-        f'<div class="bracket-pager-strips"{strips_hidden}>{round_header}{west_strip}{east_strip}</div>'
-        f'<div class="bracket-pager-finals"{finals_hidden}>{finals_row}</div>'
+        f'<div class="bracket-pager-strips">{round_header}{west_strip}{east_strip}</div>'
+        f"{_finals_champion_line(finals_series)}"
         '<div class="pager-nav">'
         '<button type="button" class="pager-arrow pager-prev" aria-label="הקודם">‹</button>'
         '<button type="button" class="pager-arrow pager-next" aria-label="הבא">›</button>'
