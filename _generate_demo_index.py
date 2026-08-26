@@ -6,11 +6,12 @@ season starts and scheduler.py is producing genuine nightly briefs, this page
 stops being useful and can just be deleted (index.html - the PWA's actual
 start_url - always shows the single latest real brief, unaffected by this).
 
-Classifies each demo into exactly one of the six day-types (regular / cup
-groups / cup knockout / playoffs / NBA Finals / Play-In) from the underlying
-fixture's real data flags - not by scraping the rendered HTML's tab labels,
-since a page can have several tabs (e.g. Finals days show both a Finals tab
-and the two conference brackets).
+Classifies each demo into exactly one of the five day-types (regular / cup
+groups / cup knockout / playoffs / Play-In) from the underlying fixture's
+real data flags, not by scraping the rendered HTML - the Finals no longer
+get their own category here either, matching the site itself where the
+Finals are just another stage of the single combined playoff bracket, not
+a separate tab.
 """
 import json
 from pathlib import Path
@@ -35,8 +36,6 @@ FIXTURES = [
 
 def classify(data: dict) -> str:
     if data.get("is_playoffs"):
-        if any(s.get("round") == "NBA Finals" for s in data.get("playoff_series", [])):
-            return "גמר NBA"
         return "פלייאוף"
     if data.get("is_cup_knockout"):
         return "גביע (נוקאאוט)"
