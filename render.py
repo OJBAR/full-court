@@ -368,6 +368,7 @@ TEMPLATE = """<!DOCTYPE html>
     font-size: 10px;
     color: var(--text-muted);
     text-align: center;
+    direction: rtl;
   }}
 
   .a11y-overlay {{
@@ -1023,32 +1024,22 @@ def _build_play_in_conference_bracket_html(conf_games: list[dict]) -> str:
     return f'<div class="bracket">{"".join(columns)}</div>'
 
 
-def _build_play_in_html(games: list[dict]) -> str:
+def _build_play_in_html(games: list[dict], conference: str) -> str:
     """
-    Play-In bracket for each conference. The 3 games are identified by their
-    teams' seeds, not by date - the two conferences don't always play their
-    games on the same nights, so date order alone doesn't tell you which game
-    is which. {7,8} is the opener, {9,10} is the loser-out game, and the
-    mismatched pair (e.g. {7,9} or {8,10}) is the decider for the conference's
-    final 8 seed.
+    Play-In bracket for one conference (its own tab - "פלייאין מזרח"/"פלייאין
+    מערב" - same as the two playoff conference-bracket tabs). The 3 games are
+    identified by their teams' seeds, not by date - the two conferences don't
+    always play their games on the same nights, so date order alone doesn't
+    tell you which game is which. {7,8} is the opener, {9,10} is the loser-out
+    game, and the mismatched pair (e.g. {7,9} or {8,10}) is the decider for
+    the conference's final 8 seed.
     """
-    play_in_games = [g for g in games if g["game_id"].startswith("005")]
-    by_conf: dict[str, list[dict]] = {}
-    for game in play_in_games:
-        by_conf.setdefault(game.get("series_conference", ""), []).append(game)
-
-    names = {"East": "מזרח", "West": "מערב"}
-    blocks = []
-    for conf_key in ["West", "East"]:
-        conf_games = by_conf.get(conf_key, [])
-        if not conf_games:
-            continue
-        blocks.append(
-            f'<div class="conference standings-block"><h3>{names.get(conf_key, conf_key)}</h3>'
-            + _build_play_in_conference_bracket_html(conf_games)
-            + "</div>"
-        )
-    return f'<div class="conferences">{"".join(blocks)}</div>'
+    conf_games = [
+        g
+        for g in games
+        if g["game_id"].startswith("005") and g.get("series_conference") == conference
+    ]
+    return _build_play_in_conference_bracket_html(conf_games)
 
 
 def _bracket_column_html(label: str, round_html: str) -> str:
@@ -1280,7 +1271,9 @@ def _build_secondary_section(data: dict) -> str:
         if data.get("is_cup_knockout"):
             sections.append(("בראקט הגביע", _build_cup_bracket_html(data.get("cup_bracket", []))))
         if data.get("is_play_in"):
-            sections.append(("פלייאין", _build_play_in_html(data.get("games", []))))
+            games = data.get("games", [])
+            sections.append(("פלייאין מזרח", _build_play_in_html(games, "East")))
+            sections.append(("פלייאין מערב", _build_play_in_html(games, "West")))
 
     return "\n\n    ".join(_details_block(title, body_html) for title, body_html in sections)
 
