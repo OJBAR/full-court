@@ -509,6 +509,18 @@ TEMPLATE = """<!DOCTYPE html>
     left: 0;
     right: 0;
   }}
+  /* The wrapper's own height is set live in px (positionFinalsConnector),
+     but that alone doesn't make the match inside actually fill it - flex
+     stretching only propagates from a parent that itself has a real
+     height, and neither .strip-viewport nor .strip-track had one, so the
+     match just sat at its own small natural size flush at the wrapper's
+     top (i.e. level with the West conference's box) instead of being
+     centered across the whole span. Chaining height:100% down through both
+     lets .bracket-column's default stretch and .bracket-round's flex:1 do
+     the rest, so .bracket-final's justify-content:center finally has the
+     full span to center within. */
+  .nba-finals-track-wrap .strip-viewport,
+  .nba-finals-track-wrap .strip-track {{ height: 100%; }}
   .nba-finals-connector {{
     position: absolute;
     width: 2px;
