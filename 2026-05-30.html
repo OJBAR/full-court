@@ -785,14 +785,18 @@
      available height instead of pinned to the top with empty space below
      when it's shorter than the screen - the content itself (table rows,
      bracket, etc.) keeps its natural size, only its vertical position
-     within the screen changes. */
+     within the screen changes. No overflow/min-height here on purpose:
+     <main> is still the one real scroll container (see below) - giving
+     this element its own overflow:auto too, combined with a plain
+     justify-content:center, is a known flex/scroll pitfall where content
+     taller than the box gets clipped at the top with no way to scroll to
+     it. "safe center" falls back to top-alignment instead of centering
+     once content actually overflows, avoiding that trap. */
   :root.tabs-mode details.tab-section.app-screen-active > .details-body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    min-height: 0;
-    overflow-y: auto;
+    justify-content: safe center;
   }
   .app-home { display: none; }
   :root.tabs-mode .app-home {
