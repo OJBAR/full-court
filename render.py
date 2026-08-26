@@ -362,6 +362,13 @@ TEMPLATE = """<!DOCTYPE html>
      Cup/Play-In brackets' own column sizing. */
   .bracket-pager .bracket-column,
   .cup-bracket-pager .bracket-column {{ width: 146px; }}
+  /* The Finals row isn't part of the synced pan (see _bracket_finals_row_html),
+     so it doesn't need the 146px uniform width forced above - narrower
+     columns and a tighter gap keep it closer to fitting a phone's width
+     without a fixed pan target to preserve; initFitToWidth() (JS) then
+     scales the whole row to whatever the actual available width allows. */
+  .bracket-finals-row {{ gap: 14px; }}
+  .bracket-finals-row .bracket-column {{ width: 128px; }}
   .bracket-pair {{
     display: flex;
     flex-direction: column;
@@ -482,13 +489,14 @@ TEMPLATE = """<!DOCTYPE html>
   .bracket-conf-block {{ margin-bottom: 18px; }}
   .bracket-conf-block:last-child {{ margin-bottom: 0; }}
   /* Play-In is just two stacked conference brackets with no pager, so it
-     doesn't naturally use up the screen the way the paged brackets do -
-     `zoom` scales the whole thing (including its own layout footprint,
-     unlike `transform`) so surrounding spacing reflows correctly, without
-     touching the fixed-pixel connector math inside .bracket-pair-captioned
-     (everything scales together proportionally, so that math stays
-     internally consistent either way). */
-  :root.tabs-mode .play-in-bracket {{ zoom: 1.2; }}
+     doesn't naturally use up the screen the way the paged brackets do. A
+     fixed zoom overflowed narrower phones sideways - initFitToWidth() (JS)
+     instead measures the real available width and computes a zoom that's
+     guaranteed to fit, scaling everything (including its own layout
+     footprint, unlike `transform`) so surrounding spacing reflows
+     correctly without touching the fixed-pixel connector math inside
+     .bracket-pair-captioned (it all scales together proportionally, so
+     that math stays internally consistent regardless of the factor). */
   .bracket-conf-label {{
     font-size: 11px;
     font-weight: 700;
@@ -1127,6 +1135,31 @@ TEMPLATE = """<!DOCTYPE html>
       if (savedFontSize) {{
         applyFontSize(savedFontSize);
       }}
+    }})();
+
+    (function initFitToWidth() {{
+      // Scales an element to fill the real available width instead of a
+      // fixed guess (which can overflow narrower phones sideways, or look
+      // small on wider ones) - measures its true natural width at zoom:1,
+      // then computes a zoom that's guaranteed to fit (capped so it never
+      // gets absurdly large on a very narrow parent). Runs before the
+      // pager init functions below so their own column-width measurements
+      // already reflect the final zoomed size, not the pre-zoom one.
+      function fit(el, maxScale) {{
+        if (!el) return;
+        el.style.zoom = 1;
+        var parent = el.parentElement;
+        if (!parent) return;
+        var available = parent.clientWidth;
+        var natural = el.scrollWidth;
+        if (!natural || !available) return;
+        var scale = Math.min(available / natural, maxScale);
+        if (scale > 0.05) {{ el.style.zoom = scale; }}
+      }}
+
+      document.querySelectorAll(".cup-bracket-pager .strip-viewport").forEach(function(el) {{ fit(el, 1.25); }});
+      fit(document.querySelector(".play-in-bracket"), 1.25);
+      fit(document.querySelector(".bracket-finals-row"), 1.1);
     }})();
 
     (function initPagers() {{
@@ -2178,18 +2211,17 @@ def _bracket_finals_row_html(columns_by_conf: dict[str, dict[str, str]], finals_
     The last stop (Conf. Finals -> NBA Finals) isn't part of either
     conference's own strip - the Finals combine both conferences, so it's
     a separate, differently-shaped page: the two Conf. Finals columns
-    flank the NBA Finals column in the middle, each with its own label
-    (in English, matching the round names elsewhere) instead of the
-    "מערב"/"מזrח" used for the strips, since these three columns aren't a
-    repeated round shared across two regions the way the strips' columns
-    are - each is a distinct, one-off matchup.
+    flank the NBA Finals column in the middle. No region label on the two
+    side columns (which team is which conference is already obvious from
+    the seed badge/side) - only "NBA Finals" in the middle, since that's
+    the one column that actually needs identifying.
     """
-    west_col = _bracket_column_html("Western Conf. Finals", columns_by_conf["West"]["Conf. Finals"])
-    east_col = _bracket_column_html("Eastern Conf. Finals", columns_by_conf["East"]["Conf. Finals"])
+    west_col = f'<div class="bracket-column">{columns_by_conf["West"]["Conf. Finals"]}</div>'
+    east_col = f'<div class="bracket-column">{columns_by_conf["East"]["Conf. Finals"]}</div>'
     finals_col = _bracket_column_html(
         "NBA Finals", f'<div class="bracket-round bracket-final">{_finals_match_html(finals_series, conf_by_team)}</div>'
     )
-    return f'<div class="bracket">{west_col}{finals_col}{east_col}</div>' + _finals_champion_line(finals_series)
+    return f'<div class="bracket bracket-finals-row">{west_col}{finals_col}{east_col}</div>' + _finals_champion_line(finals_series)
 
 
 def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list[dict]) -> str:

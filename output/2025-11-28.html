@@ -345,6 +345,13 @@
      Cup/Play-In brackets' own column sizing. */
   .bracket-pager .bracket-column,
   .cup-bracket-pager .bracket-column { width: 146px; }
+  /* The Finals row isn't part of the synced pan (see _bracket_finals_row_html),
+     so it doesn't need the 146px uniform width forced above - narrower
+     columns and a tighter gap keep it closer to fitting a phone's width
+     without a fixed pan target to preserve; initFitToWidth() (JS) then
+     scales the whole row to whatever the actual available width allows. */
+  .bracket-finals-row { gap: 14px; }
+  .bracket-finals-row .bracket-column { width: 128px; }
   .bracket-pair {
     display: flex;
     flex-direction: column;
@@ -465,13 +472,14 @@
   .bracket-conf-block { margin-bottom: 18px; }
   .bracket-conf-block:last-child { margin-bottom: 0; }
   /* Play-In is just two stacked conference brackets with no pager, so it
-     doesn't naturally use up the screen the way the paged brackets do -
-     `zoom` scales the whole thing (including its own layout footprint,
-     unlike `transform`) so surrounding spacing reflows correctly, without
-     touching the fixed-pixel connector math inside .bracket-pair-captioned
-     (everything scales together proportionally, so that math stays
-     internally consistent either way). */
-  :root.tabs-mode .play-in-bracket { zoom: 1.2; }
+     doesn't naturally use up the screen the way the paged brackets do. A
+     fixed zoom overflowed narrower phones sideways - initFitToWidth() (JS)
+     instead measures the real available width and computes a zoom that's
+     guaranteed to fit, scaling everything (including its own layout
+     footprint, unlike `transform`) so surrounding spacing reflows
+     correctly without touching the fixed-pixel connector math inside
+     .bracket-pair-captioned (it all scales together proportionally, so
+     that math stays internally consistent regardless of the factor). */
   .bracket-conf-label {
     font-size: 11px;
     font-weight: 700;
@@ -1194,6 +1202,31 @@
       if (savedFontSize) {
         applyFontSize(savedFontSize);
       }
+    })();
+
+    (function initFitToWidth() {
+      // Scales an element to fill the real available width instead of a
+      // fixed guess (which can overflow narrower phones sideways, or look
+      // small on wider ones) - measures its true natural width at zoom:1,
+      // then computes a zoom that's guaranteed to fit (capped so it never
+      // gets absurdly large on a very narrow parent). Runs before the
+      // pager init functions below so their own column-width measurements
+      // already reflect the final zoomed size, not the pre-zoom one.
+      function fit(el, maxScale) {
+        if (!el) return;
+        el.style.zoom = 1;
+        var parent = el.parentElement;
+        if (!parent) return;
+        var available = parent.clientWidth;
+        var natural = el.scrollWidth;
+        if (!natural || !available) return;
+        var scale = Math.min(available / natural, maxScale);
+        if (scale > 0.05) { el.style.zoom = scale; }
+      }
+
+      document.querySelectorAll(".cup-bracket-pager .strip-viewport").forEach(function(el) { fit(el, 1.25); });
+      fit(document.querySelector(".play-in-bracket"), 1.25);
+      fit(document.querySelector(".bracket-finals-row"), 1.1);
     })();
 
     (function initPagers() {
