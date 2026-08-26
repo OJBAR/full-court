@@ -303,7 +303,7 @@ TEMPLATE = """<!DOCTYPE html>
   }}
 
   /* Every font-size inside the bracket diagram (this section down through
-     .bracket-conf-label/.bracket-pager-label) deliberately stays in px, not
+     .bracket-conf-label/.bracket-pager-arrow) deliberately stays in px, not
      rem - the connector-line geometry between rounds is pixel-exact math
      tied to .bracket-match's real rendered height (see .bracket-pair-r2 and
      .bracket-pair-captioned below), and letting the text grow with the
@@ -335,14 +335,14 @@ TEMPLATE = """<!DOCTYPE html>
     flex: 1;
     flex-direction: column;
     justify-content: space-around;
-    gap: 20px;
+    gap: 12px;
   }}
   .bracket-final {{ justify-content: center; }}
   .bracket-pair {{
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 16px;
+    gap: 10px;
     position: relative;
     padding-right: 16px;
     border-right: 2px solid var(--text-muted);
@@ -361,16 +361,16 @@ TEMPLATE = """<!DOCTYPE html>
      gap than a round-1 pair. Its two matches individually need to line up
      with the vertical centers of the two round-1 PAIRS feeding them, not just
      be evenly spaced within the column - round-1 pairs are already spread out
-     by a match's height (56px) + round-1's own internal gap (16px) + the gap
-     between pairs in a round (20px) = 92px between their centers, so the
-     round-2 pair's own internal gap has to match that same 92px, not the
-     plain 16px used one round earlier. Without this, a round-2 match's own
+     by a match's height (56px) + round-1's own internal gap (10px) + the gap
+     between pairs in a round (12px) = 78px between their centers, so the
+     round-2 pair's own internal gap has to match that same 78px, not the
+     plain 10px used one round earlier. Without this, a round-2 match's own
      center silently drifts away from the round-1 connector aimed at it (this
      is exactly why the connector looked disconnected - not a color/width
      issue, the target coordinate itself was off by ~38px in one demo).
-     Coupled to bracket-match's real rendered height (56px) via the constants
-     above - update this if that height ever changes. */
-  .bracket-pair-r2 {{ gap: 92px; }}
+     Coupled to bracket-match's real rendered height (56px) and the two gaps
+     above - update this if any of those three ever change. */
+  .bracket-pair-r2 {{ gap: 78px; }}
   /* Play-In's pair is the only one where each match has its own caption
      underneath it (see .bracket-caption) - that extra content below each
      match throws off the plain 50%-based connector (which naturally landed
@@ -379,9 +379,12 @@ TEMPLATE = """<!DOCTYPE html>
      positioned with fixed pixels instead, tied to bracket-match's real
      height (56px, so a match's own center is 28px from its wrap's top) and
      bracket-match-wrap's real height (86px = 56 match + 4 caption margin +
-     26 caption min-height) + this pair's own 16px gap = 102px between the
-     two matches' centers. */
-  .bracket-pair-captioned {{ border-right: none; }}
+     26 caption min-height) + this pair's own gap = 102px between the two
+     matches' centers. Explicitly frozen at the original 16px gap (instead
+     of inheriting .bracket-pair's, which is now smaller) so tightening the
+     playoff/Cup bracket's spacing doesn't silently throw off this fixed-
+     pixel math too. */
+  .bracket-pair-captioned {{ border-right: none; gap: 16px; }}
   .bracket-pair-captioned::before {{
     content: "";
     position: absolute;
@@ -475,8 +478,12 @@ TEMPLATE = """<!DOCTYPE html>
     direction: rtl;
     margin: 0 0 6px;
   }}
-  .bracket-pager-page {{ display: none; }}
-  .bracket-pager-page.active {{ display: block; }}
+  .bracket-pager-viewport {{ overflow: hidden; touch-action: pan-y; }}
+  .bracket-pager-track {{
+    display: flex;
+    transition: transform 0.3s ease;
+  }}
+  .bracket-pager-page {{ flex: 0 0 100%; min-width: 0; }}
   .bracket-pager-nav {{
     display: flex;
     align-items: center;
@@ -499,13 +506,6 @@ TEMPLATE = """<!DOCTYPE html>
     justify-content: center;
   }}
   .bracket-pager-arrow:disabled {{ opacity: 0.35; cursor: default; }}
-  .bracket-pager-label {{
-    font-size: 11px;
-    color: var(--text-muted);
-    direction: rtl;
-    min-width: 110px;
-    text-align: center;
-  }}
 
   .a11y-overlay {{
     position: fixed;
@@ -962,24 +962,67 @@ TEMPLATE = """<!DOCTYPE html>
     }})();
 
     (function initBracketPagers() {{
+      // Pages slide via a CSS transform on the track (translateX in 100%
+      // steps) instead of show/hide, so both the arrow buttons and swiping
+      // animate the same smooth way. Ambient direction here is forced ltr
+      // (see _details_block), so "next" moves the track further left, same
+      // as any plain left-to-right carousel.
       var pagers = document.querySelectorAll(".bracket-pager");
       pagers.forEach(function(pager) {{
+        var viewport = pager.querySelector(".bracket-pager-viewport");
+        var track = pager.querySelector(".bracket-pager-track");
         var pages = Array.prototype.slice.call(pager.querySelectorAll(".bracket-pager-page"));
         var prevBtn = pager.querySelector(".bracket-pager-prev");
         var nextBtn = pager.querySelector(".bracket-pager-next");
-        var label = pager.querySelector(".bracket-pager-label");
-        var index = pages.findIndex(function(p) {{ return p.classList.contains("active"); }});
-        if (index < 0) index = 0;
+        var index = parseInt(pager.getAttribute("data-page"), 10) || 0;
 
         function render() {{
-          pages.forEach(function(p, i) {{ p.classList.toggle("active", i === index); }});
-          if (label) label.textContent = pages[index].getAttribute("data-label") || "";
+          track.style.transform = "translateX(" + (-index * 100) + "%)";
           prevBtn.disabled = index === 0;
           nextBtn.disabled = index === pages.length - 1;
         }}
 
-        prevBtn.addEventListener("click", function() {{ if (index > 0) {{ index -= 1; render(); }} }});
-        nextBtn.addEventListener("click", function() {{ if (index < pages.length - 1) {{ index += 1; render(); }} }});
+        function goTo(newIndex) {{
+          index = Math.max(0, Math.min(newIndex, pages.length - 1));
+          render();
+        }}
+
+        prevBtn.addEventListener("click", function() {{ goTo(index - 1); }});
+        nextBtn.addEventListener("click", function() {{ goTo(index + 1); }});
+
+        var startX = null;
+        var startY = null;
+        var dragging = false;
+
+        viewport.addEventListener("touchstart", function(e) {{
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+          dragging = false;
+          track.style.transition = "none";
+        }}, {{ passive: true }});
+
+        viewport.addEventListener("touchmove", function(e) {{
+          if (startX === null) return;
+          var deltaX = e.touches[0].clientX - startX;
+          var deltaY = e.touches[0].clientY - startY;
+          if (!dragging && Math.abs(deltaX) < Math.abs(deltaY)) return;
+          dragging = true;
+          track.style.transform = "translateX(calc(" + (-index * 100) + "% + " + deltaX + "px))";
+        }}, {{ passive: true }});
+
+        viewport.addEventListener("touchend", function(e) {{
+          track.style.transition = "transform 0.3s ease";
+          if (dragging) {{
+            var deltaX = e.changedTouches[0].clientX - startX;
+            var threshold = 50;
+            if (deltaX < -threshold) {{ goTo(index + 1); }}
+            else if (deltaX > threshold) {{ goTo(index - 1); }}
+            else {{ render(); }}
+          }}
+          startX = null;
+          startY = null;
+          dragging = false;
+        }});
 
         render();
       }});
@@ -1651,12 +1694,6 @@ def _finals_champion_line(series: dict | None) -> str:
 
 
 _PLAYOFF_ROUNDS = ["1st Round", "Conf. Semifinals", "Conf. Finals", "NBA Finals"]
-_PLAYOFF_ROUND_LABELS_HE = {
-    "1st Round": "סיבוב 1",
-    "Conf. Semifinals": "סיבוב 2",
-    "Conf. Finals": "חצי גמר",
-    "NBA Finals": "גמר ה-NBA",
-}
 
 
 def _bracket_conf_block(conf_label: str, columns_html: str) -> str:
@@ -1679,17 +1716,20 @@ def _bracket_page_finals(
     columns_by_conf: dict[str, dict[str, str]], finals_series: dict | None, conf_by_team: dict
 ) -> str:
     """
-    The Conf. Finals -> NBA Finals page: both conferences' Conf. Finals
-    columns flank the NBA Finals column in the middle - the two conference
-    champions visually converging into the Finals, instead of a separate tab
-    for it like before.
+    The Conf. Finals -> NBA Finals page: same stacked-block format as every
+    other page (one block per conference, plus a third block for the Finals
+    itself) instead of a special side-flanking layout - keeps the whole
+    pager visually consistent from page to page.
     """
     west_col = columns_by_conf["West"].get("Conf. Finals", "")
     east_col = columns_by_conf["East"].get("Conf. Finals", "")
     finals_col = _bracket_column_html(
         "NBA Finals", f'<div class="bracket-round bracket-final">{_finals_match_html(finals_series, conf_by_team)}</div>'
     )
-    return f'<div class="bracket">{west_col}{finals_col}{east_col}</div>' + _finals_champion_line(finals_series)
+    blocks = "".join(
+        _bracket_conf_block(label, col) for label, col in (("מערב", west_col), ("מזרח", east_col), ("גמר", finals_col))
+    )
+    return blocks + _finals_champion_line(finals_series)
 
 
 def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list[dict]) -> str:
@@ -1721,23 +1761,23 @@ def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list
         _bracket_page_two_rounds(columns_by_conf, "Conf. Semifinals", "Conf. Finals"),
         _bracket_page_finals(columns_by_conf, finals_series, conf_by_team),
     ]
-    page_labels = [
-        f"{_PLAYOFF_ROUND_LABELS_HE['1st Round']} · {_PLAYOFF_ROUND_LABELS_HE['Conf. Semifinals']}",
-        f"{_PLAYOFF_ROUND_LABELS_HE['Conf. Semifinals']} · {_PLAYOFF_ROUND_LABELS_HE['Conf. Finals']}",
-        f"{_PLAYOFF_ROUND_LABELS_HE['Conf. Finals']} · {_PLAYOFF_ROUND_LABELS_HE['NBA Finals']}",
-    ]
 
-    pages_html = "".join(
-        f'<div class="bracket-pager-page{" active" if i == start_page else ""}" data-label="{html.escape(page_labels[i])}">{page_html}</div>'
-        for i, page_html in enumerate(pages)
-    )
+    pages_html = "".join(f'<div class="bracket-pager-page">{page_html}</div>' for page_html in pages)
+    # The content itself (and everything around it) is forced dir="ltr" (see
+    # _details_block) since it's mostly seed numbers/English round names, so
+    # these buttons follow plain left-to-right pagination convention: prev
+    # (‹) sits physically on the left, next (›) on the right - not RTL-
+    # mirrored, since the ambient direction here already isn't RTL either.
+    # The track slides via a CSS transform (see initBracketPagers()), so
+    # swiping and the arrow buttons both animate the same way.
     return (
         f'<div class="bracket-pager" data-page="{start_page}">'
-        f"<div class=\"bracket-pager-pages\">{pages_html}</div>"
+        '<div class="bracket-pager-viewport">'
+        f'<div class="bracket-pager-track">{pages_html}</div>'
+        "</div>"
         '<div class="bracket-pager-nav">'
-        '<button type="button" class="bracket-pager-arrow bracket-pager-prev" aria-label="השלב הקודם">›</button>'
-        '<span class="bracket-pager-label"></span>'
-        '<button type="button" class="bracket-pager-arrow bracket-pager-next" aria-label="השלב הבא">‹</button>'
+        '<button type="button" class="bracket-pager-arrow bracket-pager-prev" aria-label="השלב הקודם">‹</button>'
+        '<button type="button" class="bracket-pager-arrow bracket-pager-next" aria-label="השלב הבא">›</button>'
         "</div></div>"
     )
 
