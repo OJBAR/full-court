@@ -341,6 +341,27 @@
      Coupled to bracket-match's real rendered height (56px) via the constants
      above - update this if that height ever changes. */
   .bracket-pair-r2 { gap: 92px; }
+  /* Play-In's pair is the only one where each match has its own caption
+     underneath it (see .bracket-caption) - that extra content below each
+     match throws off the plain 50%-based connector (which naturally landed
+     on the pair's overall midpoint, i.e. roughly between the two captions,
+     not between the two actual score boxes). Here the connector is
+     positioned with fixed pixels instead, tied to bracket-match's real
+     height (56px, so a match's own center is 28px from its wrap's top) and
+     bracket-match-wrap's real height (86px = 56 match + 4 caption margin +
+     26 caption min-height) + this pair's own 16px gap = 102px between the
+     two matches' centers. */
+  .bracket-pair-captioned { border-right: none; }
+  .bracket-pair-captioned::before {
+    content: "";
+    position: absolute;
+    top: 28px;
+    right: 0;
+    width: 2px;
+    height: 102px;
+    background: var(--text-muted);
+  }
+  .bracket-pair-captioned::after { top: 79px; }
   .bracket-match {
     width: 128px;
     flex-shrink: 0;
@@ -631,7 +652,7 @@
             <div class="standing-row"><span class="standing-team">Milwaukee Bucks</span><span class="standing-record">2-2</span><span class="standing-diff">+17</span></div>
             <div class="standing-row"><span class="standing-team">Chicago Bulls</span><span class="standing-record">1-3</span><span class="standing-diff">-49</span></div>
             <div class="standing-row"><span class="standing-team">Charlotte Hornets</span><span class="standing-record">1-3</span><span class="standing-diff">-52</span></div></div></div>
-      <p class="wildcard-legend" dir="rtl">WC - הסגנית הכי טובה בכל אזור, עולה לשלב הנוקאאוט</p></div>
+      <p class="wildcard-legend" dir="rtl">WC - הסגנית עם המאזן הטוב ביותר.</p></div>
       </div>
     </details>
 
@@ -688,7 +709,7 @@
         <p>יש הערה, באג, או הצעה לשיפור? אשמח לשמוע.</p>
         <a class="a11y-link-btn" href="https://github.com/OJBAR/full-court/issues/new" target="_blank" rel="noopener">GitHub Issues</a>
         <div class="email-row">
-          <a class="a11y-link-btn" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=ojbar30@gmail.com&amp;su=%D7%A4%D7%A0%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT-+(%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%94)&amp;body=%D7%AA%D7%95%D7%9B%D7%9F+%D7%94%D7%9E%D7%99%D7%99%D7%9C" target="_blank" rel="noopener">ojbar30@gmail.com</a>
+          <a class="a11y-link-btn" href="mailto:ojbar30@gmail.com?subject=%D7%A4%D7%A0%D7%99%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT:+%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%99%D7%94">ojbar30@gmail.com</a>
           <button type="button" class="copy-email-btn" onclick="copyEmailAddress(this)" aria-label="העתק את כתובת המייל">📋</button>
         </div>
       </div>

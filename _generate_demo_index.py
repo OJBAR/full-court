@@ -139,7 +139,6 @@ page = f"""<!DOCTYPE html>
     background: var(--card-bg);
   }}
   a {{ color: var(--accent); text-decoration: none; font-weight: 700; }}
-  a:hover {{ text-decoration: underline; }}
   .tabs {{ color: var(--text-muted); font-size: 12px; font-weight: 400; }}
 </style>
 </head>
