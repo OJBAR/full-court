@@ -362,6 +362,13 @@ TEMPLATE = """<!DOCTYPE html>
   }}
   .bracket-score {{ font-variant-numeric: tabular-nums; }}
   .bracket-match-tbd {{ opacity: 0.55; border-style: dashed; font-style: italic; }}
+  .bracket-match-wrap {{ width: 128px; flex-shrink: 0; }}
+  .bracket-caption {{
+    margin-top: 4px;
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: center;
+  }}
 
   .a11y-overlay {{
     position: fixed;
@@ -944,43 +951,81 @@ def _build_finals_html(playoff_series: list[dict]) -> str:
     return result
 
 
-def _play_in_game_html(label: str, game: dict | None) -> str:
-    """One Play-In game row (label + final score), or a TBD placeholder if
-    that game hasn't been played yet (e.g. the decider, before both feeder
-    games are done)."""
+def _play_in_bracket_match_html(game: dict | None, caption: str) -> str:
+    """
+    One Play-In game as a bracket cell (reuses .bracket-match, same as the
+    playoff/Cup brackets), with a caption below explaining what the result
+    means - necessary because Play-In isn't a clean single-elimination shape
+    like the rest of the bracket UI: the 7-vs-8 game's WINNER is done (locked
+    into the 7 seed, plays no further Play-In games) while its LOSER is the
+    one who continues into the decider - the opposite of a normal bracket
+    advancement, so it needs to be spelled out rather than left to the shape
+    of the lines to imply.
+    """
     if game is None:
-        return (
-            f'<div class="game-block"><div class="game-sub">{html.escape(label)}</div>'
-            '<div class="game-row"><span class="team">TBD</span></div></div>'
+        match_html = (
+            '<div class="bracket-match bracket-match-tbd">'
+            '<div class="bracket-team"><span>TBD</span></div>'
+            '<div class="bracket-team"><span>TBD</span></div>'
+            "</div>"
         )
-    line_score = game["line_score"]
-    if len(line_score) != 2:
-        return ""
-    team_a, team_b = line_score
-    a_wins = team_a["score"] > team_b["score"]
+    else:
+        line_score = game["line_score"]
+        team_a, team_b = line_score
+        a_wins = team_a["score"] > team_b["score"]
 
-    def _team_span(team: dict, is_winner: bool) -> str:
-        return (
-            f'<span class="team{" winner" if is_winner else ""}">'
-            f'{html.escape(team["teamTricode"])}</span>'
-        )
+        def _team(team: dict, is_winner: bool) -> str:
+            cls = " winner" if is_winner else ""
+            return (
+                f'<div class="bracket-team{cls}"><span>{html.escape(team["teamTricode"])}</span>'
+                f'<span class="bracket-score">{team["score"]}</span></div>'
+            )
 
+        match_html = f'<div class="bracket-match">{_team(team_a, a_wins)}{_team(team_b, not a_wins)}</div>'
     return (
-        '<div class="game-block">'
-        f'<div class="game-sub">{html.escape(label)}</div>'
-        '<div class="game-row">'
-        f'{_team_span(team_a, a_wins)}'
-        f'<span class="score{" winner" if a_wins else ""}">{team_a["score"]}</span>'
-        f'<span class="score">–</span>'
-        f'<span class="score{"" if a_wins else " winner"}">{team_b["score"]}</span>'
-        f'{_team_span(team_b, not a_wins)}'
-        "</div></div>"
+        '<div class="bracket-match-wrap">'
+        f"{match_html}"
+        f'<div class="bracket-caption">{html.escape(caption)}</div>'
+        "</div>"
     )
+
+
+def _build_play_in_conference_bracket_html(conf_games: list[dict]) -> str:
+    """
+    One conference's Play-In bracket: 7-vs-8 and 9-vs-10 side by side (round
+    1), feeding into a single decider game for the conference's final 8 seed
+    (round 2) - visually a bracket, even though the real advancement logic
+    is asymmetric (see _play_in_bracket_match_html) rather than "both
+    winners meet", unlike every other bracket in this app.
+    """
+    seven_eight = nine_ten = decider = None
+    for game in conf_games:
+        seeds = {t.get("seed") for t in game["line_score"]}
+        if seeds == {7, 8}:
+            seven_eight = game
+        elif seeds == {9, 10}:
+            nine_ten = game
+        else:
+            decider = game
+
+    round1_pair = (
+        '<div class="bracket-pair">'
+        f'{_play_in_bracket_match_html(seven_eight, "מנצח = seed 7 (עולה ישירות)")}'
+        f'{_play_in_bracket_match_html(nine_ten, "מפסיד מודח")}'
+        "</div>"
+    )
+    decider_cell = _play_in_bracket_match_html(decider, "מנצח = seed 8")
+
+    columns = [
+        _bracket_column_html("סיבוב ראשון", f'<div class="bracket-round">{round1_pair}</div>'),
+        _bracket_column_html("קרב הכרעה", f'<div class="bracket-round bracket-final">{decider_cell}</div>'),
+    ]
+    return f'<div class="bracket">{"".join(columns)}</div>'
 
 
 def _build_play_in_html(games: list[dict]) -> str:
     """
-    Play-In state for each conference: the 3 games are identified by their
+    Play-In bracket for each conference. The 3 games are identified by their
     teams' seeds, not by date - the two conferences don't always play their
     games on the same nights, so date order alone doesn't tell you which game
     is which. {7,8} is the opener, {9,10} is the loser-out game, and the
@@ -998,26 +1043,9 @@ def _build_play_in_html(games: list[dict]) -> str:
         conf_games = by_conf.get(conf_key, [])
         if not conf_games:
             continue
-        seven_eight = nine_ten = decider = None
-        for game in conf_games:
-            seeds = {t.get("seed") for t in game["line_score"]}
-            if seeds == {7, 8}:
-                seven_eight = game
-            elif seeds == {9, 10}:
-                nine_ten = game
-            else:
-                decider = game
-        rows_html = "".join(
-            _play_in_game_html(label, game)
-            for label, game in (
-                ("7 מול 8", seven_eight),
-                ("9 מול 10", nine_ten),
-                ("קרב על המקום ה-8", decider),
-            )
-        )
         blocks.append(
             f'<div class="conference standings-block"><h3>{names.get(conf_key, conf_key)}</h3>'
-            + rows_html
+            + _build_play_in_conference_bracket_html(conf_games)
             + "</div>"
         )
     return f'<div class="conferences">{"".join(blocks)}</div>'
