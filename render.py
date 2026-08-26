@@ -698,6 +698,14 @@ TEMPLATE = """<!DOCTYPE html>
      the overshoot-past-the-edge effect. */
   :root.tabs-mode html,
   :root.tabs-mode body {{ overscroll-behavior: none; }}
+  /* No text selection in app mode - long-press highlighting a word/score
+     reads as a website, not an app. Buttons/links stay clickable either
+     way, this only blocks selecting/highlighting text. */
+  :root.tabs-mode * {{
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }}
   /* The page shell itself is pinned to exactly one screen's height and
      never scrolls - only the active screen's own content area (inside
      <main>) scrolls, and only when it's genuinely taller than the
