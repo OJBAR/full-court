@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NBA Morning Brief — 2026-08-23</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", "Rubik", Arial, sans-serif;
+    background: #0f1115;
+    color: #e8e8e8;
+    margin: 0;
+    padding: 0;
+  }
+  .wrapper {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 24px 16px 40px;
+  }
+  .header {
+    text-align: center;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #ff6b35;
+    margin-bottom: 20px;
+  }
+  .header .logo {
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: #ff6b35;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .header h1 {
+    font-size: 22px;
+    margin: 0;
+  }
+  .header .date {
+    color: #9a9a9a;
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  .summary {
+    font-size: 16px;
+    line-height: 1.8;
+  }
+  .summary p {
+    margin: 0 0 16px 0;
+  }
+  details {
+    margin-top: 12px;
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #16181d;
+  }
+  summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after {
+    content: "＋";
+    color: #ff6b35;
+    font-size: 16px;
+  }
+  details[open] summary::after { content: "－"; }
+  details[open] summary { border-bottom: 1px solid #2a2a2a; }
+  .details-body { padding: 12px 16px 16px; }
+
+  .game-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #22242a;
+  }
+  .game-row:last-child { border-bottom: none; }
+  .team { width: 4.5em; color: #9a9a9a; text-align: center; }
+  .team.winner { color: #e8e8e8; font-weight: 700; }
+  .score { width: 2.2em; text-align: center; color: #6a6a6a; font-variant-numeric: tabular-nums; }
+  .score.winner { color: #ff6b35; font-weight: 700; }
+
+  .conferences {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  @media (min-width: 480px) {
+    .conferences { grid-template-columns: 1fr 1fr; }
+  }
+  .conference h3 {
+    font-size: 13px;
+    color: #ff6b35;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 0 8px 0;
+  }
+  .standing-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 13px;
+    border-bottom: 1px solid #22242a;
+  }
+  .standing-row:last-child { border-bottom: none; }
+  .standing-rank { color: #6a6a6a; width: 1.6em; flex-shrink: 0; }
+  .standing-team { flex: 1; }
+  .standing-record { color: #9a9a9a; flex-shrink: 0; }
+  .standing-streak { width: 3em; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .standing-streak.win { color: #4caf7d; }
+  .standing-streak.loss { color: #e05d5d; }
+
+  .footer {
+    margin-top: 28px;
+    padding-top: 16px;
+    border-top: 1px solid #2a2a2a;
+    text-align: center;
+    color: #6a6a6a;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <div class="logo">NBA Morning Brief</div>
+      <h1>סיכום לילה של NBA</h1>
+      <div class="date">23/08/2026</div>
+    </div>
+    <div class="summary">
+      <p>ליל ה-23 באוגוסט 2026 עבר בשקט מוחלט - אין משחקי NBA לסקר, שכן אנחנו נמצאים בעיצומה של תקופת ה-offseason. הכדורסל ישוב אלינו עם פתיחת העונה הבאה, ועד אז אין תוצאות לדווח עליהן.</p>
+    </div>
+
+    <details>
+      <summary>כל תוצאות הלילה</summary>
+      <div class="details-body">
+        <p style="color:#6a6a6a; font-size:14px;">אין משחקים ללילה הזה.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>הטבלה</summary>
+      <div class="details-body" dir="ltr">
+        <div class="conferences">
+          <div class="conference"><h3>מערב</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Oklahoma City Thunder</span><span class="standing-record">64-18</span><span class="standing-streak loss">L 2</span></div>
+          <div class="standing-row"><span class="standing-rank">2</span><span class="standing-team">San Antonio Spurs</span><span class="standing-record">62-20</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">3</span><span class="standing-team">Denver Nuggets</span><span class="standing-record">54-28</span><span class="standing-streak win">W 12</span></div>
+          <div class="standing-row"><span class="standing-rank">4</span><span class="standing-team">Los Angeles Lakers</span><span class="standing-record">53-29</span><span class="standing-streak win">W 3</span></div>
+          <div class="standing-row"><span class="standing-rank">5</span><span class="standing-team">Houston Rockets</span><span class="standing-record">52-30</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row"><span class="standing-rank">6</span><span class="standing-team">Minnesota Timberwolves</span><span class="standing-record">49-33</span><span class="standing-streak win">W 2</span></div>
+          <div class="standing-row"><span class="standing-rank">7</span><span class="standing-team">Phoenix Suns</span><span class="standing-record">45-37</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row"><span class="standing-rank">8</span><span class="standing-team">Portland Trail Blazers</span><span class="standing-record">42-40</span><span class="standing-streak win">W 2</span></div>
+          <div class="standing-row"><span class="standing-rank">9</span><span class="standing-team">LA Clippers</span><span class="standing-record">42-40</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row"><span class="standing-rank">10</span><span class="standing-team">Golden State Warriors</span><span class="standing-record">37-45</span><span class="standing-streak loss">L 3</span></div>
+          <div class="standing-row"><span class="standing-rank">11</span><span class="standing-team">New Orleans Pelicans</span><span class="standing-record">26-56</span><span class="standing-streak loss">L 2</span></div>
+          <div class="standing-row"><span class="standing-rank">12</span><span class="standing-team">Dallas Mavericks</span><span class="standing-record">26-56</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Memphis Grizzlies</span><span class="standing-record">25-57</span><span class="standing-streak loss">L 8</span></div>
+          <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Sacramento Kings</span><span class="standing-record">22-60</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Utah Jazz</span><span class="standing-record">22-60</span><span class="standing-streak loss">L 1</span></div></div>
+      <div class="conference"><h3>מזרח</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Detroit Pistons</span><span class="standing-record">60-22</span><span class="standing-streak win">W 3</span></div>
+          <div class="standing-row"><span class="standing-rank">2</span><span class="standing-team">Boston Celtics</span><span class="standing-record">56-26</span><span class="standing-streak win">W 2</span></div>
+          <div class="standing-row"><span class="standing-rank">3</span><span class="standing-team">New York Knicks</span><span class="standing-record">53-29</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">4</span><span class="standing-team">Cleveland Cavaliers</span><span class="standing-record">52-30</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row"><span class="standing-rank">5</span><span class="standing-team">Toronto Raptors</span><span class="standing-record">46-36</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row"><span class="standing-rank">6</span><span class="standing-team">Atlanta Hawks</span><span class="standing-record">46-36</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">7</span><span class="standing-team">Philadelphia 76ers</span><span class="standing-record">45-37</span><span class="standing-streak win">W 2</span></div>
+          <div class="standing-row"><span class="standing-rank">8</span><span class="standing-team">Orlando Magic</span><span class="standing-record">45-37</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">9</span><span class="standing-team">Charlotte Hornets</span><span class="standing-record">44-38</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row"><span class="standing-rank">10</span><span class="standing-team">Miami Heat</span><span class="standing-record">43-39</span><span class="standing-streak win">W 2</span></div>
+          <div class="standing-row"><span class="standing-rank">11</span><span class="standing-team">Milwaukee Bucks</span><span class="standing-record">32-50</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">12</span><span class="standing-team">Chicago Bulls</span><span class="standing-record">31-51</span><span class="standing-streak loss">L 2</span></div>
+          <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Brooklyn Nets</span><span class="standing-record">20-62</span><span class="standing-streak loss">L 3</span></div>
+          <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Indiana Pacers</span><span class="standing-record">19-63</span><span class="standing-streak loss">L 2</span></div>
+          <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Washington Wizards</span><span class="standing-record">17-65</span><span class="standing-streak loss">L 10</span></div></div>
+        </div>
+      </div>
+    </details>
+
+    <div class="footer">
+      נוצר אוטומטית
+    </div>
+  </div>
+</body>
+</html>
