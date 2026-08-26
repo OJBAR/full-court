@@ -492,6 +492,19 @@ TEMPLATE = """<!DOCTYPE html>
   }}
   .pager-arrow:disabled {{ opacity: 0.35; cursor: default; }}
 
+  /* The playoff bracket's own pager (see initPlayoffBracketPager()) - a
+     continuous per-conference strip panned by a JS-measured column width
+     instead of the generic page-based .pager above, so the round shared
+     between two adjacent stops never appears as two separate copies. */
+  .strip-viewport {{ overflow: hidden; touch-action: pan-y; }}
+  .strip-track {{
+    display: flex;
+    justify-content: flex-start;
+    gap: 24px;
+    padding: 4px 4px 12px;
+    transition: transform 0.35s ease;
+  }}
+
   .a11y-overlay {{
     position: fixed;
     inset: 0;
@@ -1061,17 +1074,160 @@ TEMPLATE = """<!DOCTYPE html>
       }});
     }})();
 
-    (function initSettingsAccordion() {{
-      var sections = Array.prototype.slice.call(document.querySelectorAll("#settings-overlay details.settings-about"));
+    (function initPlayoffBracketPager() {{
+      // The playoff bracket's pager: stops 0/1 pan a continuous strip per
+      // conference (see _bracket_strip_html) by exactly one column's real
+      // measured width, so the round shared between them never appears
+      // twice mid-transition; stop 2 swaps to the separate Finals page,
+      // since it isn't part of either conference's own strip.
+      var wrap = document.querySelector(".bracket-pager");
+      if (!wrap) return;
+
+      var step = parseInt(wrap.getAttribute("data-step"), 10) || 0;
+      var stripsEl = wrap.querySelector(".bracket-pager-strips");
+      var finalsEl = wrap.querySelector(".bracket-pager-finals");
+      var tracks = Array.prototype.slice.call(wrap.querySelectorAll(".strip-track"));
+      var prevBtn = wrap.querySelector(".pager-prev");
+      var nextBtn = wrap.querySelector(".pager-next");
+
+      function maxShift() {{
+        var track = tracks[0];
+        var firstCol = track && track.children[0];
+        if (!firstCol) return 0;
+        var gap = parseFloat(getComputedStyle(track).gap || "0") || 0;
+        return firstCol.getBoundingClientRect().width + gap;
+      }}
+
+      function setTracks(px, animate) {{
+        tracks.forEach(function(track) {{
+          track.style.transition = animate ? "transform 0.35s ease" : "none";
+          track.style.transform = "translateX(-" + px + "px)";
+        }});
+      }}
+
+      function render(animate) {{
+        if (step < 2) {{
+          stripsEl.hidden = false;
+          finalsEl.hidden = true;
+          setTracks(step === 1 ? maxShift() : 0, animate);
+        }} else {{
+          stripsEl.hidden = true;
+          finalsEl.hidden = false;
+        }}
+        prevBtn.disabled = step === 0;
+        nextBtn.disabled = step === 2;
+      }}
+
+      function goTo(newStep) {{
+        step = Math.max(0, Math.min(newStep, 2));
+        render(true);
+      }}
+
+      prevBtn.addEventListener("click", function() {{ goTo(step - 1); }});
+      nextBtn.addEventListener("click", function() {{ goTo(step + 1); }});
+
+      var startX = null;
+      var startY = null;
+      var dragging = false;
+
+      wrap.addEventListener("touchstart", function(e) {{
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        dragging = false;
+      }}, {{ passive: true }});
+
+      wrap.addEventListener("touchmove", function(e) {{
+        if (startX === null || step === 2) return;
+        var dx = e.touches[0].clientX - startX;
+        var dy = e.touches[0].clientY - startY;
+        if (!dragging && Math.abs(dx) < Math.abs(dy)) return;
+        dragging = true;
+        var base = step === 1 ? maxShift() : 0;
+        var target = Math.max(0, Math.min(base - dx, maxShift()));
+        setTracks(target, false);
+      }}, {{ passive: true }});
+
+      wrap.addEventListener("touchend", function(e) {{
+        if (startX === null) return;
+        var dx = e.changedTouches[0].clientX - startX;
+        var threshold = 40;
+        if (dragging) {{
+          if (dx < -threshold) {{ goTo(step + 1); }}
+          else if (dx > threshold) {{ goTo(step - 1); }}
+          else {{ render(true); }}
+        }} else {{
+          // No live drag preview on the Finals page (it isn't part of the
+          // strip) - a plain swipe there still pages, just without a
+          // dragged-along preview.
+          if (dx < -threshold) {{ goTo(step + 1); }}
+          else if (dx > threshold) {{ goTo(step - 1); }}
+        }}
+        startX = null;
+        startY = null;
+        dragging = false;
+      }});
+
+      window.addEventListener("resize", function() {{ render(false); }});
+      render(false);
+    }})();
+
+    // Shared by the settings panel and the app-home tab list: an
+    // exclusive-open accordion group (opening one closes any other) where
+    // both the open and the close are height-animated instead of the
+    // native <details> instant snap - intercepts the summary click so we
+    // control the open/close timing ourselves.
+    function makeExclusiveAccordion(sections) {{
+      function animateOpen(section) {{
+        var body = section.querySelector(":scope > .details-body");
+        if (!body) {{ section.open = true; return; }}
+        section.open = true;
+        var target = body.scrollHeight;
+        body.style.overflow = "hidden";
+        body.style.maxHeight = "0px";
+        body.getBoundingClientRect();
+        body.style.transition = "max-height 0.25s ease";
+        body.style.maxHeight = target + "px";
+        body.addEventListener("transitionend", function done() {{
+          body.style.maxHeight = "";
+          body.style.overflow = "";
+          body.style.transition = "";
+          body.removeEventListener("transitionend", done);
+        }});
+      }}
+
+      function animateClose(section) {{
+        var body = section.querySelector(":scope > .details-body");
+        if (!body) {{ section.open = false; return; }}
+        body.style.overflow = "hidden";
+        body.style.maxHeight = body.scrollHeight + "px";
+        body.getBoundingClientRect();
+        body.style.transition = "max-height 0.25s ease";
+        body.style.maxHeight = "0px";
+        body.addEventListener("transitionend", function done() {{
+          section.open = false;
+          body.style.maxHeight = "";
+          body.style.overflow = "";
+          body.style.transition = "";
+          body.removeEventListener("transitionend", done);
+        }});
+      }}
+
       sections.forEach(function(section) {{
-        section.addEventListener("toggle", function() {{
-          if (section.open) {{
-            sections.forEach(function(other) {{
-              if (other !== section) other.open = false;
-            }});
-          }}
+        var summary = section.querySelector(":scope > summary");
+        summary.addEventListener("click", function(e) {{
+          e.preventDefault();
+          var wasOpen = section.open;
+          sections.forEach(function(other) {{
+            if (other !== section && other.open) animateClose(other);
+          }});
+          if (wasOpen) {{ animateClose(section); }} else {{ animateOpen(section); }}
         }});
       }});
+    }}
+
+    (function initSettingsAccordion() {{
+      var sections = Array.prototype.slice.call(document.querySelectorAll("#settings-overlay details.settings-about"));
+      makeExclusiveAccordion(sections);
     }})();
 
     var settingsLastFocused = null;
@@ -1389,16 +1545,9 @@ TEMPLATE = """<!DOCTYPE html>
 
       // Only one accordion section open at a time - opening one closes the
       // rest, same as a normal single-select tab UI, just using the native
-      // <details>/<summary> disclosure instead of custom buttons/screens.
-      sections.forEach(function(section) {{
-        section.addEventListener("toggle", function() {{
-          if (section.open) {{
-            sections.forEach(function(other) {{
-              if (other !== section) other.open = false;
-            }});
-          }}
-        }});
-      }});
+      // <details>/<summary> disclosure instead of custom buttons/screens
+      // (see makeExclusiveAccordion() for the height-animated open/close).
+      makeExclusiveAccordion(sections);
 
       var home = document.createElement("div");
       home.className = "app-home";
@@ -1765,10 +1914,24 @@ def _bracket_conf_block(conf_label: str, columns_html: str) -> str:
     )
 
 
-def _bracket_page_two_rounds(columns_by_conf: dict[str, dict[str, str]], round_a: str, round_b: str) -> str:
-    return "".join(
-        _bracket_conf_block(conf_label, columns_by_conf[conf].get(round_a, "") + columns_by_conf[conf].get(round_b, ""))
-        for conf, conf_label in (("West", "מערב"), ("East", "מזרח"))
+def _bracket_strip_html(conf_label: str, columns: dict[str, str]) -> str:
+    """
+    One conference's full Round 1 -> Conf. Semis -> Conf. Finals bracket as
+    a single continuous strip (all 3 columns, always in the DOM together),
+    instead of splitting it across separate pages. initPlayoffBracketPager()
+    pans a fixed viewport across this strip by exactly one column's width
+    at a time, so a round shared between two "stops" (e.g. Conf. Semis,
+    visible at both stop 0 and stop 1) is the same element throughout - it
+    just slides from the trailing position to the leading one, instead of
+    two independent copies appearing to overlap mid-transition the way two
+    separate pages sliding past each other would.
+    """
+    track_html = columns["1st Round"] + columns["Conf. Semifinals"] + columns["Conf. Finals"]
+    return (
+        '<div class="bracket-conf-block">'
+        f'<div class="bracket-conf-label">{html.escape(conf_label)}</div>'
+        f'<div class="strip-viewport"><div class="strip-track">{track_html}</div></div>'
+        "</div>"
     )
 
 
@@ -1794,18 +1957,21 @@ def _bracket_page_finals(
 
 def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list[dict]) -> str:
     """
-    A single paged bracket covering the whole playoffs (both conferences,
-    no separate tab per conference or for the Finals) - only two adjacent
+    A single bracket covering the whole playoffs (both conferences, no
+    separate tab per conference or for the Finals) - only two adjacent
     rounds are shown at a time, since a full 4-round bracket is too wide for
-    mobile. Defaults to whichever two rounds are relevant tonight: if
-    tonight's games span more than one round (e.g. a 1st Round Game 7 and a
-    Conf. Semifinals Game 1 on the same night), the earliest round wins,
-    since that series isn't fully resolved league-wide yet.
+    mobile. Stops 0 and 1 (1st Round<->Conf. Semis<->Conf. Finals) are a pan
+    across one continuous strip per conference (see _bracket_strip_html) -
+    stop 2 (the Finals) is a separate composed page, since it's not part of
+    either conference's own strip. Defaults to whichever stop is relevant
+    tonight: if tonight's games span more than one round (e.g. a 1st Round
+    Game 7 and a Conf. Semifinals Game 1 on the same night), the earliest
+    round wins, since that series isn't fully resolved league-wide yet.
     """
     round_index = {r: i for i, r in enumerate(_PLAYOFF_ROUNDS)}
     current_indices = [round_index[g["po_round"]] for g in games if g.get("po_round") in round_index]
     current_round = min(current_indices) if current_indices else 0
-    start_page = min(current_round, 2)
+    start_step = min(current_round, 2)
 
     columns_by_conf = {conf: _conference_bracket_columns(playoff_series, conf) for conf in ("West", "East")}
     finals_series = next((s for s in playoff_series if s.get("round") == "NBA Finals"), None)
@@ -1816,18 +1982,27 @@ def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list
         for t in s["teams"]
     }
 
-    pages = [
-        _bracket_page_two_rounds(columns_by_conf, "1st Round", "Conf. Semifinals"),
-        _bracket_page_two_rounds(columns_by_conf, "Conf. Semifinals", "Conf. Finals"),
-        _bracket_page_finals(columns_by_conf, finals_series, conf_by_team),
-    ]
+    west_strip = _bracket_strip_html("מערב", columns_by_conf["West"])
+    east_strip = _bracket_strip_html("מזרח", columns_by_conf["East"])
+    finals_page = _bracket_page_finals(columns_by_conf, finals_series, conf_by_team)
+
+    strips_hidden = " hidden" if start_step == 2 else ""
+    finals_hidden = "" if start_step == 2 else " hidden"
 
     # The content itself (and everything around it) is forced dir="ltr" (see
     # _details_block) since it's mostly seed numbers/English round names, so
     # the pager's arrows follow plain left-to-right pagination convention:
     # prev (‹) sits physically on the left, next (›) on the right - not
     # RTL-mirrored, since the ambient direction here already isn't RTL.
-    return _build_pager_html(pages, start_page)
+    return (
+        f'<div class="bracket-pager" data-step="{start_step}">'
+        f'<div class="bracket-pager-strips"{strips_hidden}>{west_strip}{east_strip}</div>'
+        f'<div class="bracket-pager-finals"{finals_hidden}>{finals_page}</div>'
+        '<div class="pager-nav">'
+        '<button type="button" class="pager-arrow pager-prev" aria-label="הקודם">‹</button>'
+        '<button type="button" class="pager-arrow pager-next" aria-label="הבא">›</button>'
+        "</div></div>"
+    )
 
 
 def _play_in_bracket_match_html(game: dict | None, caption: str) -> str:
