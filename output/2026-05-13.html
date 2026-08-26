@@ -711,7 +711,29 @@
     display: flex;
     flex-direction: column;
   }
-  :root.tabs-mode .header { flex-shrink: 0; cursor: pointer; }
+  /* Compact app-mode header: logo moves to the top-left (row-reverse puts
+     the first-markup child, the logo, at the ltr "end" which is the left
+     edge under RTL), with the title/date beside it instead of stacked
+     centered below - frees up real vertical room for the summary screen,
+     which otherwise easily needs its own scroll on a long night. The
+     splash screen's closing animation lands wherever .header .logo-img
+     actually is (computed live, see animateSplashAway()), so it follows
+     the logo here automatically. */
+  :root.tabs-mode .header {
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 10px;
+    text-align: right;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+  }
+  :root.tabs-mode .header .logo-img { height: 28px; margin: 0; }
+  :root.tabs-mode .header-text { display: flex; flex-direction: column; gap: 1px; }
+  :root.tabs-mode .header h1 { margin: 0; }
+  :root.tabs-mode .header .date { margin-top: 0; }
   :root.tabs-mode main {
     flex: 1;
     min-height: 0;
@@ -846,8 +868,10 @@
     <header class="header">
       <img class="logo-img logo-light" src="assets/logo_light.png" alt="Full Court">
       <img class="logo-img logo-dark" src="assets/logo_dark.png" alt="Full Court">
-      <h1>סיכום הלילה ב-NBA</h1>
-      <div class="date">13/05/2026, הלילה בין רביעי לחמישי</div>
+      <div class="header-text">
+        <h1>סיכום הלילה ב-NBA</h1>
+        <div class="date">13/05/2026, הלילה בין רביעי לחמישי</div>
+      </div>
     </header>
     <main>
       <div class="summary">
