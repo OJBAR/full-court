@@ -481,29 +481,34 @@ TEMPLATE = """<!DOCTYPE html>
 
   .bracket-conf-block {{ margin-bottom: 18px; }}
   .bracket-conf-block:last-child {{ margin-bottom: 0; }}
-  /* The NBA Finals match is real content embedded as the 4th column of the
-     West strip (see _bracket_strip_html) - not a separately-faded overlay -
-     so it's clipped by the strip's own .strip-viewport and only becomes
-     visible by actually being panned into view in lockstep with everything
-     else, exactly like every other round. The connecting line is the only
-     thing still positioned separately (it can't be clipped inside either
-     strip's own viewport, since it has to reach from the West conference's
-     box down to the East conference's box in a different strip). Its
-     geometry - top, height, and left - is entirely measured live off the
-     two real Conf. Finals boxes by positionFinalsConnector() in
-     initPlayoffBracketPager, not computed from percentages, so it's exact
-     on any phone: top/height span from the top edge of the West box to the
-     bottom edge of the East box (same "vertical bar spans the whole pair"
-     language as .bracket-pair), and left tracks the real right edge of
-     those boxes. positionFinalsConnector() also folds the connector into
-     the same tracks[] array the pager already pans with setTracks(), so
-     the exact same transform that moves the two strips moves this line too
-     - it stays visually locked to the boxes through the whole pan/drag,
-     not just once settled. Its own ::after stub (same 25px length as every
-     other round's connector) comes out of its exact vertical middle,
-     reaching toward the Finals column. Only visible at stop 2, same as the
-     Finals column itself. */
+  /* The NBA Finals match is a real 4th track (see
+     _bracket_nba_finals_track_html), not a separately-faded overlay - it
+     has its own .strip-viewport, so it's clipped and only becomes visible
+     by actually being panned into view, in lockstep with everything else
+     (its .strip-track is picked up by the exact same ".strip-track"
+     selector as every other track in initPlayoffBracketPager, so it needs
+     no special-casing there at all). Its wrapper only needs a vertical
+     position set, live, to span from the top edge of the West conference's
+     Conf. Finals box to the bottom edge of the East one (positionFinals
+     Connector() in initPlayoffBracketPager) - .bracket-final's own
+     justify-content:center then lands the match at the true vertical
+     middle between the two conferences, not squeezed into either one's own
+     much shorter row height. The connecting line is the only thing still
+     positioned separately (it can't live inside any single strip's own
+     viewport, since it has to reach from one conference's box to the
+     other's), sharing that same measured top/height, with its own left
+     tracking those boxes' real right edge plus the same 16px gap
+     .bracket-pair leaves before its own connecting line. Both pieces are
+     folded into the same tracks[] array the pager already pans with
+     setTracks(), so the exact same transform that moves the two conference
+     strips moves them too - locked to the pan/drag the whole way, not just
+     once settled. */
   .bracket-pager-strips {{ position: relative; }}
+  .nba-finals-track-wrap {{
+    position: absolute;
+    left: 0;
+    right: 0;
+  }}
   .nba-finals-connector {{
     position: absolute;
     width: 2px;
@@ -1308,36 +1313,44 @@ TEMPLATE = """<!DOCTYPE html>
         }});
       }}
 
-      // The connector isn't inside either strip's own viewport (it can't
-      // be - it has to reach from the West conference's box down to the
-      // East conference's, in a different strip, and would get clipped by
-      // either one's overflow:hidden). So instead of trying to compute its
-      // position from percentages, this measures the two real Conf.
-      // Finals boxes directly - top/height span exactly from the top edge
-      // of the West box to the bottom edge of the East box, left tracks
-      // the boxes' real right edge - then folds the connector into the
-      // same tracks[] array setTracks() already pans, converting the
-      // just-measured on-screen position back to the same untransformed
-      // reference frame the real tracks use (current position + the shift
-      // already applied = where it'd sit at step 0). From then on it gets
-      // the exact same transform as everything else, every time
-      // setTracks() runs (including mid-drag) - it never has to be
-      // re-measured again unless the layout itself changes (resize).
+      // The Finals track (see _bracket_nba_finals_track_html) is already
+      // panned in perfect sync for free - it's just another ".strip-track"
+      // the tracks[] query above already picked up. All that's left is
+      // giving its wrapper a vertical position, and drawing the connecting
+      // line, neither of which can be done from percentages alone: they
+      // have to span exactly from the top edge of the West conference's
+      // Conf. Finals box to the bottom edge of the East one, which varies
+      // by phone/text size. The connector's left tracks those boxes' real
+      // right edge plus the same 16px gap .bracket-pair leaves before its
+      // own connecting line (same distance-0-into-the-next-box math as
+      // every other round). It's converted from the just-measured
+      // on-screen position back to the same untransformed reference frame
+      // the real tracks use (current position + the shift already applied
+      // = where it'd sit at step 0), then folded into the same tracks[]
+      // array setTracks() already pans - from then on it gets the exact
+      // same transform as everything else, every time setTracks() runs
+      // (including mid-drag), never re-measured again unless the layout
+      // itself changes (resize).
       function positionFinalsConnector() {{
         var connector = wrap.querySelector(".nba-finals-connector");
+        var finalsWrap = wrap.querySelector(".nba-finals-track-wrap");
         var strips = wrap.querySelector(".bracket-pager-strips");
         var finalBoxes = wrap.querySelectorAll(".bracket-final-conf .bracket-match");
-        if (!connector || !strips || finalBoxes.length < 2) return;
+        if (!connector || !finalsWrap || !strips || finalBoxes.length < 2) return;
         var topBox = finalBoxes[0];
         var bottomBox = finalBoxes[finalBoxes.length - 1];
         var stripsRect = strips.getBoundingClientRect();
         var topRect = topBox.getBoundingClientRect();
         var bottomRect = bottomBox.getBoundingClientRect();
         if (!topRect.height || !bottomRect.height) return;
+        var top = topRect.top - stripsRect.top;
+        var height = bottomRect.bottom - topRect.top;
+        finalsWrap.style.top = top + "px";
+        finalsWrap.style.height = height + "px";
         var currentShift = step * unitShift();
-        connector.style.top = (topRect.top - stripsRect.top) + "px";
-        connector.style.height = (bottomRect.bottom - topRect.top) + "px";
-        connector.style.left = (topRect.right - stripsRect.left + currentShift) + "px";
+        connector.style.top = top + "px";
+        connector.style.height = height + "px";
+        connector.style.left = (topRect.right - stripsRect.left + 16 + currentShift) + "px";
         connector.style.transform = "translateX(-" + currentShift + "px)";
         if (tracks.indexOf(connector) === -1) tracks.push(connector);
       }}
@@ -2252,25 +2265,21 @@ def _bracket_round_header_track(labels: list[str]) -> str:
     return f'<div class="strip-viewport"><div class="strip-track">{cols}</div></div>'
 
 
-def _bracket_strip_html(conf_label: str, columns: dict[str, str], fourth_column: str = "") -> str:
+def _bracket_strip_html(conf_label: str, columns: dict[str, str]) -> str:
     """
     One conference's full Round 1 -> Conf. Semis -> Conf. Finals bracket as
-    a single continuous strip, plus one more 4th column - initPlayoffBracket
-    Pager() pans a fixed viewport across this strip by exactly one column's
-    width at a time, so a round shared between two stops (e.g. Conf. Semis,
-    visible at both stop 0 and stop 1) is the same element throughout, it
-    just slides from the trailing position to the leading one. The shared
-    NBA Finals match (see _finals_match_html) is passed in as fourth_column
-    for exactly one conference's strip (currently West) - the other
-    conference's 4th column stays empty, since the Finals combine both and
-    only need to be shown once, not duplicated per conference. Embedding
-    the real match as real strip content (instead of a separately-faded
-    overlay) means it's clipped by .strip-viewport like every other round
-    and only ever becomes visible by actually being panned into view, never
-    a moment before.
+    a single continuous strip - initPlayoffBracketPager() pans a fixed
+    viewport across this strip by exactly one column's width at a time, so
+    a round shared between two stops (e.g. Conf. Semis, visible at both
+    stop 0 and stop 1) is the same element throughout, it just slides from
+    the trailing position to the leading one. Only 3 real columns (this
+    strip has nothing of its own for stop 2 - the shared NBA Finals match
+    lives in its own separate track, see _bracket_nba_finals_track_html) -
+    panning past the end of a 3-column track at stop 2 just reveals plain
+    background on the right half of the viewport, which is exactly what's
+    wanted there.
     """
     track_html = "".join(f'<div class="bracket-column">{columns[r]}</div>' for r in _PLAYOFF_ROUNDS[:3])
-    track_html += f'<div class="bracket-column"><div class="bracket-round bracket-final">{fourth_column}</div></div>'
     return (
         '<div class="bracket-conf-block">'
         f'<h4 class="sr-only">{html.escape(conf_label)}</h4>'
@@ -2279,17 +2288,39 @@ def _bracket_strip_html(conf_label: str, columns: dict[str, str], fourth_column:
     )
 
 
+def _bracket_nba_finals_track_html(finals_series: dict | None, conf_by_team: dict) -> str:
+    """
+    The NBA Finals match as its own independent track - not part of either
+    conference's strip (the Finals combine both, so there's nothing
+    conference-specific to show per side). It's panned by the exact same
+    transform as every other track (all ".strip-track"s are picked up
+    uniformly by initPlayoffBracketPager()) and clipped by its own
+    .strip-viewport, so - same as every other round - it only ever becomes
+    visible by actually being panned into view, never a moment before.
+    Its wrapper (.nba-finals-track-wrap) is absolutely positioned to span
+    the live-measured range between the two conferences' Conf. Finals boxes
+    (see positionFinalsConnector), so centering the match within it lands
+    it at the true vertical middle between them, not squeezed into either
+    conference's own much shorter row height.
+    """
+    match = _finals_match_html(finals_series, conf_by_team)
+    empties = '<div class="bracket-column"></div>' * 3
+    track_html = empties + f'<div class="bracket-column"><div class="bracket-round bracket-final">{match}</div></div>'
+    return f'<div class="nba-finals-track-wrap"><div class="strip-viewport"><div class="strip-track">{track_html}</div></div></div>'
+
+
 def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list[dict]) -> str:
     """
     A single bracket covering the whole playoffs (both conferences, no
     separate tab per conference or for the Finals) - only two adjacent
     rounds are shown at a time, since a full 4-round bracket is too wide for
     mobile. All 3 stops are one continuous pan across a strip per
-    conference (see _bracket_strip_html) plus the shared round-name header,
-    all 3 tracks moving together by the same measured column width - stop
-    2 isn't special-cased, it just happens to land on the West strip's 4th
-    column, which is where the shared NBA Finals match (see
-    _finals_match_html) is embedded. Defaults to whichever stop is
+    conference (see _bracket_strip_html) plus the shared round-name header
+    and the shared NBA Finals track (see _bracket_nba_finals_track_html),
+    every track moving together by the same measured column width - stop 2
+    isn't special-cased, the two conference strips just run out of real
+    columns and show blank space while the Finals track's own 4th column
+    (its only real one) comes into view. Defaults to whichever stop is
     relevant tonight: if tonight's games span more than one round (e.g. a
     1st Round Game 7 and a Conf. Semifinals Game 1 on the same night), the
     earliest round wins, since that series isn't fully resolved
@@ -2309,11 +2340,10 @@ def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list
         for t in s["teams"]
     }
 
-    finals_match = _finals_match_html(finals_series, conf_by_team)
-
     round_header = _bracket_round_header_track(_PLAYOFF_ROUNDS)
-    west_strip = _bracket_strip_html("מערב", columns_by_conf["West"], fourth_column=finals_match)
+    west_strip = _bracket_strip_html("מערב", columns_by_conf["West"])
     east_strip = _bracket_strip_html("מזרח", columns_by_conf["East"])
+    finals_track = _bracket_nba_finals_track_html(finals_series, conf_by_team)
     finals_connector = '<div class="nba-finals-connector"></div>'
 
     # The content itself (and everything around it) is forced dir="ltr" (see
@@ -2323,7 +2353,7 @@ def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list
     # RTL-mirrored, since the ambient direction here already isn't RTL.
     return (
         f'<div class="bracket-pager" data-step="{start_step}">'
-        f'<div class="bracket-pager-strips">{round_header}{west_strip}{east_strip}{finals_connector}</div>'
+        f'<div class="bracket-pager-strips">{round_header}{west_strip}{east_strip}{finals_track}{finals_connector}</div>'
         f"{_finals_champion_line(finals_series)}"
         '<div class="pager-nav">'
         '<button type="button" class="pager-arrow pager-prev" aria-label="הקודם">‹</button>'
