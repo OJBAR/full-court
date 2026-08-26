@@ -525,12 +525,6 @@
     color: var(--text-muted);
     margin-bottom: 8px;
   }
-  .settings-box {
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px;
-  }
-  .settings-box .a11y-field:last-child { margin-bottom: 0; }
   .settings-theme-row {
     display: flex;
     align-items: center;
@@ -935,21 +929,23 @@
         <button class="a11y-panel-close" onclick="closeSettingsOverlays()" aria-label="סגור הגדרות">✕</button>
       </div>
 
-      <div class="settings-box">
-        <span class="a11y-field-label">התאמות אישיות</span>
-        <div class="settings-theme-row">
-          <span>מצב תצוגה</span>
-          <button type="button" class="settings-theme-btn" id="settings-theme-btn" onclick="toggleTheme()" aria-label="החלף תצוגה בהירה/כהה">🌙</button>
-        </div>
-        <div class="a11y-field">
-          <span class="a11y-field-label" id="a11y-fontsize-label">גודל טקסט</span>
-          <div class="a11y-fontsize-options" role="group" aria-labelledby="a11y-fontsize-label">
-            <button type="button" class="a11y-fontsize-btn a11y-fontsize-sm" data-fontsize="normal" aria-pressed="true" aria-label="גודל טקסט רגיל" onclick="setFontSize('normal')">א</button>
-            <button type="button" class="a11y-fontsize-btn a11y-fontsize-md" data-fontsize="large" aria-pressed="false" aria-label="גודל טקסט גדול" onclick="setFontSize('large')">א</button>
-            <button type="button" class="a11y-fontsize-btn a11y-fontsize-lg" data-fontsize="xlarge" aria-pressed="false" aria-label="גודל טקסט גדול מאוד" onclick="setFontSize('xlarge')">א</button>
+      <details class="settings-about">
+        <summary>התאמות אישיות</summary>
+        <div class="details-body">
+          <div class="settings-theme-row">
+            <span>מצב תצוגה</span>
+            <button type="button" class="settings-theme-btn" id="settings-theme-btn" onclick="toggleTheme()" aria-label="החלף תצוגה בהירה/כהה">🌙</button>
+          </div>
+          <div class="a11y-field">
+            <span class="a11y-field-label" id="a11y-fontsize-label">גודל טקסט</span>
+            <div class="a11y-fontsize-options" role="group" aria-labelledby="a11y-fontsize-label">
+              <button type="button" class="a11y-fontsize-btn a11y-fontsize-sm" data-fontsize="normal" aria-pressed="true" aria-label="גודל טקסט רגיל" onclick="setFontSize('normal')">א</button>
+              <button type="button" class="a11y-fontsize-btn a11y-fontsize-md" data-fontsize="large" aria-pressed="false" aria-label="גודל טקסט גדול" onclick="setFontSize('large')">א</button>
+              <button type="button" class="a11y-fontsize-btn a11y-fontsize-lg" data-fontsize="xlarge" aria-pressed="false" aria-label="גודל טקסט גדול מאוד" onclick="setFontSize('xlarge')">א</button>
+            </div>
           </div>
         </div>
-      </div>
+      </details>
 
       <details class="settings-about">
         <summary>יצירת קשר</summary>
@@ -1036,6 +1032,19 @@
         nextBtn.addEventListener("click", function() { if (index < pages.length - 1) { index += 1; render(); } });
 
         render();
+      });
+    })();
+
+    (function initSettingsAccordion() {
+      var sections = Array.prototype.slice.call(document.querySelectorAll("#settings-overlay details.settings-about"));
+      sections.forEach(function(section) {
+        section.addEventListener("toggle", function() {
+          if (section.open) {
+            sections.forEach(function(other) {
+              if (other !== section) other.open = false;
+            });
+          }
+        });
       });
     })();
 
