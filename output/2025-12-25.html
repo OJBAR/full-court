@@ -580,9 +580,79 @@
     color: var(--text-muted);
   }
   .beta-note a { color: var(--accent); text-decoration: none; }
+
+  /* App-like extras: only active when installed to the home screen
+     (display-mode: standalone) - a normal browser tab never sees any of
+     this, on phone or desktop. */
+  .splash-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    transition: opacity 0.3s ease;
+  }
+  .splash-screen.visible { display: flex; }
+  .splash-screen.fade-out { opacity: 0; }
+  .splash-screen .logo-img { height: 56px; }
+
+  :root.tabs-mode .wrapper { padding-bottom: 72px; }
+  :root.tabs-mode details.tab-section summary { display: none; }
+  .bottom-tabs { display: none; }
+  :root.tabs-mode .bottom-tabs {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    gap: 4px;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    z-index: 50;
+  }
+  .bottom-tab-btn {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 10px;
+    padding: 6px 2px;
+    border-radius: 8px;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .bottom-tab-btn.active { color: var(--accent); font-weight: 700; background: var(--bg); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .wrapper { animation: fc-fade-in 0.3s ease; }
+    @keyframes fc-fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    button:active, .bottom-tab-btn:active, summary:active { transform: scale(0.96); }
+    button, .bottom-tab-btn { transition: transform 0.1s ease; }
+  }
 </style>
 </head>
 <body>
+  <div id="splash-screen" class="splash-screen">
+    <img class="logo-img logo-light" src="assets/logo_light.png" alt="Full Court">
+    <img class="logo-img logo-dark" src="assets/logo_dark.png" alt="Full Court">
+  </div>
+  <script>
+    (function() {
+      var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+      if (standalone) {
+        document.getElementById("splash-screen").classList.add("visible");
+      }
+    })();
+  </script>
   <div class="wrapper">
     <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="החלף תצוגה בהירה/כהה">🌙</button>
     <button class="refresh-toggle" onclick="location.reload()" aria-label="רענן את הדף">🔄</button>
@@ -603,7 +673,7 @@
       <p>ולבסוף, יוסטון המשיכו את המומנטום החיובי שלהם עם ניצחון מוחץ 119-96 על הלייקרס, ששברו בכך רצף של שלושה ניצחונות רצופים שהיה להם.</p>
       </div>
 
-      <details>
+      <details class="tab-section">
         <summary>כל תוצאות הלילה</summary>
         <div class="details-body">
           <div class="game-block"><div class="game-row"><span class="team winner">NYK<span class="team-record">21-9</span></span><span class="score winner">126</span><span class="score">–</span><span class="score">124</span><span class="team">CLE<span class="team-record">17-15</span></span></div></div>
@@ -614,7 +684,7 @@
         </div>
       </details>
 
-      <details>
+      <details class="tab-section">
       <summary>טבלת הליגה</summary>
       <div class="details-body" dir="ltr">
         <div class="conferences"><div class="conference standings-block"><h3>מערב</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Oklahoma City Thunder</span><span class="standing-record">64-18</span><span class="standing-streak loss">L 2</span></div>
@@ -850,6 +920,69 @@
         }
       }
     }
+
+    function dismissSplash() {
+      var splash = document.getElementById("splash-screen");
+      if (!splash) return;
+      if (splash.classList.contains("visible")) {
+        setTimeout(function() {
+          splash.classList.add("fade-out");
+          setTimeout(function() { splash.remove(); }, 300);
+        }, 400);
+      } else {
+        splash.remove();
+      }
+    }
+    // The "load" event may already have fired by the time this script runs
+    // (e.g. on a fast connection/cache) - addEventListener("load", ...) would
+    // then never call back, leaving the splash stuck forever. Check
+    // readyState first and only wait for the event if it hasn't happened yet.
+    // A hard timeout is also set regardless, as a safety net - dismissSplash()
+    // is idempotent (a second call is a no-op once the element is gone), so
+    // this can never show the splash twice or double-remove it, only
+    // guarantee it can't get stuck forever if "load" never fires at all
+    // (e.g. a slow/failed image request).
+    if (document.readyState === "complete") {
+      dismissSplash();
+    } else {
+      window.addEventListener("load", dismissSplash);
+    }
+    setTimeout(dismissSplash, 2500);
+
+    (function initBottomTabs() {
+      var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+      var narrow = window.matchMedia("(max-width: 480px)").matches;
+      if (!standalone || !narrow) return;
+
+      var sections = Array.prototype.slice.call(document.querySelectorAll("main > details.tab-section"));
+      if (sections.length < 2) return;
+
+      document.documentElement.classList.add("tabs-mode");
+
+      var bar = document.createElement("nav");
+      bar.className = "bottom-tabs";
+      bar.setAttribute("aria-label", "ניווט בין הסיכומים");
+
+      sections.forEach(function(section, i) {
+        var label = section.querySelector("summary").textContent;
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "bottom-tab-btn" + (i === 0 ? " active" : "");
+        btn.textContent = label;
+        btn.setAttribute("aria-label", label);
+        btn.onclick = function() {
+          sections.forEach(function(s) { s.open = false; });
+          section.open = true;
+          section.scrollIntoView({ behavior: "smooth", block: "start" });
+          Array.prototype.forEach.call(bar.children, function(b) { b.classList.remove("active"); });
+          btn.classList.add("active");
+        };
+        bar.appendChild(btn);
+      });
+
+      document.body.appendChild(bar);
+      sections.forEach(function(s, i) { s.open = (i === 0); });
+    })();
 
     function toggleTheme() {
       var current = document.documentElement.getAttribute("data-theme");

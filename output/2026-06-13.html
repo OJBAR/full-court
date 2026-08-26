@@ -580,9 +580,79 @@
     color: var(--text-muted);
   }
   .beta-note a { color: var(--accent); text-decoration: none; }
+
+  /* App-like extras: only active when installed to the home screen
+     (display-mode: standalone) - a normal browser tab never sees any of
+     this, on phone or desktop. */
+  .splash-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    transition: opacity 0.3s ease;
+  }
+  .splash-screen.visible { display: flex; }
+  .splash-screen.fade-out { opacity: 0; }
+  .splash-screen .logo-img { height: 56px; }
+
+  :root.tabs-mode .wrapper { padding-bottom: 72px; }
+  :root.tabs-mode details.tab-section summary { display: none; }
+  .bottom-tabs { display: none; }
+  :root.tabs-mode .bottom-tabs {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    gap: 4px;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    z-index: 50;
+  }
+  .bottom-tab-btn {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 10px;
+    padding: 6px 2px;
+    border-radius: 8px;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .bottom-tab-btn.active { color: var(--accent); font-weight: 700; background: var(--bg); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .wrapper { animation: fc-fade-in 0.3s ease; }
+    @keyframes fc-fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    button:active, .bottom-tab-btn:active, summary:active { transform: scale(0.96); }
+    button, .bottom-tab-btn { transition: transform 0.1s ease; }
+  }
 </style>
 </head>
 <body>
+  <div id="splash-screen" class="splash-screen">
+    <img class="logo-img logo-light" src="assets/logo_light.png" alt="Full Court">
+    <img class="logo-img logo-dark" src="assets/logo_dark.png" alt="Full Court">
+  </div>
+  <script>
+    (function() {
+      var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+      if (standalone) {
+        document.getElementById("splash-screen").classList.add("visible");
+      }
+    })();
+  </script>
   <div class="wrapper">
     <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="החלף תצוגה בהירה/כהה">🌙</button>
     <button class="refresh-toggle" onclick="location.reload()" aria-label="רענן את הדף">🔄</button>
@@ -598,28 +668,28 @@
         <p>ניו יורק היא אלופת ה-NBA. הניקס גברו הלילה על סן אנטוניו ספרס 94-90 במשחק החמישי של הגמר, וסגרו את הסדרה 4-1 בדרך לתואר. זה היה משחק צמוד עד הסוף, כשג&#x27;יילן בראנסון היה הכוכב הבלתי מעורער עם ערב קלעים מדהים של 45 נקודה שהוביל את קבוצתו לתואר. מנגד, קארל אנתוני טאונס נעלם כמעט לגמרי מהתמונה ההתקפית - רק 2 נקודות, לצד 10 ריבאונדים, לילה חלש מאוד ביחס לממוצע העונתי שלו של 20.1 נקודות למשחק, אבל זה כלל לא הפריע לניו יורק לחגוג. אצל ספרס, ג&#x27;יידן קוויינטנס נעדר מהמשחק לאחר שעבר בשבוע שעבר ניתוח בברך ימין וללא לוח זמנים ברור לחזרה - סיום עונה קשה במיוחד עבור הקבוצה המפסידה בגמר.</p>
       </div>
 
-      <details>
+      <details class="tab-section">
         <summary>תוצאת המשחק</summary>
         <div class="details-body">
           <div class="game-block"><div class="game-row"><span class="team">SAS</span><span class="score">90</span><span class="score">–</span><span class="score winner">94</span><span class="team winner">NYK</span></div><div class="game-sub">Game 5 · NYK wins 4-1</div></div>
         </div>
       </details>
 
-      <details>
+      <details class="tab-section">
       <summary>גמר ה-NBA</summary>
       <div class="details-body" dir="ltr">
         <div class="bracket"><div class="bracket-column"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="conf-badge conf-badge-east">E</span><span>NYK</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="conf-badge conf-badge-west">W</span><span>SAS</span></span><span class="bracket-score">1</span></div></div></div></div><p class="game-sub" dir="rtl">NYK אלופת ה-NBA!</p>
       </div>
     </details>
 
-    <details>
+    <details class="tab-section">
       <summary>בראקט מערב</summary>
       <div class="details-body" dir="ltr">
         <div class="bracket"><div class="bracket-column"><h4 class="bracket-round-label">1st Round</h4><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>LAL</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">5</span><span>HOU</span></span><span class="bracket-score">2</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>OKC</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">8</span><span>PHX</span></span><span class="bracket-score">0</span></div></div></div><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">3</span><span>DEN</span></span><span class="bracket-score">2</span></div><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">6</span><span>MIN</span></span><span class="bracket-score">4</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">2</span><span>SAS</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">7</span><span>POR</span></span><span class="bracket-score">1</span></div></div></div></div></div><div class="bracket-column"><h4 class="bracket-round-label">Conf. Semifinals</h4><div class="bracket-round"><div class="bracket-pair bracket-pair-r2"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>OKC</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>LAL</span></span><span class="bracket-score">0</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">2</span><span>SAS</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">6</span><span>MIN</span></span><span class="bracket-score">2</span></div></div></div></div></div><div class="bracket-column"><h4 class="bracket-round-label">Conf. Finals</h4><div class="bracket-round bracket-final"><div class="bracket-match"><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>OKC</span></span><span class="bracket-score">3</span></div><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">2</span><span>SAS</span></span><span class="bracket-score">4</span></div></div></div></div></div>
       </div>
     </details>
 
-    <details>
+    <details class="tab-section">
       <summary>בראקט מזרח</summary>
       <div class="details-body" dir="ltr">
         <div class="bracket"><div class="bracket-column"><h4 class="bracket-round-label">1st Round</h4><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>CLE</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">5</span><span>TOR</span></span><span class="bracket-score">3</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>DET</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">8</span><span>ORL</span></span><span class="bracket-score">3</span></div></div></div><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">2</span><span>BOS</span></span><span class="bracket-score">3</span></div><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">7</span><span>PHI</span></span><span class="bracket-score">4</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">3</span><span>NYK</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">6</span><span>ATL</span></span><span class="bracket-score">2</span></div></div></div></div></div><div class="bracket-column"><h4 class="bracket-round-label">Conf. Semifinals</h4><div class="bracket-round"><div class="bracket-pair bracket-pair-r2"><div class="bracket-match"><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>DET</span></span><span class="bracket-score">3</span></div><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>CLE</span></span><span class="bracket-score">4</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">3</span><span>NYK</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">7</span><span>PHI</span></span><span class="bracket-score">0</span></div></div></div></div></div><div class="bracket-column"><h4 class="bracket-round-label">Conf. Finals</h4><div class="bracket-round bracket-final"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">3</span><span>NYK</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>CLE</span></span><span class="bracket-score">0</span></div></div></div></div></div>
@@ -826,6 +896,69 @@
         }
       }
     }
+
+    function dismissSplash() {
+      var splash = document.getElementById("splash-screen");
+      if (!splash) return;
+      if (splash.classList.contains("visible")) {
+        setTimeout(function() {
+          splash.classList.add("fade-out");
+          setTimeout(function() { splash.remove(); }, 300);
+        }, 400);
+      } else {
+        splash.remove();
+      }
+    }
+    // The "load" event may already have fired by the time this script runs
+    // (e.g. on a fast connection/cache) - addEventListener("load", ...) would
+    // then never call back, leaving the splash stuck forever. Check
+    // readyState first and only wait for the event if it hasn't happened yet.
+    // A hard timeout is also set regardless, as a safety net - dismissSplash()
+    // is idempotent (a second call is a no-op once the element is gone), so
+    // this can never show the splash twice or double-remove it, only
+    // guarantee it can't get stuck forever if "load" never fires at all
+    // (e.g. a slow/failed image request).
+    if (document.readyState === "complete") {
+      dismissSplash();
+    } else {
+      window.addEventListener("load", dismissSplash);
+    }
+    setTimeout(dismissSplash, 2500);
+
+    (function initBottomTabs() {
+      var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+      var narrow = window.matchMedia("(max-width: 480px)").matches;
+      if (!standalone || !narrow) return;
+
+      var sections = Array.prototype.slice.call(document.querySelectorAll("main > details.tab-section"));
+      if (sections.length < 2) return;
+
+      document.documentElement.classList.add("tabs-mode");
+
+      var bar = document.createElement("nav");
+      bar.className = "bottom-tabs";
+      bar.setAttribute("aria-label", "ניווט בין הסיכומים");
+
+      sections.forEach(function(section, i) {
+        var label = section.querySelector("summary").textContent;
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "bottom-tab-btn" + (i === 0 ? " active" : "");
+        btn.textContent = label;
+        btn.setAttribute("aria-label", label);
+        btn.onclick = function() {
+          sections.forEach(function(s) { s.open = false; });
+          section.open = true;
+          section.scrollIntoView({ behavior: "smooth", block: "start" });
+          Array.prototype.forEach.call(bar.children, function(b) { b.classList.remove("active"); });
+          btn.classList.add("active");
+        };
+        bar.appendChild(btn);
+      });
+
+      document.body.appendChild(bar);
+      sections.forEach(function(s, i) { s.open = (i === 0); });
+    })();
 
     function toggleTheme() {
       var current = document.documentElement.getAttribute("data-theme");
