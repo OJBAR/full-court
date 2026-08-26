@@ -17,6 +17,16 @@ on:
 permissions:
   contents: write
 
+# Each run force-pushes the whole output/ dir to gh-pages, so if several
+# pushes land in quick succession, their runs can finish out of order and an
+# older run's deploy can silently overwrite a newer one's. Restricting all
+# runs to one shared concurrency group makes a new run cancel whichever one
+# is still in progress, so only the most recently triggered run ever
+# actually deploys.
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
