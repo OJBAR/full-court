@@ -843,6 +843,16 @@ TEMPLATE = """<!DOCTYPE html>
     overflow: visible;
   }}
   :root.tabs-mode details.tab-section.app-screen-active > summary::after {{ content: "‹"; }}
+  /* The tab's own title/back-arrow row stays pinned to the top of the
+     scrollable area (<main>) instead of scrolling away with a long list
+     of games - needs its own opaque background so scrolled-past content
+     doesn't show through underneath it. */
+  :root.tabs-mode details.tab-section.app-screen-active > summary {{
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--bg);
+  }}
   /* A full-screen tab's own content is centered as a block within the
      available height instead of pinned to the top with empty space below
      when it's shorter than the screen - the content itself (table rows,
