@@ -806,30 +806,56 @@
     justify-content: safe center;
   }
   .app-home { display: none; }
+  /* Positioned like a vertical ruler from 0 (bottom of the home screen) to
+     100 (the line under the header): the summary button's own center sits
+     at 66.66 (=33.34 measured from the top) and the rest of the tabs'
+     center sits at 33.33 (=66.67 from the top) - both are absolutely
+     positioned against .app-home and centered on that exact point via
+     translateY(-50%), regardless of each block's own natural height. */
   :root.tabs-mode .app-home {
-    display: flex;
-    flex-direction: column;
+    display: block;
+    position: relative;
+    flex: 1;
+    min-height: 0;
   }
   :root.tabs-mode .app-home.hidden { display: none; }
-  /* The summary button is styled as just another equal-sized card in the
-     same flat list as the other tabs (same padding/font-size as a tab's
-     summary below) - only its accent color still marks it as the primary
-     action, not its size. */
   .app-home-big-btn {
     display: block;
     width: 100%;
-    flex-shrink: 0;
-    margin-top: 12px;
-    padding: 14px 16px;
+    padding: 18px 16px;
     border-radius: 10px;
     border: none;
     background: var(--accent);
     color: var(--card-bg);
-    font-size: 0.9375rem;
+    font-size: 1.0625rem;
     font-weight: 700;
+    text-align: center;
     cursor: pointer;
   }
-  :root.tabs-mode .app-home-tabs-group { display: flex; flex-direction: column; }
+  :root.tabs-mode .app-home-big-btn {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 33.34%;
+    transform: translateY(-50%);
+  }
+  :root.tabs-mode .app-home-tabs-group {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 66.67%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+  }
+  /* The tabs no longer expand in place (opening one goes full-screen
+     instead), so the +/- disclosure icon and off-center title from the
+     old inline-accordion look no longer make sense here. */
+  :root.tabs-mode .app-home-tabs-group summary {
+    justify-content: center;
+    text-align: center;
+  }
+  :root.tabs-mode .app-home-tabs-group summary::after { display: none; }
   .pull-refresh-indicator {
     position: fixed;
     top: 16px;
