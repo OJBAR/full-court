@@ -228,14 +228,6 @@ TEMPLATE = """<!DOCTYPE html>
     margin-top: 6px;
   }}
 
-  .conferences {{
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }}
-  @media (min-width: 480px) {{
-    .conferences {{ grid-template-columns: 1fr 1fr; }}
-  }}
   .conference h3 {{
     font-size: 0.8125rem;
     color: var(--accent);
@@ -309,7 +301,7 @@ TEMPLATE = """<!DOCTYPE html>
   }}
 
   /* Every font-size inside the bracket diagram (this section down through
-     .bracket-conf-label/.bracket-pager-arrow) deliberately stays in px, not
+     .bracket-conf-label/.pager-arrow) deliberately stays in px, not
      rem - the connector-line geometry between rounds is pixel-exact math
      tied to .bracket-match's real rendered height (see .bracket-pair-r2 and
      .bracket-pair-captioned below), and letting the text grow with the
@@ -484,20 +476,20 @@ TEMPLATE = """<!DOCTYPE html>
     direction: rtl;
     margin: 0 0 6px;
   }}
-  .bracket-pager-viewport {{ overflow: hidden; touch-action: pan-y; }}
-  .bracket-pager-track {{
+  .pager-viewport {{ overflow: hidden; touch-action: pan-y; }}
+  .pager-track {{
     display: flex;
     transition: transform 0.3s ease;
   }}
-  .bracket-pager-page {{ flex: 0 0 100%; min-width: 0; }}
-  .bracket-pager-nav {{
+  .pager-page {{ flex: 0 0 100%; min-width: 0; }}
+  .pager-nav {{
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
     margin-top: 4px;
   }}
-  .bracket-pager-arrow {{
+  .pager-arrow {{
     width: 32px;
     height: 32px;
     flex-shrink: 0;
@@ -511,7 +503,7 @@ TEMPLATE = """<!DOCTYPE html>
     align-items: center;
     justify-content: center;
   }}
-  .bracket-pager-arrow:disabled {{ opacity: 0.35; cursor: default; }}
+  .pager-arrow:disabled {{ opacity: 0.35; cursor: default; }}
 
   .a11y-overlay {{
     position: fixed;
@@ -1010,19 +1002,22 @@ TEMPLATE = """<!DOCTYPE html>
       }}
     }})();
 
-    (function initBracketPagers() {{
+    (function initPagers() {{
+      // Generic horizontal pager: used for the playoff bracket (2 rounds at
+      // a time) and for standings/Cup-groups (one conference at a time).
       // Pages slide via a CSS transform on the track (translateX in 100%
       // steps) instead of show/hide, so both the arrow buttons and swiping
-      // animate the same smooth way. Ambient direction here is forced ltr
-      // (see _details_block), so "next" moves the track further left, same
-      // as any plain left-to-right carousel.
-      var pagers = document.querySelectorAll(".bracket-pager");
+      // animate the same smooth way. Ambient direction inside a bracket page
+      // is forced ltr (see _details_block); standings pages aren't, but the
+      // same left-to-right "next moves the track further left" logic still
+      // reads fine either way since it's just a physical swipe direction.
+      var pagers = document.querySelectorAll(".pager");
       pagers.forEach(function(pager) {{
-        var viewport = pager.querySelector(".bracket-pager-viewport");
-        var track = pager.querySelector(".bracket-pager-track");
-        var pages = Array.prototype.slice.call(pager.querySelectorAll(".bracket-pager-page"));
-        var prevBtn = pager.querySelector(".bracket-pager-prev");
-        var nextBtn = pager.querySelector(".bracket-pager-next");
+        var viewport = pager.querySelector(".pager-viewport");
+        var track = pager.querySelector(".pager-track");
+        var pages = Array.prototype.slice.call(pager.querySelectorAll(".pager-page"));
+        var prevBtn = pager.querySelector(".pager-prev");
+        var nextBtn = pager.querySelector(".pager-next");
         var index = parseInt(pager.getAttribute("data-page"), 10) || 0;
 
         function render() {{
@@ -1578,7 +1573,7 @@ def _build_standings_html(standings: list[dict]) -> str:
         conferences.setdefault(team["Conference"], []).append(team)
 
     names = {"East": "מזרח", "West": "מערב"}
-    blocks = []
+    pages = []
     for conf_key in ["West", "East"]:
         if conf_key not in conferences:
             continue
@@ -1597,12 +1592,12 @@ def _build_standings_html(standings: list[dict]) -> str:
                 f'<span class="standing-streak {streak_class}">{html.escape(streak)}</span>'
                 "</div>"
             )
-        blocks.append(
+        pages.append(
             f'<div class="conference standings-block"><h3>{names.get(conf_key, conf_key)}</h3>'
             + "\n          ".join(rows)
             + "</div>"
         )
-    return "\n      ".join(blocks)
+    return _build_pager_html(pages)
 
 
 def _pad_series(series_list: list[dict], count: int) -> list[dict | None]:
@@ -1751,6 +1746,26 @@ def _finals_champion_line(series: dict | None) -> str:
 _PLAYOFF_ROUNDS = ["1st Round", "Conf. Semifinals", "Conf. Finals", "NBA Finals"]
 
 
+def _build_pager_html(pages: list[str], start_page: int = 0) -> str:
+    """
+    Generic horizontal pager (one page visible at a time, arrows + swipe,
+    sliding transform) - shared by the playoff bracket (2 rounds at a time)
+    and standings/Cup-group tables (one conference at a time). See
+    initPagers() for the JS driving it.
+    """
+    pages_html = "".join(f'<div class="pager-page">{page_html}</div>' for page_html in pages)
+    return (
+        f'<div class="pager" data-page="{start_page}">'
+        '<div class="pager-viewport">'
+        f'<div class="pager-track">{pages_html}</div>'
+        "</div>"
+        '<div class="pager-nav">'
+        '<button type="button" class="pager-arrow pager-prev" aria-label="הקודם">‹</button>'
+        '<button type="button" class="pager-arrow pager-next" aria-label="הבא">›</button>'
+        "</div></div>"
+    )
+
+
 def _bracket_conf_block(conf_label: str, columns_html: str) -> str:
     return (
         '<div class="bracket-conf-block">'
@@ -1817,24 +1832,12 @@ def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list
         _bracket_page_finals(columns_by_conf, finals_series, conf_by_team),
     ]
 
-    pages_html = "".join(f'<div class="bracket-pager-page">{page_html}</div>' for page_html in pages)
     # The content itself (and everything around it) is forced dir="ltr" (see
     # _details_block) since it's mostly seed numbers/English round names, so
-    # these buttons follow plain left-to-right pagination convention: prev
-    # (‹) sits physically on the left, next (›) on the right - not RTL-
-    # mirrored, since the ambient direction here already isn't RTL either.
-    # The track slides via a CSS transform (see initBracketPagers()), so
-    # swiping and the arrow buttons both animate the same way.
-    return (
-        f'<div class="bracket-pager" data-page="{start_page}">'
-        '<div class="bracket-pager-viewport">'
-        f'<div class="bracket-pager-track">{pages_html}</div>'
-        "</div>"
-        '<div class="bracket-pager-nav">'
-        '<button type="button" class="bracket-pager-arrow bracket-pager-prev" aria-label="השלב הקודם">‹</button>'
-        '<button type="button" class="bracket-pager-arrow bracket-pager-next" aria-label="השלב הבא">›</button>'
-        "</div></div>"
-    )
+    # the pager's arrows follow plain left-to-right pagination convention:
+    # prev (‹) sits physically on the left, next (›) on the right - not
+    # RTL-mirrored, since the ambient direction here already isn't RTL.
+    return _build_pager_html(pages, start_page)
 
 
 def _play_in_bracket_match_html(game: dict | None, caption: str) -> str:
@@ -2109,8 +2112,12 @@ def _build_cup_group_standings_html(cup_group_standings: list[dict]) -> str:
             + "</div>"
         )
 
-    result = "\n      ".join(conf_blocks)
+    result = _build_pager_html(conf_blocks)
     if found_wildcard:
+        # Shown outside/below the pager itself (not per-page) since either
+        # conference's page can carry the WC badge - stays visible no matter
+        # which one is currently showing, same as when both were always
+        # visible together before.
         result += (
             '\n      <p class="wildcard-legend" dir="rtl">'
             "WC - הסגנית עם המאזן הטוב ביותר.</p>"
@@ -2144,17 +2151,11 @@ def _build_secondary_section(data: dict) -> str:
         playoff_series = data.get("playoff_series", [])
         sections = [("בראקט הפלייאוף", _build_combined_playoff_bracket_html(playoff_series, data["games"]))]
     else:
-        standings_section = (
-            "טבלת הליגה",
-            f'<div class="conferences">{_build_standings_html(data["standings"])}</div>',
-        )
+        standings_section = ("טבלת הליגה", _build_standings_html(data["standings"]))
         sections = []
         if data.get("is_cup_groups"):
             sections.append(
-                (
-                    "בתי הגביע",
-                    f'<div class="conferences">{_build_cup_group_standings_html(data.get("cup_group_standings", []))}</div>',
-                )
+                ("בתי הגביע", _build_cup_group_standings_html(data.get("cup_group_standings", [])))
             )
         if data.get("is_cup_knockout"):
             sections.append(("בראקט הגביע", _build_cup_bracket_html(data.get("cup_bracket", []))))

@@ -211,14 +211,6 @@
     margin-top: 6px;
   }
 
-  .conferences {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  @media (min-width: 480px) {
-    .conferences { grid-template-columns: 1fr 1fr; }
-  }
   .conference h3 {
     font-size: 0.8125rem;
     color: var(--accent);
@@ -292,7 +284,7 @@
   }
 
   /* Every font-size inside the bracket diagram (this section down through
-     .bracket-conf-label/.bracket-pager-arrow) deliberately stays in px, not
+     .bracket-conf-label/.pager-arrow) deliberately stays in px, not
      rem - the connector-line geometry between rounds is pixel-exact math
      tied to .bracket-match's real rendered height (see .bracket-pair-r2 and
      .bracket-pair-captioned below), and letting the text grow with the
@@ -467,20 +459,20 @@
     direction: rtl;
     margin: 0 0 6px;
   }
-  .bracket-pager-viewport { overflow: hidden; touch-action: pan-y; }
-  .bracket-pager-track {
+  .pager-viewport { overflow: hidden; touch-action: pan-y; }
+  .pager-track {
     display: flex;
     transition: transform 0.3s ease;
   }
-  .bracket-pager-page { flex: 0 0 100%; min-width: 0; }
-  .bracket-pager-nav {
+  .pager-page { flex: 0 0 100%; min-width: 0; }
+  .pager-nav {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
     margin-top: 4px;
   }
-  .bracket-pager-arrow {
+  .pager-arrow {
     width: 32px;
     height: 32px;
     flex-shrink: 0;
@@ -494,7 +486,7 @@
     align-items: center;
     justify-content: center;
   }
-  .bracket-pager-arrow:disabled { opacity: 0.35; cursor: default; }
+  .pager-arrow:disabled { opacity: 0.35; cursor: default; }
 
   .a11y-overlay {
     position: fixed;
@@ -914,7 +906,7 @@
       <details class="tab-section">
       <summary>בתי הגביע</summary>
       <div class="details-body" dir="ltr">
-        <div class="conferences"><div class="conference standings-block"><h3>מערב</h3><div class="cup-group"><h4>Group A</h4><div class="standing-row boundary"><span class="standing-team">Oklahoma City Thunder</span><span class="standing-record">4-0</span><span class="standing-diff">+75</span></div>
+        <div class="pager" data-page="0"><div class="pager-viewport"><div class="pager-track"><div class="pager-page"><div class="conference standings-block"><h3>מערב</h3><div class="cup-group"><h4>Group A</h4><div class="standing-row boundary"><span class="standing-team">Oklahoma City Thunder</span><span class="standing-record">4-0</span><span class="standing-diff">+75</span></div>
             <div class="standing-row"><span class="standing-team">Phoenix Suns <span class="wildcard-badge">WC</span></span><span class="standing-record">3-1</span><span class="standing-diff">+31</span></div>
             <div class="standing-row"><span class="standing-team">Minnesota Timberwolves</span><span class="standing-record">2-2</span><span class="standing-diff">+45</span></div>
             <div class="standing-row"><span class="standing-team">Utah Jazz</span><span class="standing-record">1-3</span><span class="standing-diff">-85</span></div>
@@ -928,8 +920,7 @@
             <div class="standing-row"><span class="standing-team">Denver Nuggets</span><span class="standing-record">2-2</span><span class="standing-diff">+23</span></div>
             <div class="standing-row"><span class="standing-team">Houston Rockets</span><span class="standing-record">2-2</span><span class="standing-diff">+14</span></div>
             <div class="standing-row"><span class="standing-team">Portland Trail Blazers</span><span class="standing-record">2-2</span><span class="standing-diff">-31</span></div>
-            <div class="standing-row"><span class="standing-team">Golden State Warriors</span><span class="standing-record">1-3</span><span class="standing-diff">-32</span></div></div></div>
-      <div class="conference standings-block"><h3>מזרח</h3><div class="cup-group"><h4>Group A</h4><div class="standing-row boundary"><span class="standing-team">Toronto Raptors</span><span class="standing-record">4-0</span><span class="standing-diff">+55</span></div>
+            <div class="standing-row"><span class="standing-team">Golden State Warriors</span><span class="standing-record">1-3</span><span class="standing-diff">-32</span></div></div></div></div><div class="pager-page"><div class="conference standings-block"><h3>מזרח</h3><div class="cup-group"><h4>Group A</h4><div class="standing-row boundary"><span class="standing-team">Toronto Raptors</span><span class="standing-record">4-0</span><span class="standing-diff">+55</span></div>
             <div class="standing-row"><span class="standing-team">Cleveland Cavaliers</span><span class="standing-record">2-2</span><span class="standing-diff">+26</span></div>
             <div class="standing-row"><span class="standing-team">Atlanta Hawks</span><span class="standing-record">2-2</span><span class="standing-diff">-4</span></div>
             <div class="standing-row"><span class="standing-team">Indiana Pacers</span><span class="standing-record">1-3</span><span class="standing-diff">0</span></div>
@@ -943,15 +934,15 @@
             <div class="standing-row"><span class="standing-team">New York Knicks <span class="wildcard-badge">WC</span></span><span class="standing-record">3-1</span><span class="standing-diff">+35</span></div>
             <div class="standing-row"><span class="standing-team">Milwaukee Bucks</span><span class="standing-record">2-2</span><span class="standing-diff">+17</span></div>
             <div class="standing-row"><span class="standing-team">Chicago Bulls</span><span class="standing-record">1-3</span><span class="standing-diff">-49</span></div>
-            <div class="standing-row"><span class="standing-team">Charlotte Hornets</span><span class="standing-record">1-3</span><span class="standing-diff">-52</span></div></div></div>
-      <p class="wildcard-legend" dir="rtl">WC - הסגנית עם המאזן הטוב ביותר.</p></div>
+            <div class="standing-row"><span class="standing-team">Charlotte Hornets</span><span class="standing-record">1-3</span><span class="standing-diff">-52</span></div></div></div></div></div></div><div class="pager-nav"><button type="button" class="pager-arrow pager-prev" aria-label="הקודם">‹</button><button type="button" class="pager-arrow pager-next" aria-label="הבא">›</button></div></div>
+      <p class="wildcard-legend" dir="rtl">WC - הסגנית עם המאזן הטוב ביותר.</p>
       </div>
     </details>
 
     <details class="tab-section">
       <summary>טבלת הליגה</summary>
       <div class="details-body" dir="ltr">
-        <div class="conferences"><div class="conference standings-block"><h3>מערב</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Oklahoma City Thunder</span><span class="standing-record">64-18</span><span class="standing-streak loss">L 2</span></div>
+        <div class="pager" data-page="0"><div class="pager-viewport"><div class="pager-track"><div class="pager-page"><div class="conference standings-block"><h3>מערב</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Oklahoma City Thunder</span><span class="standing-record">64-18</span><span class="standing-streak loss">L 2</span></div>
           <div class="standing-row"><span class="standing-rank">2</span><span class="standing-team">San Antonio Spurs</span><span class="standing-record">62-20</span><span class="standing-streak loss">L 1</span></div>
           <div class="standing-row"><span class="standing-rank">3</span><span class="standing-team">Denver Nuggets</span><span class="standing-record">54-28</span><span class="standing-streak win">W 12</span></div>
           <div class="standing-row"><span class="standing-rank">4</span><span class="standing-team">Los Angeles Lakers</span><span class="standing-record">53-29</span><span class="standing-streak win">W 3</span></div>
@@ -965,8 +956,7 @@
           <div class="standing-row"><span class="standing-rank">12</span><span class="standing-team">Dallas Mavericks</span><span class="standing-record">26-56</span><span class="standing-streak win">W 1</span></div>
           <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Memphis Grizzlies</span><span class="standing-record">25-57</span><span class="standing-streak loss">L 8</span></div>
           <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Sacramento Kings</span><span class="standing-record">22-60</span><span class="standing-streak loss">L 1</span></div>
-          <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Utah Jazz</span><span class="standing-record">22-60</span><span class="standing-streak loss">L 1</span></div></div>
-      <div class="conference standings-block"><h3>מזרח</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Detroit Pistons</span><span class="standing-record">60-22</span><span class="standing-streak win">W 3</span></div>
+          <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Utah Jazz</span><span class="standing-record">22-60</span><span class="standing-streak loss">L 1</span></div></div></div><div class="pager-page"><div class="conference standings-block"><h3>מזרח</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Detroit Pistons</span><span class="standing-record">60-22</span><span class="standing-streak win">W 3</span></div>
           <div class="standing-row"><span class="standing-rank">2</span><span class="standing-team">Boston Celtics</span><span class="standing-record">56-26</span><span class="standing-streak win">W 2</span></div>
           <div class="standing-row"><span class="standing-rank">3</span><span class="standing-team">New York Knicks</span><span class="standing-record">53-29</span><span class="standing-streak loss">L 1</span></div>
           <div class="standing-row"><span class="standing-rank">4</span><span class="standing-team">Cleveland Cavaliers</span><span class="standing-record">52-30</span><span class="standing-streak win">W 1</span></div>
@@ -980,7 +970,7 @@
           <div class="standing-row"><span class="standing-rank">12</span><span class="standing-team">Chicago Bulls</span><span class="standing-record">31-51</span><span class="standing-streak loss">L 2</span></div>
           <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Brooklyn Nets</span><span class="standing-record">20-62</span><span class="standing-streak loss">L 3</span></div>
           <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Indiana Pacers</span><span class="standing-record">19-63</span><span class="standing-streak loss">L 2</span></div>
-          <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Washington Wizards</span><span class="standing-record">17-65</span><span class="standing-streak loss">L 10</span></div></div></div>
+          <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Washington Wizards</span><span class="standing-record">17-65</span><span class="standing-streak loss">L 10</span></div></div></div></div></div><div class="pager-nav"><button type="button" class="pager-arrow pager-prev" aria-label="הקודם">‹</button><button type="button" class="pager-arrow pager-next" aria-label="הבא">›</button></div></div>
       </div>
     </details>
     </main>
@@ -1079,19 +1069,22 @@
       }
     })();
 
-    (function initBracketPagers() {
+    (function initPagers() {
+      // Generic horizontal pager: used for the playoff bracket (2 rounds at
+      // a time) and for standings/Cup-groups (one conference at a time).
       // Pages slide via a CSS transform on the track (translateX in 100%
       // steps) instead of show/hide, so both the arrow buttons and swiping
-      // animate the same smooth way. Ambient direction here is forced ltr
-      // (see _details_block), so "next" moves the track further left, same
-      // as any plain left-to-right carousel.
-      var pagers = document.querySelectorAll(".bracket-pager");
+      // animate the same smooth way. Ambient direction inside a bracket page
+      // is forced ltr (see _details_block); standings pages aren't, but the
+      // same left-to-right "next moves the track further left" logic still
+      // reads fine either way since it's just a physical swipe direction.
+      var pagers = document.querySelectorAll(".pager");
       pagers.forEach(function(pager) {
-        var viewport = pager.querySelector(".bracket-pager-viewport");
-        var track = pager.querySelector(".bracket-pager-track");
-        var pages = Array.prototype.slice.call(pager.querySelectorAll(".bracket-pager-page"));
-        var prevBtn = pager.querySelector(".bracket-pager-prev");
-        var nextBtn = pager.querySelector(".bracket-pager-next");
+        var viewport = pager.querySelector(".pager-viewport");
+        var track = pager.querySelector(".pager-track");
+        var pages = Array.prototype.slice.call(pager.querySelectorAll(".pager-page"));
+        var prevBtn = pager.querySelector(".pager-prev");
+        var nextBtn = pager.querySelector(".pager-next");
         var index = parseInt(pager.getAttribute("data-page"), 10) || 0;
 
         function render() {
