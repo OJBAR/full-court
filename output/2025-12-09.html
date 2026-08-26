@@ -483,6 +483,12 @@
     color: var(--text-muted);
     margin-bottom: 8px;
   }
+  .settings-box {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .settings-box .a11y-field:last-child { margin-bottom: 0; }
   .settings-theme-row {
     display: flex;
     align-items: center;
@@ -504,11 +510,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-  .settings-divider {
-    height: 1px;
-    background: var(--border);
-    margin: 18px 0;
   }
   .settings-about-text {
     font-size: 13px;
@@ -854,32 +855,34 @@
         <button class="a11y-panel-close" onclick="closeSettingsOverlays()" aria-label="סגור הגדרות">✕</button>
       </div>
 
-      <span class="a11y-field-label">התאמות אישיות</span>
-      <div class="settings-theme-row">
-        <span>מצב תצוגה</span>
-        <button type="button" class="settings-theme-btn" id="settings-theme-btn" onclick="toggleTheme()" aria-label="החלף תצוגה בהירה/כהה">🌙</button>
-      </div>
-      <div class="a11y-field">
-        <span class="a11y-field-label" id="a11y-fontsize-label">גודל טקסט</span>
-        <div class="a11y-fontsize-options" role="group" aria-labelledby="a11y-fontsize-label">
-          <button type="button" class="a11y-fontsize-btn a11y-fontsize-sm" data-fontsize="normal" aria-pressed="true" aria-label="גודל טקסט רגיל" onclick="setFontSize('normal')">א</button>
-          <button type="button" class="a11y-fontsize-btn a11y-fontsize-md" data-fontsize="large" aria-pressed="false" aria-label="גודל טקסט גדול" onclick="setFontSize('large')">א</button>
-          <button type="button" class="a11y-fontsize-btn a11y-fontsize-lg" data-fontsize="xlarge" aria-pressed="false" aria-label="גודל טקסט גדול מאוד" onclick="setFontSize('xlarge')">א</button>
+      <div class="settings-box">
+        <span class="a11y-field-label">התאמות אישיות</span>
+        <div class="settings-theme-row">
+          <span>מצב תצוגה</span>
+          <button type="button" class="settings-theme-btn" id="settings-theme-btn" onclick="toggleTheme()" aria-label="החלף תצוגה בהירה/כהה">🌙</button>
+        </div>
+        <div class="a11y-field">
+          <span class="a11y-field-label" id="a11y-fontsize-label">גודל טקסט</span>
+          <div class="a11y-fontsize-options" role="group" aria-labelledby="a11y-fontsize-label">
+            <button type="button" class="a11y-fontsize-btn a11y-fontsize-sm" data-fontsize="normal" aria-pressed="true" aria-label="גודל טקסט רגיל" onclick="setFontSize('normal')">א</button>
+            <button type="button" class="a11y-fontsize-btn a11y-fontsize-md" data-fontsize="large" aria-pressed="false" aria-label="גודל טקסט גדול" onclick="setFontSize('large')">א</button>
+            <button type="button" class="a11y-fontsize-btn a11y-fontsize-lg" data-fontsize="xlarge" aria-pressed="false" aria-label="גודל טקסט גדול מאוד" onclick="setFontSize('xlarge')">א</button>
+          </div>
         </div>
       </div>
 
-      <div class="settings-divider"></div>
-
-      <span class="a11y-field-label">אודות</span>
-      <p class="settings-about-text">יש הערה, באג, או הצעה לשיפור? אשמח לשמוע.</p>
-      <a class="a11y-link-btn" href="https://github.com/OJBAR/full-court/issues/new" target="_blank" rel="noopener">GitHub Issues</a>
-      <div class="email-row">
-        <a class="a11y-link-btn" href="mailto:ojbar30@gmail.com?subject=%D7%A4%D7%A0%D7%99%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT:+%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%99%D7%94">ojbar30@gmail.com</a>
-        <button type="button" class="copy-email-btn" onclick="copyEmailAddress(this)" aria-label="העתק את כתובת המייל">📋</button>
-      </div>
-      <button type="button" class="a11y-link-btn" onclick="openA11yStatement()">הצהרת נגישות</button>
-
-      <div class="settings-divider"></div>
+      <details class="settings-about">
+        <summary>אודות</summary>
+        <div class="details-body">
+          <p class="settings-about-text">יש הערה, באג, או הצעה לשיפור? אשמח לשמוע.</p>
+          <a class="a11y-link-btn" href="https://github.com/OJBAR/full-court/issues/new" target="_blank" rel="noopener">GitHub Issues</a>
+          <div class="email-row">
+            <a class="a11y-link-btn" href="mailto:ojbar30@gmail.com?subject=%D7%A4%D7%A0%D7%99%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT:+%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%99%D7%94">ojbar30@gmail.com</a>
+            <button type="button" class="copy-email-btn" onclick="copyEmailAddress(this)" aria-label="העתק את כתובת המייל">📋</button>
+          </div>
+          <button type="button" class="a11y-link-btn" onclick="openA11yStatement()">הצהרת נגישות</button>
+        </div>
+      </details>
 
       <div class="beta-note">גרסת בטא · <a href="demos.html">מעבר בין דמואים</a></div>
     </div>
@@ -1256,6 +1259,7 @@
       function showSummary() {
         home.classList.add("hidden");
         if (summaryDiv) summaryDiv.classList.add("app-screen-active");
+        sections.forEach(function(section) { section.open = false; });
         main.scrollIntoView({ behavior: "smooth", block: "start" });
       }
       // No dedicated back button - returning home is done by tapping the
