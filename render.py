@@ -1011,15 +1011,15 @@ def _build_play_in_conference_bracket_html(conf_games: list[dict]) -> str:
 
     round1_pair = (
         '<div class="bracket-pair">'
-        f'{_play_in_bracket_match_html(seven_eight, "מנצח = seed 7 (עולה ישירות)")}'
-        f'{_play_in_bracket_match_html(nine_ten, "מפסיד מודח")}'
+        f'{_play_in_bracket_match_html(seven_eight, "המנצחת עולה לפלייאוף מהמקום ה-7")}'
+        f'{_play_in_bracket_match_html(nine_ten, "המפסיד מודחת")}'
         "</div>"
     )
-    decider_cell = _play_in_bracket_match_html(decider, "מנצח = seed 8")
+    decider_cell = _play_in_bracket_match_html(decider, "המנצחת עולה לפלייאוף מהמקום ה-8")
 
     columns = [
-        _bracket_column_html("סיבוב ראשון", f'<div class="bracket-round">{round1_pair}</div>'),
-        _bracket_column_html("קרב הכרעה", f'<div class="bracket-round bracket-final">{decider_cell}</div>'),
+        f'<div class="bracket-column"><div class="bracket-round">{round1_pair}</div></div>',
+        f'<div class="bracket-column"><div class="bracket-round bracket-final">{decider_cell}</div></div>',
     ]
     return f'<div class="bracket">{"".join(columns)}</div>'
 
