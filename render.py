@@ -344,6 +344,20 @@ TEMPLATE = """<!DOCTYPE html>
     margin-top: -1px;
     background: var(--text-muted);
   }}
+  /* A round-2 pair (Conf. Semifinals / Cup Semifinals) needs a bigger internal
+     gap than a round-1 pair. Its two matches individually need to line up
+     with the vertical centers of the two round-1 PAIRS feeding them, not just
+     be evenly spaced within the column - round-1 pairs are already spread out
+     by a match's height (56px) + round-1's own internal gap (16px) + the gap
+     between pairs in a round (20px) = 92px between their centers, so the
+     round-2 pair's own internal gap has to match that same 92px, not the
+     plain 16px used one round earlier. Without this, a round-2 match's own
+     center silently drifts away from the round-1 connector aimed at it (this
+     is exactly why the connector looked disconnected - not a color/width
+     issue, the target coordinate itself was off by ~38px in one demo).
+     Coupled to bracket-match's real rendered height (56px) via the constants
+     above - update this if that height ever changes. */
+  .bracket-pair-r2 {{ gap: 92px; }}
   .bracket-match {{
     width: 128px;
     flex-shrink: 0;
@@ -1030,7 +1044,7 @@ def _build_conference_bracket_html(playoff_series: list[dict], conference: str) 
         if half:
             semis_by_half[half] = series
     semis_slots = [semis_by_half.get("A"), semis_by_half.get("B")]
-    semis_pair = f'<div class="bracket-pair">{"".join(_bracket_series_html(s) for s in semis_slots)}</div>'
+    semis_pair = f'<div class="bracket-pair bracket-pair-r2">{"".join(_bracket_series_html(s) for s in semis_slots)}</div>'
 
     final_column = _bracket_series_html(finals[0] if finals else None)
 
@@ -1286,7 +1300,7 @@ def _build_cup_bracket_html(cup_bracket: list[dict]) -> str:
             sf_matches_html.append(_bracket_projected_match_html(projected_sf_by_conf[conf]))
         else:
             sf_matches_html.append(_bracket_match_html(None))
-    sf_pair = f'<div class="bracket-pair">{"".join(sf_matches_html)}</div>'
+    sf_pair = f'<div class="bracket-pair bracket-pair-r2">{"".join(sf_matches_html)}</div>'
 
     if final:
         final_column = _bracket_match_html(final[0])
