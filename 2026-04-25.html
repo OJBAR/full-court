@@ -412,19 +412,6 @@
     border: 1px solid var(--border);
     border-radius: 4px;
   }
-  .conf-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 14px;
-    height: 14px;
-    border-radius: 3px;
-    font-size: 9px;
-    font-weight: 700;
-    color: #fff;
-  }
-  .conf-badge-east { background: #3b6fd6; }
-  .conf-badge-west { background: #c0392b; }
   .bracket-record {
     font-size: 9px;
     font-weight: 400;
@@ -518,7 +505,8 @@
     color: var(--text-heading);
     margin: 0;
   }
-  .a11y-panel-close {
+  .a11y-panel-close,
+  .a11y-panel-back {
     width: 30px;
     height: 30px;
     flex-shrink: 0;
@@ -532,6 +520,7 @@
     align-items: center;
     justify-content: center;
   }
+  .a11y-panel-back { font-size: 18px; }
   .a11y-field-label {
     display: block;
     font-size: 0.8125rem;
@@ -719,15 +708,14 @@
     align-items: center;
     gap: 10px;
     text-align: right;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
+    padding-bottom: 6px;
+    margin-bottom: 6px;
   }
-  :root.tabs-mode .header .logo-img { height: 28px; margin: 0; }
-  :root.tabs-mode .header-text { display: flex; flex-direction: column; gap: 1px; }
-  :root.tabs-mode .header h1 { margin: 0; }
-  /* The date moves from the (now very slim) header down into the summary
-     screen itself instead - .summary-date is a plain duplicate of the same
-     text, hidden everywhere except app mode so it never shows twice. */
+  :root.tabs-mode .header .logo-img { height: 22px; margin: 0; }
+  /* Title and date both move out of the header entirely in app mode - just
+     the logo remains, as compact as possible - the date reappears at the
+     top of the summary screen instead (see .summary-date below). */
+  :root.tabs-mode .header h1,
   :root.tabs-mode .header .date { display: none; }
   .summary-date { display: none; }
   :root.tabs-mode .summary-date {
@@ -959,6 +947,7 @@
   <div class="a11y-overlay" id="a11y-statement-overlay" hidden onclick="if (event.target === this) closeSettingsOverlays()">
     <div class="a11y-panel" role="dialog" aria-modal="true" aria-labelledby="a11y-statement-title">
       <div class="a11y-panel-header">
+        <button class="a11y-panel-back" onclick="switchOverlay('settings-overlay')" aria-label="חזור להגדרות">‹</button>
         <h2 id="a11y-statement-title">הצהרת נגישות</h2>
         <button class="a11y-panel-close" onclick="closeSettingsOverlays()" aria-label="סגור הצהרת נגישות">✕</button>
       </div>
