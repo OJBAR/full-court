@@ -733,7 +733,17 @@
   :root.tabs-mode .header .logo-img { height: 28px; margin: 0; }
   :root.tabs-mode .header-text { display: flex; flex-direction: column; gap: 1px; }
   :root.tabs-mode .header h1 { margin: 0; }
-  :root.tabs-mode .header .date { margin-top: 0; }
+  /* The date moves from the (now very slim) header down into the summary
+     screen itself instead - .summary-date is a plain duplicate of the same
+     text, hidden everywhere except app mode so it never shows twice. */
+  :root.tabs-mode .header .date { display: none; }
+  .summary-date { display: none; }
+  :root.tabs-mode .summary-date {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    margin-bottom: 10px;
+  }
   :root.tabs-mode main {
     flex: 1;
     min-height: 0;
@@ -875,6 +885,7 @@
     </header>
     <main>
       <div class="summary">
+        <div class="summary-date">30/05/2026, הלילה בין שבת לראשון</div>
         <p>דרמה בשיא הטהרה שלה - משחק שביעי מכריע בגמר הקונפרנס, והספרס הם אלה שבקעו את הדלת אל הגמר הגדול. סן אנטוניו ניצחה את אוקלהומה סיטי 111-103 במשחק ההכרעה, וסגרה סדרה מותחת עם היתרון הסופי 4-3, בדרך שמזכירה שבפלייאוף לא תמיד המדורגת הגבוהה יותר היא זו שמצליחה לסיים את העבודה.</p>
       <p>ת&#x27;אנדר לא הלכו בלי קרב - שיי גילג&#x27;ס-אלכסנדר סיפק עוד תזכורת לגודל שלו עם 35 נקודות, 4 ריבאונדים ו-9 אסיסטים, אבל הפעם זה לא הספיק כדי להשלים את המהפך ולדחוף את הסדרה למקום אחר. עונתם של הת&#x27;אנדר מסתיימת כאן, בעוד שהספרס ממשיכים הלאה עם המומנטום של ניצחון במשחק השביעי בחוץ.</p>
       <p>מחוץ לפרקט, ספרס מקבלים תזכורת פחות נעימה: ג&#x27;יידן קוויינטנס עבר ניתוח בברך ימין ביום רביעי ואין לו לוח זמנים לחזרה, כך שהוא לא היה חלק מהחגיגות הלילה.</p>

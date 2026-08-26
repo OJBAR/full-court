@@ -733,7 +733,17 @@
   :root.tabs-mode .header .logo-img { height: 28px; margin: 0; }
   :root.tabs-mode .header-text { display: flex; flex-direction: column; gap: 1px; }
   :root.tabs-mode .header h1 { margin: 0; }
-  :root.tabs-mode .header .date { margin-top: 0; }
+  /* The date moves from the (now very slim) header down into the summary
+     screen itself instead - .summary-date is a plain duplicate of the same
+     text, hidden everywhere except app mode so it never shows twice. */
+  :root.tabs-mode .header .date { display: none; }
+  .summary-date { display: none; }
+  :root.tabs-mode .summary-date {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    margin-bottom: 10px;
+  }
   :root.tabs-mode main {
     flex: 1;
     min-height: 0;
@@ -875,6 +885,7 @@
     </header>
     <main>
       <div class="summary">
+        <div class="summary-date">09/12/2025, הלילה בין שלישי לרביעי</div>
         <p>לילה חם בשלב הנוקאאוט של גביע ה-NBA, כשברבע הגמר המזרחי שני מפגשים הסתיימו בהכרעות ברורות ושלחו קבוצה אחת הביתה מהטורניר בעוד השנייה ממשיכה הלאה.</p>
       <p>באורלנדו, המאג&#x27;יק הדיחו את מיאמי היט בניצחון 117-108, כשדזמונדביין היה הכוכב הבלתי מעורער של הערב עם 37 נקודות, לצד 6 ריבאונדים ו-5 אסיסטים. ביצוע כזה בערב עם משקל של הדחה או המשך דרך זה בדיוק מה שאורלנדו הייתה זקוקה לו, ומיאמי נשארת מחוץ להמשך התחרות על התואר.</p>
       <p>במשחק המקביל, ניו יורק ניקס המשיכו הלאה על חשבון טורונטו ראפטורס בניצחון מרשים 117-101. ג&#x27;יילן ברנסון הוביל את הניקס עם 35 נקודות, וקארל אנתוני טאונס תרם דאבל-דאבל מוצק עם 14 נקודות ו-16 ריבאונדים ששלט בפריטים. מנגד, בראנדון אינגרם ניסה להשאיר את הראפטורס בתמונה עם 31 נקודות, 6 ריבאונדים ו-6 אסיסטים, אך זה לא הספיק מול הביצוע הקבוצתי של ניו יורק, שממשיכה קדימה בטורניר הגביע בעוד טורונטו יוצאת מחוץ למרוץ.</p>

@@ -733,7 +733,17 @@
   :root.tabs-mode .header .logo-img { height: 28px; margin: 0; }
   :root.tabs-mode .header-text { display: flex; flex-direction: column; gap: 1px; }
   :root.tabs-mode .header h1 { margin: 0; }
-  :root.tabs-mode .header .date { margin-top: 0; }
+  /* The date moves from the (now very slim) header down into the summary
+     screen itself instead - .summary-date is a plain duplicate of the same
+     text, hidden everywhere except app mode so it never shows twice. */
+  :root.tabs-mode .header .date { display: none; }
+  .summary-date { display: none; }
+  :root.tabs-mode .summary-date {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    margin-bottom: 10px;
+  }
   :root.tabs-mode main {
     flex: 1;
     min-height: 0;
@@ -875,6 +885,7 @@
     </header>
     <main>
       <div class="summary">
+        <div class="summary-date">17/04/2026, הלילה בין שישי לשבת</div>
         <p>ליל פליי-אין שקבע סופית מי ממשיך הלילה לפלייאוף ומי הולך הביתה - שני משחקי הכרעה על ה-seed השמיני, בלי מקום לטעויות.</p>
       <p>באורלנדו לא היה הרבה מתח: המג&#x27;יק דהרו קדימה מהצלצול הראשון וסיימו עם ניצחון מוחץ 121-90 על שרלוט. הורנטס, שהגיעו למשחק ההכרעה הזה אחרי דרך ארוכה, נשארו מאחור לאורך כל המפגש ומסיימים בכך את העונה שלהם, בעוד אורלנדו מבטיחים את המקום השמיני ועולים לפלייאוף.</p>
       <p>הרבה יותר מעניין קרה בפיניקס, שם הסאנס גברו על גולדן סטייט 111-96 ובכך שלחו את הוריורס הביתה במה שהיה עבורם המשחק השלישי ברצף שהסתיים בהפסד. ג&#x27;יילן גרין היה הכוכב הבולט של הערב עם 36 נקודות, 6 ריבאונדים ו-4 אסיסטים, וסחף את פיניקס למקום השמיני בפלייאוף. אצל גולדן סטייט, העונה מסתיימת בצל פציעות כואבות: ג&#x27;ימי באטלר נעדר כשהוא עדיין בשלבים המוקדמים של שיקום הברך, ומוזס מודי לא שיחק בעקבות קרע בגיד הפיקה בברך שמאל - שני חסרים משמעותיים שליוו את הקבוצה בסיום עונה מאכזב.</p>

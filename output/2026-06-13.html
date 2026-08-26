@@ -733,7 +733,17 @@
   :root.tabs-mode .header .logo-img { height: 28px; margin: 0; }
   :root.tabs-mode .header-text { display: flex; flex-direction: column; gap: 1px; }
   :root.tabs-mode .header h1 { margin: 0; }
-  :root.tabs-mode .header .date { margin-top: 0; }
+  /* The date moves from the (now very slim) header down into the summary
+     screen itself instead - .summary-date is a plain duplicate of the same
+     text, hidden everywhere except app mode so it never shows twice. */
+  :root.tabs-mode .header .date { display: none; }
+  .summary-date { display: none; }
+  :root.tabs-mode .summary-date {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    margin-bottom: 10px;
+  }
   :root.tabs-mode main {
     flex: 1;
     min-height: 0;
@@ -875,6 +885,7 @@
     </header>
     <main>
       <div class="summary">
+        <div class="summary-date">13/06/2026, הלילה בין שבת לראשון</div>
         <p>ניו יורק היא אלופת ה-NBA. הניקס גברו הלילה על סן אנטוניו ספרס 94-90 במשחק החמישי של הגמר, וסגרו את הסדרה 4-1 בדרך לתואר. זה היה משחק צמוד עד הסוף, כשג&#x27;יילן בראנסון היה הכוכב הבלתי מעורער עם ערב קלעים מדהים של 45 נקודה שהוביל את קבוצתו לתואר. מנגד, קארל אנתוני טאונס נעלם כמעט לגמרי מהתמונה ההתקפית - רק 2 נקודות, לצד 10 ריבאונדים, לילה חלש מאוד ביחס לממוצע העונתי שלו של 20.1 נקודות למשחק, אבל זה כלל לא הפריע לניו יורק לחגוג. אצל ספרס, ג&#x27;יידן קוויינטנס נעדר מהמשחק לאחר שעבר בשבוע שעבר ניתוח בברך ימין וללא לוח זמנים ברור לחזרה - סיום עונה קשה במיוחד עבור הקבוצה המפסידה בגמר.</p>
       </div>
 

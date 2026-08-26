@@ -733,7 +733,17 @@
   :root.tabs-mode .header .logo-img { height: 28px; margin: 0; }
   :root.tabs-mode .header-text { display: flex; flex-direction: column; gap: 1px; }
   :root.tabs-mode .header h1 { margin: 0; }
-  :root.tabs-mode .header .date { margin-top: 0; }
+  /* The date moves from the (now very slim) header down into the summary
+     screen itself instead - .summary-date is a plain duplicate of the same
+     text, hidden everywhere except app mode so it never shows twice. */
+  :root.tabs-mode .header .date { display: none; }
+  .summary-date { display: none; }
+  :root.tabs-mode .summary-date {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    margin-bottom: 10px;
+  }
   :root.tabs-mode main {
     flex: 1;
     min-height: 0;
@@ -875,6 +885,7 @@
     </header>
     <main>
       <div class="summary">
+        <div class="summary-date">28/11/2025, הלילה בין שישי לשבת</div>
         <p>לילה עמוס במיוחד בסימן שלב הבתים של גביע ה-NBA, עם 11 משחקים ולא מעט דרמה קלעים.</p>
       <p>בקליבלנד-אטלנטה נפלה התוצאה הגבוהה ביותר של הערב, כשהוקס גברו 130-123. ג&#x27;יילן ג&#x27;markonson (Johnson) חתם טריפל-דאבל של 29 נקודות, 12 ריבאונדים ו-12 אסיסטים, ניקיל אלכסנדר-ווקר הוסיף 30 נקודות משלו, אבל כל זה כמעט לא הספיק מול דונובן מיטשל שהתפרע עם 42 נקודות בהפסד של קאבלירס.</p>
       <p>בפילדלפיה סיקסרס פרקו את נטס 115-103, בהמשך לרצף הפסדים מטריד של שלושה משחקים לברוקלין. מצד שני דטרויט ממשיכה לגלגל, אך הפעם נעצרה - אורלנדו ניצחה 112-109 במשחק צמוד שגם סווג כהפתעה משמעותית, כשהמג&#x27;יק המדורגת נמוך גברה על הפיסטונס המדורגים גבוה בהרבה. קייד קנינגהאם היה מדהים עם 39 נקודות, 13 ריבאונדים ו-11 אסיסטים בטריפל-דאבל, אבל דזמונדביין ענה עם 37 נקודות ואורלנדו לקחה את הניצחון.</p>

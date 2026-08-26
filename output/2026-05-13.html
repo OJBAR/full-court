@@ -733,7 +733,17 @@
   :root.tabs-mode .header .logo-img { height: 28px; margin: 0; }
   :root.tabs-mode .header-text { display: flex; flex-direction: column; gap: 1px; }
   :root.tabs-mode .header h1 { margin: 0; }
-  :root.tabs-mode .header .date { margin-top: 0; }
+  /* The date moves from the (now very slim) header down into the summary
+     screen itself instead - .summary-date is a plain duplicate of the same
+     text, hidden everywhere except app mode so it never shows twice. */
+  :root.tabs-mode .header .date { display: none; }
+  .summary-date { display: none; }
+  :root.tabs-mode .summary-date {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    margin-bottom: 10px;
+  }
   :root.tabs-mode main {
     flex: 1;
     min-height: 0;
@@ -875,6 +885,7 @@
     </header>
     <main>
       <div class="summary">
+        <div class="summary-date">13/05/2026, הלילה בין רביעי לחמישי</div>
         <p>קליבלנד עם היד על הגרון, אבל הצליחה לשרוד עוד לילה אחד בפלייאוף. הקאבלירס גברו על דטרויט 117-113 בהארכה במשחק 5 דרמטי, ועכשיו מובילים בסדרה 3-2 עם סיכוי לסגור את העניינים במשחק הבא. התוצאה הזו נחשבת להפתעה לא קטנה - קליבלנד, המדורגת רביעית, ניצחה את פיסטונס המדורגת ראשונה, ורמזה שהיתרון בטבלה לא תמיד מתורגם לפרקט.</p>
       <p>הכוכב הגדול של הערב היה קייד קנינגהם מדטרויט, שניסה לבדו למנוע את ההפסד עם ערב מטורף של 39 נקודות, 7 ריבאונדים ו-9 אסיסטים - אבל גם ביצוע כזה לא הספיק כשהצד השני לא נשבר. מולו, ג&#x27;יימס הארדן הוביל את קליבלנד עם 30 נקודות, 8 ריבאונדים ו-6 אסיסטים, וידע לקחת את המשחק לידיים בדיוק ברגעים שקבעו את ההארכה ואת התוצאה הסופית. עכשיו כל העיניים נשואות למשחק 6 בדטרויט, שם הפיסטונס יצטרכו לנצח כדי להימנע מסיום העונה, בזמן שקליבלנד תנסה לסגור את הסדרה ולהעפיל הלאה.</p>
       </div>

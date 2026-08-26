@@ -733,7 +733,17 @@
   :root.tabs-mode .header .logo-img { height: 28px; margin: 0; }
   :root.tabs-mode .header-text { display: flex; flex-direction: column; gap: 1px; }
   :root.tabs-mode .header h1 { margin: 0; }
-  :root.tabs-mode .header .date { margin-top: 0; }
+  /* The date moves from the (now very slim) header down into the summary
+     screen itself instead - .summary-date is a plain duplicate of the same
+     text, hidden everywhere except app mode so it never shows twice. */
+  :root.tabs-mode .header .date { display: none; }
+  .summary-date { display: none; }
+  :root.tabs-mode .summary-date {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    margin-bottom: 10px;
+  }
   :root.tabs-mode main {
     flex: 1;
     min-height: 0;
@@ -875,6 +885,7 @@
     </header>
     <main>
       <div class="summary">
+        <div class="summary-date">16/12/2025, הלילה בין שלישי לרביעי</div>
         <p>ניו יורק ניקס היא אלופת גביע ה-NBA לעונת 2025-26. הקבוצה ניצחה את סן אנטוניו ספרס 124-113 במשחק הגמר, שכמובן נערך כמסורת ב-T-Mobile Arena בלאס וגאס, וזכתה בתואר לאחר הופעה נשלטת רוב הדרך מול קבוצה שהעפילה בזכות עונה טובה עד כה.</p>
       <p>מיצ&#x27;ל רובינסון תרם תרומה חשוב מתחת לטבעת עם 15 ריבאונדים, לצד 4 נקודות ו-2 אסיסטים, וסיפק את הזרוע הפיזית שהניקס נזקקו לה בגמר. מהצד השני, ספרס נותרו בלי ג&#x27;יידן קוונטאנס שנעדר מהמשחק - השחקן עבר ניתוח ברך ימין ביום רביעי וללא לוח זמנים ברור לחזרה, כך שממילא לא היה מדובר בגורם שהשפיע על התוצאה בפועל אלא היעדרות מתמשכת מהרכב הקבוצה.</p>
       <p>בכך נחתם טורניר הגביע לעונה הזו, כשניו יורק סוגרת מסע מוצלח בתוך שלל המשחקים העונתיים ומוסיפה תואר לארון הקבוצה.</p>

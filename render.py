@@ -750,7 +750,17 @@ TEMPLATE = """<!DOCTYPE html>
   :root.tabs-mode .header .logo-img {{ height: 28px; margin: 0; }}
   :root.tabs-mode .header-text {{ display: flex; flex-direction: column; gap: 1px; }}
   :root.tabs-mode .header h1 {{ margin: 0; }}
-  :root.tabs-mode .header .date {{ margin-top: 0; }}
+  /* The date moves from the (now very slim) header down into the summary
+     screen itself instead - .summary-date is a plain duplicate of the same
+     text, hidden everywhere except app mode so it never shows twice. */
+  :root.tabs-mode .header .date {{ display: none; }}
+  .summary-date {{ display: none; }}
+  :root.tabs-mode .summary-date {{
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    margin-bottom: 10px;
+  }}
   :root.tabs-mode main {{
     flex: 1;
     min-height: 0;
@@ -892,6 +902,7 @@ TEMPLATE = """<!DOCTYPE html>
     </header>
     <main>
       <div class="summary">
+        <div class="summary-date">{page_date_label}</div>
         {summary_html}
       </div>
 
