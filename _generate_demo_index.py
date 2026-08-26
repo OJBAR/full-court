@@ -5,28 +5,63 @@ to verify the whole Pages/PWA publish chain works end-to-end. Once the real
 season starts and scheduler.py is producing genuine nightly briefs, this page
 stops being useful and can just be deleted (index.html - the PWA's actual
 start_url - always shows the single latest real brief, unaffected by this).
+
+Classifies each demo into exactly one of the six day-types (regular / cup
+groups / cup knockout / playoffs / NBA Finals / Play-In) from the underlying
+fixture's real data flags - not by scraping the rendered HTML's tab labels,
+since a page can have several tabs (e.g. Finals days show both a Finals tab
+and the two conference brackets).
 """
-import re
+import json
 from pathlib import Path
 
-OUTPUT_DIR = Path(__file__).parent / "output"
-SUMMARY_RE = re.compile(r"<summary>(.*?)</summary>")
+REPO_DIR = Path(__file__).parent
+OUTPUT_DIR = REPO_DIR / "output"
+
+FIXTURES = [
+    "demo_fixture.json",
+    "demo_regular_new_fixture.json",
+    "demo_cup_groups_fixture.json",
+    "demo_cup_groups_new_fixture.json",
+    "demo_cup_knockout_fixture.json",
+    "demo_cup_final_fixture.json",
+    "demo_playoffs_fixture.json",
+    "demo_playoffs_round2_fixture.json",
+    "demo_playoffs_conf_finals_fixture.json",
+    "demo_finals_fixture.json",
+    "demo_play_in_fixture.json",
+]
+
+
+def classify(data: dict) -> str:
+    if data.get("is_playoffs"):
+        if any(s.get("round") == "NBA Finals" for s in data.get("playoff_series", [])):
+            return "גמר NBA"
+        return "פלייאוף"
+    if data.get("is_cup_knockout"):
+        return "גביע (נוקאאוט)"
+    if data.get("is_cup_groups"):
+        return "גביע (בתים)"
+    if data.get("is_play_in"):
+        return "פלייאין"
+    return "יום רגיל"
+
 
 rows = []
-for path in sorted(OUTPUT_DIR.glob("????-??-??.html")):
-    date_str = path.stem
-    html = path.read_text(encoding="utf-8")
-    tabs = SUMMARY_RE.findall(html)
-    tabs_label = " · ".join(tabs) if tabs else ""
-    rows.append((date_str, tabs_label))
+for fixture_name in FIXTURES:
+    with open(REPO_DIR / fixture_name, encoding="utf-8") as f:
+        fixture = json.load(f)
+    data = fixture["data"]
+    date_str = data["date"]
+    if not (OUTPUT_DIR / f"{date_str}.html").exists():
+        continue
+    rows.append((date_str, classify(data)))
 
 rows.sort(reverse=True)
 
 items_html = "\n".join(
-    f'<li><a href="{date}.html">{date}</a>'
-    + (f'<span class="tabs"> - {tabs}</span>' if tabs else "")
-    + "</li>"
-    for date, tabs in rows
+    f'<li><a href="{date}.html">{date}</a><span class="tabs"> - {category}</span></li>'
+    for date, category in rows
 )
 
 page = f"""<!DOCTYPE html>
