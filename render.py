@@ -2353,11 +2353,11 @@ def _build_secondary_section(data: dict) -> str:
             sections.append(("בראקט הגביע", _build_cup_bracket_html(data.get("cup_bracket", []))))
         if data.get("is_play_in"):
             games = data.get("play_in_bracket", [])
-            play_in_pages = [
+            play_in_blocks = "".join(
                 f'<div class="bracket-conf-block"><div class="bracket-conf-label">{label}</div>{_build_play_in_html(games, conf)}</div>'
                 for conf, label in (("West", "מערב"), ("East", "מזרח"))
-            ]
-            sections.append(("פלייאין", _build_pager_html(play_in_pages)))
+            )
+            sections.append(("פלייאין", play_in_blocks))
         sections.append(standings_section)
 
     return "\n\n    ".join(_details_block(title, body_html) for title, body_html in sections)
