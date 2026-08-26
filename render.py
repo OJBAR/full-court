@@ -94,10 +94,10 @@ TEMPLATE = """<!DOCTYPE html>
     position: relative;
     zoom: var(--a11y-zoom, 1);
   }}
-  .theme-toggle,
-  .a11y-toggle {{
+  .settings-toggle {{
     position: absolute;
     top: 24px;
+    right: 16px;
     width: 36px;
     height: 36px;
     border-radius: 999px;
@@ -110,8 +110,6 @@ TEMPLATE = """<!DOCTYPE html>
     align-items: center;
     justify-content: center;
   }}
-  .theme-toggle {{ left: 16px; }}
-  .a11y-toggle {{ right: 16px; }}
   .header {{
     text-align: center;
     padding-bottom: 20px;
@@ -502,6 +500,38 @@ TEMPLATE = """<!DOCTYPE html>
     color: var(--text-muted);
     margin-bottom: 8px;
   }}
+  .settings-theme-row {{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--text-body);
+  }}
+  .settings-theme-btn {{
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-heading);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }}
+  .settings-divider {{
+    height: 1px;
+    background: var(--border);
+    margin: 18px 0;
+  }}
+  .settings-about-text {{
+    font-size: 13px;
+    color: var(--text-body);
+    margin: 0 0 4px;
+  }}
   .a11y-fontsize-options {{
     display: flex;
     gap: 8px;
@@ -578,15 +608,6 @@ TEMPLATE = """<!DOCTYPE html>
   }}
   .footer a {{
     color: var(--accent);
-    text-decoration: none;
-  }}
-  .footer-link-btn {{
-    color: var(--accent);
-    background: none;
-    border: none;
-    padding: 0;
-    font: inherit;
-    cursor: pointer;
     text-decoration: none;
   }}
   .beta-note {{
@@ -772,8 +793,7 @@ TEMPLATE = """<!DOCTYPE html>
     }})();
   </script>
   <div class="wrapper">
-    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="החלף תצוגה בהירה/כהה">🌙</button>
-    <button class="a11y-toggle" id="a11y-toggle" onclick="openA11yPanel()" aria-haspopup="dialog" aria-expanded="false" aria-label="פתח הגדרות נגישות">♿</button>
+    <button class="settings-toggle" id="settings-toggle" onclick="openSettingsPanel()" aria-haspopup="dialog" aria-expanded="false" aria-label="פתח הגדרות">⚙️</button>
     <header class="header">
       <img class="logo-img logo-light" src="assets/logo_light.png" alt="Full Court">
       <img class="logo-img logo-dark" src="assets/logo_dark.png" alt="Full Court">
@@ -796,33 +816,22 @@ TEMPLATE = """<!DOCTYPE html>
     </main>
 
     <footer class="footer">
-      made by Ofek Barel · <button type="button" class="footer-link-btn" onclick="openContactOverlay()">יצירת קשר</button>
+      made by Ofek Barel
       <div class="beta-note">גרסת בטא · <a href="demos.html">מעבר בין דמואים</a></div>
     </footer>
   </div>
 
-  <div class="a11y-overlay" id="contact-overlay" hidden onclick="if (event.target === this) closeContactOverlay()">
-    <div class="a11y-panel" role="dialog" aria-modal="true" aria-labelledby="contact-title">
+  <div class="a11y-overlay" id="settings-overlay" hidden onclick="if (event.target === this) closeSettingsOverlays()">
+    <div class="a11y-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
       <div class="a11y-panel-header">
-        <h2 id="contact-title">יצירת קשר</h2>
-        <button class="a11y-panel-close" onclick="closeContactOverlay()" aria-label="סגור יצירת קשר">✕</button>
+        <h2 id="settings-title">הגדרות</h2>
+        <button class="a11y-panel-close" onclick="closeSettingsOverlays()" aria-label="סגור הגדרות">✕</button>
       </div>
-      <div class="a11y-statement-body" dir="rtl">
-        <p>יש הערה, באג, או הצעה לשיפור? אשמח לשמוע.</p>
-        <a class="a11y-link-btn" href="https://github.com/OJBAR/full-court/issues/new" target="_blank" rel="noopener">GitHub Issues</a>
-        <div class="email-row">
-          <a class="a11y-link-btn" href="mailto:ojbar30@gmail.com?subject=%D7%A4%D7%A0%D7%99%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT:+%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%99%D7%94">ojbar30@gmail.com</a>
-          <button type="button" class="copy-email-btn" onclick="copyEmailAddress(this)" aria-label="העתק את כתובת המייל">📋</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="a11y-overlay" id="a11y-overlay" hidden onclick="if (event.target === this) closeA11yOverlays()">
-    <div class="a11y-panel" role="dialog" aria-modal="true" aria-labelledby="a11y-panel-title">
-      <div class="a11y-panel-header">
-        <h2 id="a11y-panel-title">נגישות</h2>
-        <button class="a11y-panel-close" onclick="closeA11yOverlays()" aria-label="סגור הגדרות נגישות">✕</button>
+      <span class="a11y-field-label">התאמות אישיות</span>
+      <div class="settings-theme-row">
+        <span>מצב תצוגה</span>
+        <button type="button" class="settings-theme-btn" id="settings-theme-btn" onclick="toggleTheme()" aria-label="החלף תצוגה בהירה/כהה">🌙</button>
       </div>
       <div class="a11y-field">
         <span class="a11y-field-label" id="a11y-fontsize-label">גודל טקסט</span>
@@ -832,15 +841,25 @@ TEMPLATE = """<!DOCTYPE html>
           <button type="button" class="a11y-fontsize-btn a11y-fontsize-lg" data-fontsize="xlarge" aria-pressed="false" aria-label="גודל טקסט גדול מאוד" onclick="setFontSize('xlarge')">א</button>
         </div>
       </div>
+
+      <div class="settings-divider"></div>
+
+      <span class="a11y-field-label">אודות</span>
+      <p class="settings-about-text">יש הערה, באג, או הצעה לשיפור? אשמח לשמוע.</p>
+      <a class="a11y-link-btn" href="https://github.com/OJBAR/full-court/issues/new" target="_blank" rel="noopener">GitHub Issues</a>
+      <div class="email-row">
+        <a class="a11y-link-btn" href="mailto:ojbar30@gmail.com?subject=%D7%A4%D7%A0%D7%99%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT:+%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%99%D7%94">ojbar30@gmail.com</a>
+        <button type="button" class="copy-email-btn" onclick="copyEmailAddress(this)" aria-label="העתק את כתובת המייל">📋</button>
+      </div>
       <button type="button" class="a11y-link-btn" onclick="openA11yStatement()">הצהרת נגישות</button>
     </div>
   </div>
 
-  <div class="a11y-overlay" id="a11y-statement-overlay" hidden onclick="if (event.target === this) closeA11yOverlays()">
+  <div class="a11y-overlay" id="a11y-statement-overlay" hidden onclick="if (event.target === this) closeSettingsOverlays()">
     <div class="a11y-panel" role="dialog" aria-modal="true" aria-labelledby="a11y-statement-title">
       <div class="a11y-panel-header">
         <h2 id="a11y-statement-title">הצהרת נגישות</h2>
-        <button class="a11y-panel-close" onclick="closeA11yOverlays()" aria-label="סגור הצהרת נגישות">✕</button>
+        <button class="a11y-panel-close" onclick="closeSettingsOverlays()" aria-label="סגור הצהרת נגישות">✕</button>
       </div>
       <div class="a11y-statement-body" dir="rtl">
         <p>
@@ -877,50 +896,50 @@ TEMPLATE = """<!DOCTYPE html>
       }}
     }})();
 
-    var a11yLastFocused = null;
-    var a11yActiveOverlayId = null;
+    var settingsLastFocused = null;
+    var activeOverlayId = null;
 
-    function switchA11yOverlay(overlayId) {{
-      if (a11yActiveOverlayId) {{
-        document.getElementById(a11yActiveOverlayId).hidden = true;
+    function switchOverlay(overlayId) {{
+      if (activeOverlayId) {{
+        document.getElementById(activeOverlayId).hidden = true;
       }}
       document.getElementById(overlayId).hidden = false;
-      a11yActiveOverlayId = overlayId;
+      activeOverlayId = overlayId;
       var focusTarget = document.querySelector("#" + overlayId + " .a11y-panel-close");
       if (focusTarget) {{ focusTarget.focus(); }}
     }}
 
-    function openA11yPanel() {{
-      a11yLastFocused = document.activeElement;
-      document.getElementById("a11y-toggle").setAttribute("aria-expanded", "true");
+    function openSettingsPanel() {{
+      settingsLastFocused = document.activeElement;
+      document.getElementById("settings-toggle").setAttribute("aria-expanded", "true");
       document.querySelector(".wrapper").setAttribute("aria-hidden", "true");
-      switchA11yOverlay("a11y-overlay");
-      document.addEventListener("keydown", a11yKeydownHandler);
+      switchOverlay("settings-overlay");
+      document.addEventListener("keydown", overlayKeydownHandler);
     }}
 
     function openA11yStatement() {{
-      switchA11yOverlay("a11y-statement-overlay");
+      switchOverlay("a11y-statement-overlay");
     }}
 
-    function closeA11yOverlays() {{
-      if (a11yActiveOverlayId) {{
-        document.getElementById(a11yActiveOverlayId).hidden = true;
-        a11yActiveOverlayId = null;
+    function closeSettingsOverlays() {{
+      if (activeOverlayId) {{
+        document.getElementById(activeOverlayId).hidden = true;
+        activeOverlayId = null;
       }}
-      document.getElementById("a11y-toggle").setAttribute("aria-expanded", "false");
+      document.getElementById("settings-toggle").setAttribute("aria-expanded", "false");
       document.querySelector(".wrapper").removeAttribute("aria-hidden");
-      document.removeEventListener("keydown", a11yKeydownHandler);
-      if (a11yLastFocused) {{ a11yLastFocused.focus(); }}
-      a11yLastFocused = null;
+      document.removeEventListener("keydown", overlayKeydownHandler);
+      if (settingsLastFocused) {{ settingsLastFocused.focus(); }}
+      settingsLastFocused = null;
     }}
 
-    function a11yKeydownHandler(e) {{
+    function overlayKeydownHandler(e) {{
       if (e.key === "Escape") {{
-        closeA11yOverlays();
+        closeSettingsOverlays();
         return;
       }}
-      if (e.key === "Tab" && a11yActiveOverlayId) {{
-        var focusable = document.querySelectorAll("#" + a11yActiveOverlayId + " button");
+      if (e.key === "Tab" && activeOverlayId) {{
+        var focusable = document.querySelectorAll("#" + activeOverlayId + " button, #" + activeOverlayId + " a");
         var first = focusable[0];
         var last = focusable[focusable.length - 1];
         if (e.shiftKey && document.activeElement === first) {{
@@ -956,43 +975,6 @@ TEMPLATE = """<!DOCTYPE html>
         btn.textContent = "✓";
         setTimeout(function() {{ btn.textContent = original; }}, 1500);
       }}).catch(function() {{}});
-    }}
-
-    var contactLastFocused = null;
-
-    function openContactOverlay() {{
-      contactLastFocused = document.activeElement;
-      document.querySelector(".wrapper").setAttribute("aria-hidden", "true");
-      document.getElementById("contact-overlay").hidden = false;
-      document.querySelector("#contact-overlay .a11y-panel-close").focus();
-      document.addEventListener("keydown", contactKeydownHandler);
-    }}
-
-    function closeContactOverlay() {{
-      document.getElementById("contact-overlay").hidden = true;
-      document.querySelector(".wrapper").removeAttribute("aria-hidden");
-      document.removeEventListener("keydown", contactKeydownHandler);
-      if (contactLastFocused) {{ contactLastFocused.focus(); }}
-      contactLastFocused = null;
-    }}
-
-    function contactKeydownHandler(e) {{
-      if (e.key === "Escape") {{
-        closeContactOverlay();
-        return;
-      }}
-      if (e.key === "Tab") {{
-        var focusable = document.querySelectorAll("#contact-overlay button, #contact-overlay a");
-        var first = focusable[0];
-        var last = focusable[focusable.length - 1];
-        if (e.shiftKey && document.activeElement === first) {{
-          e.preventDefault();
-          last.focus();
-        }} else if (!e.shiftKey && document.activeElement === last) {{
-          e.preventDefault();
-          first.focus();
-        }}
-      }}
     }}
 
     function animateSplashAway(splash) {{
@@ -1285,7 +1267,7 @@ TEMPLATE = """<!DOCTYPE html>
       var current = document.documentElement.getAttribute("data-theme");
       var systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       var isDark = current ? current === "dark" : systemDark;
-      document.getElementById("theme-toggle").textContent = isDark ? "☀" : "🌙";
+      document.getElementById("settings-theme-btn").textContent = isDark ? "☀" : "🌙";
     }}
   </script>
 </body>
