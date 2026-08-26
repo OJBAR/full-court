@@ -781,20 +781,34 @@
     background: transparent;
   }
   :root.tabs-mode details.tab-section.app-screen-active > summary::after { content: "‹"; }
+  /* A full-screen tab's own content is centered as a block within the
+     available height instead of pinned to the top with empty space below
+     when it's shorter than the screen - the content itself (table rows,
+     bracket, etc.) keeps its natural size, only its vertical position
+     within the screen changes. */
+  :root.tabs-mode details.tab-section.app-screen-active > .details-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+    overflow-y: auto;
+  }
   .app-home { display: none; }
   :root.tabs-mode .app-home {
     display: flex;
     flex-direction: column;
     flex: 1;
     min-height: 0;
+    justify-content: space-evenly;
   }
   :root.tabs-mode .app-home.hidden { display: none; }
+  :root.tabs-mode .app-home > details.tab-section { margin-top: 0; }
   .app-home-big-btn {
     display: block;
     width: 100%;
     flex-shrink: 0;
     padding: 40px 16px;
-    margin: 4px 0 16px;
     border-radius: 16px;
     border: none;
     background: var(--accent);
