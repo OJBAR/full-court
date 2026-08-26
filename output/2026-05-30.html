@@ -177,6 +177,7 @@
     justify-content: center;
     padding-top: 8px;
     font-size: 0.875rem;
+    position: relative;
   }
   .team { width: 4.5em; color: var(--text-muted); text-align: center; }
   .team.winner { color: var(--text-heading); font-weight: 700; }
@@ -189,14 +190,19 @@
   .score { width: 2.2em; text-align: center; color: var(--text-muted); font-variant-numeric: tabular-nums; }
   .score.winner { color: var(--accent); font-weight: 700; }
   .ot-tag {
-    margin-inline-start: 6px;
+    /* Absolutely positioned off to the side, out of the flex flow, so it
+       never shifts the row's true center - .game-row centers just the
+       teams/score, same with or without overtime. */
+    position: absolute;
+    top: 50%;
+    left: 2px;
+    transform: translateY(-50%);
     padding: 1px 5px;
     border-radius: 999px;
     background: var(--accent);
     color: var(--card-bg);
     font-size: 9px;
     font-weight: 700;
-    vertical-align: middle;
   }
   .game-sub {
     text-align: center;
@@ -1324,7 +1330,13 @@
       document.addEventListener("touchend", function() {
         indicator.style.transition = "transform 0.25s ease, opacity 0.25s ease";
         if (currentPull >= threshold) {
-          location.reload();
+          // A plain location.reload() still respects GitHub Pages' HTTP
+          // cache - iOS in standalone mode can keep serving a cached
+          // response for several minutes without even asking the server.
+          // A cache-busting query param makes this a URL the cache has
+          // never seen, forcing a genuine fetch every time.
+          var url = location.pathname + "?_r=" + Date.now();
+          location.href = url;
         } else {
           indicator.style.opacity = 0;
           indicator.style.transform = "translateX(-50%) translateY(0)";
