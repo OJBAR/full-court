@@ -1114,25 +1114,26 @@ TEMPLATE = """<!DOCTYPE html>
       indicator.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M12 19l-6-6M12 19l6-6"/></svg>';
       document.body.appendChild(indicator);
 
+      function setPull(px) {{
+        indicator.style.opacity = Math.min(px / threshold, 1);
+        indicator.style.transform = "translateX(-50%) translateY(" + px + "px) rotate(" + (px * 3) + "deg)";
+      }}
+
       document.addEventListener("touchstart", function(e) {{
         startY = window.scrollY === 0 ? e.touches[0].clientY : null;
         currentPull = 0;
+        indicator.style.transition = "none";
       }}, {{ passive: true }});
 
       document.addEventListener("touchmove", function(e) {{
         if (startY === null) return;
         var delta = e.touches[0].clientY - startY;
-        if (delta <= 0) {{
-          currentPull = 0;
-          indicator.style.opacity = 0;
-          return;
-        }}
-        currentPull = Math.min(delta, threshold * 1.5);
-        indicator.style.opacity = Math.min(currentPull / threshold, 1);
-        indicator.style.transform = "translateX(-50%) translateY(" + currentPull + "px) rotate(" + (currentPull * 3) + "deg)";
+        currentPull = Math.max(0, Math.min(delta, threshold * 1.5));
+        setPull(currentPull);
       }}, {{ passive: true }});
 
       document.addEventListener("touchend", function() {{
+        indicator.style.transition = "transform 0.25s ease, opacity 0.25s ease";
         if (currentPull >= threshold) {{
           location.reload();
         }} else {{
