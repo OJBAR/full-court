@@ -792,10 +792,17 @@ TEMPLATE = """<!DOCTYPE html>
     display: flex;
     flex-direction: column;
     flex: 1;
+    min-height: 0;
     margin-top: 0;
     border: none;
     border-radius: 0;
     background: transparent;
+    /* The base `details` rule below sets overflow:hidden for the little
+       card's rounded corners - left as-is here, it clips this element's
+       own content before <main>'s scroll ever sees the overflow, which is
+       the actual reason content was getting cut off with no way to
+       scroll to it (not the centering, that part was already fixed). */
+    overflow: visible;
   }}
   :root.tabs-mode details.tab-section.app-screen-active > summary::after {{ content: "‹"; }}
   /* A full-screen tab's own content is centered as a block within the
