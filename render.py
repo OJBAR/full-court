@@ -59,8 +59,16 @@ TEMPLATE = """<!DOCTYPE html>
     --text-body: #D8C9AF;
     --text-muted: #8C7C64;
   }}
-  :root[data-a11y-fontsize="large"] {{ --a11y-zoom: 1.15; }}
-  :root[data-a11y-fontsize="xlarge"] {{ --a11y-zoom: 1.3; }}
+  :root[data-a11y-fontsize="large"] {{ --a11y-text-scale: 1.15; }}
+  :root[data-a11y-fontsize="xlarge"] {{ --a11y-text-scale: 1.3; }}
+  /* The accessibility font-size control scales root font-size (so only
+     properties declared in rem below actually grow) instead of the old
+     `zoom` on .wrapper, which scaled the entire layout - padding, borders,
+     icons, everything - proportionally along with the text, and looked
+     broken rather than just "bigger text". Fixed-size UI chrome (circular
+     icon buttons, badges/pills, the bracket diagram - see its own comment
+     below) stays in px on purpose so it doesn't distort at large sizes. */
+  html {{ font-size: calc(16px * var(--a11y-text-scale, 1)); }}
   * {{ box-sizing: border-box; }}
   a:focus-visible,
   button:focus-visible,
@@ -92,7 +100,6 @@ TEMPLATE = """<!DOCTYPE html>
     margin: 0 auto;
     padding: 24px 16px 40px;
     position: relative;
-    zoom: var(--a11y-zoom, 1);
   }}
   .settings-toggle {{
     position: absolute;
@@ -130,18 +137,18 @@ TEMPLATE = """<!DOCTYPE html>
   [data-theme="dark"] .logo-light {{ display: none; }}
   [data-theme="dark"] .logo-dark {{ display: block; }}
   .header h1 {{
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 400;
     margin: 8px 0 0;
     color: var(--text-muted);
   }}
   .header .date {{
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 0.8125rem;
     margin-top: 6px;
   }}
   .summary {{
-    font-size: 16px;
+    font-size: 1rem;
     line-height: 1.8;
   }}
   .summary p {{
@@ -158,7 +165,7 @@ TEMPLATE = """<!DOCTYPE html>
     list-style: none;
     cursor: pointer;
     padding: 14px 16px;
-    font-size: 15px;
+    font-size: 0.9375rem;
     font-weight: 600;
     color: var(--text-heading);
     display: flex;
@@ -186,13 +193,13 @@ TEMPLATE = """<!DOCTYPE html>
     align-items: center;
     justify-content: center;
     padding-top: 8px;
-    font-size: 14px;
+    font-size: 0.875rem;
   }}
   .team {{ width: 4.5em; color: var(--text-muted); text-align: center; }}
   .team.winner {{ color: var(--text-heading); font-weight: 700; }}
   .team-record {{
     display: block;
-    font-size: 9px;
+    font-size: 0.5625rem;
     font-weight: 400;
     color: var(--text-muted);
   }}
@@ -210,7 +217,7 @@ TEMPLATE = """<!DOCTYPE html>
   }}
   .game-sub {{
     text-align: center;
-    font-size: 11px;
+    font-size: 0.6875rem;
     color: var(--text-muted);
     margin-top: 6px;
   }}
@@ -224,7 +231,7 @@ TEMPLATE = """<!DOCTYPE html>
     .conferences {{ grid-template-columns: 1fr 1fr; }}
   }}
   .conference h3 {{
-    font-size: 13px;
+    font-size: 0.8125rem;
     color: var(--accent);
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -242,7 +249,7 @@ TEMPLATE = """<!DOCTYPE html>
     align-items: center;
     gap: 8px;
     padding: 6px 0;
-    font-size: 13px;
+    font-size: 0.8125rem;
     border-bottom: 1px solid var(--border);
   }}
   .standing-row:last-child {{ border-bottom: none; }}
@@ -253,7 +260,7 @@ TEMPLATE = """<!DOCTYPE html>
     min-width: 0;
     color: var(--text-heading);
     white-space: nowrap;
-    font-size: 12px;
+    font-size: 0.75rem;
   }}
   .standing-record {{ color: var(--text-muted); flex-shrink: 0; }}
   .standing-streak {{ width: 3em; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }}
@@ -274,7 +281,7 @@ TEMPLATE = """<!DOCTYPE html>
   .wildcard-legend {{
     grid-column: 1 / -1;
     margin: 10px 2px 0;
-    font-size: 11px;
+    font-size: 0.6875rem;
     color: var(--text-muted);
     text-align: right;
   }}
@@ -288,13 +295,21 @@ TEMPLATE = """<!DOCTYPE html>
   }}
   .cup-group:last-child {{ margin-bottom: 0; }}
   .cup-group h4 {{
-    font-size: 11px;
+    font-size: 0.6875rem;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin: 0 0 4px 0;
   }}
 
+  /* Every font-size inside the bracket diagram (this section down through
+     .bracket-conf-label/.bracket-pager-label) deliberately stays in px, not
+     rem - the connector-line geometry between rounds is pixel-exact math
+     tied to .bracket-match's real rendered height (see .bracket-pair-r2 and
+     .bracket-pair-captioned below), and letting the text grow with the
+     accessibility font-size setting would silently throw that math off
+     again, the same bug that took real effort to track down and fix
+     earlier. */
   .bracket {{
     display: flex;
     justify-content: safe center;
@@ -518,7 +533,7 @@ TEMPLATE = """<!DOCTYPE html>
     margin-bottom: 16px;
   }}
   .a11y-panel-header h2 {{
-    font-size: 16px;
+    font-size: 1rem;
     color: var(--text-heading);
     margin: 0;
   }}
@@ -538,7 +553,7 @@ TEMPLATE = """<!DOCTYPE html>
   }}
   .a11y-field-label {{
     display: block;
-    font-size: 13px;
+    font-size: 0.8125rem;
     color: var(--text-muted);
     margin-bottom: 8px;
   }}
@@ -547,7 +562,7 @@ TEMPLATE = """<!DOCTYPE html>
     align-items: center;
     justify-content: space-between;
     margin-bottom: 16px;
-    font-size: 13px;
+    font-size: 0.8125rem;
     color: var(--text-body);
   }}
   .settings-theme-btn {{
@@ -565,7 +580,7 @@ TEMPLATE = """<!DOCTYPE html>
     justify-content: center;
   }}
   .settings-about-text {{
-    font-size: 13px;
+    font-size: 0.8125rem;
     color: var(--text-body);
     margin: 0 0 4px;
   }}
@@ -602,7 +617,7 @@ TEMPLATE = """<!DOCTYPE html>
     border: 1px solid var(--border);
     background: var(--bg);
     color: var(--accent);
-    font-size: 13px;
+    font-size: 0.8125rem;
     font-weight: 600;
     text-align: center;
     cursor: pointer;
@@ -625,7 +640,7 @@ TEMPLATE = """<!DOCTYPE html>
     cursor: pointer;
   }}
   .a11y-statement-body {{
-    font-size: 13px;
+    font-size: 0.8125rem;
     line-height: 1.7;
     color: var(--text-body);
     max-height: 60vh;
@@ -641,7 +656,7 @@ TEMPLATE = """<!DOCTYPE html>
     border-top: 1px solid var(--border);
     text-align: center;
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: 0.75rem;
   }}
   .footer a {{
     color: var(--accent);
@@ -649,7 +664,7 @@ TEMPLATE = """<!DOCTYPE html>
   }}
   .beta-note {{
     margin-top: 8px;
-    font-size: 11px;
+    font-size: 0.6875rem;
     color: var(--text-muted);
   }}
   .beta-note a {{ color: var(--accent); text-decoration: none; }}
@@ -735,13 +750,13 @@ TEMPLATE = """<!DOCTYPE html>
     border: none;
     background: var(--accent);
     color: var(--card-bg);
-    font-size: 20px;
+    font-size: 1.25rem;
     font-weight: 700;
     cursor: pointer;
   }}
   :root.tabs-mode .app-home details.tab-section {{ flex-shrink: 0; }}
   :root.tabs-mode .app-home details.tab-section:last-child {{ margin-bottom: 4px; }}
-  :root.tabs-mode .app-home summary {{ padding: 22px 16px; font-size: 17px; }}
+  :root.tabs-mode .app-home summary {{ padding: 22px 16px; font-size: 1.0625rem; }}
   .pull-refresh-indicator {{
     position: fixed;
     top: 16px;
@@ -779,8 +794,8 @@ TEMPLATE = """<!DOCTYPE html>
   .install-banner.visible {{ display: flex; }}
   .install-banner-row {{ display: flex; align-items: center; gap: 10px; }}
   .install-banner-row img {{ width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0; }}
-  .install-banner-text {{ flex: 1; min-width: 0; font-size: 12px; color: var(--text-body); }}
-  .install-banner-text strong {{ display: block; font-size: 13px; color: var(--text-heading); margin-bottom: 2px; }}
+  .install-banner-text {{ flex: 1; min-width: 0; font-size: 0.75rem; color: var(--text-body); }}
+  .install-banner-text strong {{ display: block; font-size: 0.8125rem; color: var(--text-heading); margin-bottom: 2px; }}
   .install-banner-action {{
     flex-shrink: 0;
     padding: 8px 14px;
@@ -802,7 +817,7 @@ TEMPLATE = """<!DOCTYPE html>
     font-size: 16px;
     cursor: pointer;
   }}
-  .install-banner-hint {{ font-size: 12px; color: var(--text-muted); text-align: center; }}
+  .install-banner-hint {{ font-size: 0.75rem; color: var(--text-muted); text-align: center; }}
   .install-banner-hint a {{ color: var(--accent); font-weight: 700; }}
 
   @media (prefers-reduced-motion: no-preference) {{
@@ -1385,7 +1400,7 @@ def _paragraphs_to_html(summary: str) -> str:
 
 def _build_results_html(games: list[dict], standings: list[dict]) -> str:
     if not games:
-        return '<p style="color:var(--text-muted); font-size:14px;">אין משחקים ללילה הזה.</p>'
+        return '<p style="color:var(--text-muted); font-size:0.875rem;">אין משחקים ללילה הזה.</p>'
 
     standings_by_team_id = {s["TeamID"]: s for s in standings}
     rows = []
@@ -1458,7 +1473,7 @@ def _build_results_html(games: list[dict], standings: list[dict]) -> str:
 
 def _build_standings_html(standings: list[dict]) -> str:
     if not standings:
-        return '<p style="color:var(--text-muted); font-size:14px;">אין נתוני טבלה זמינים.</p>'
+        return '<p style="color:var(--text-muted); font-size:0.875rem;">אין נתוני טבלה זמינים.</p>'
 
     conferences: dict[str, list[dict]] = {}
     for team in standings:
@@ -1940,7 +1955,7 @@ def _build_cup_group_standings_html(cup_group_standings: list[dict]) -> str:
     3 group winners.
     """
     if not cup_group_standings:
-        return '<p style="color:var(--text-muted); font-size:14px;">אין נתוני בתים זמינים.</p>'
+        return '<p style="color:var(--text-muted); font-size:0.875rem;">אין נתוני בתים זמינים.</p>'
 
     conferences: dict[str, dict[str, list[dict]]] = {}
     for team in cup_group_standings:
