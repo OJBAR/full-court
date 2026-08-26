@@ -826,49 +826,27 @@ TEMPLATE = """<!DOCTYPE html>
   :root.tabs-mode .app-home {{
     display: flex;
     flex-direction: column;
-    flex: 1;
-    min-height: 0;
-    gap: 16px;
   }}
   :root.tabs-mode .app-home.hidden {{ display: none; }}
+  /* The summary button is styled as just another equal-sized card in the
+     same flat list as the other tabs (same padding/font-size as a tab's
+     summary below) - only its accent color still marks it as the primary
+     action, not its size. */
   .app-home-big-btn {{
     display: block;
     width: 100%;
     flex-shrink: 0;
-    padding: 40px 16px;
-    border-radius: 16px;
+    margin-top: 12px;
+    padding: 14px 16px;
+    border-radius: 10px;
     border: none;
     background: var(--accent);
     color: var(--card-bg);
-    font-size: 1.25rem;
+    font-size: 0.9375rem;
     font-weight: 700;
     cursor: pointer;
   }}
-  /* The rest of the tabs share one bordered/backed block (like a grouped
-     iOS settings list) instead of each being its own little card - this
-     is the "second block" below the summary button, and fills whatever
-     height is left with its rows spread evenly (see initAppHome()). */
-  :root.tabs-mode .app-home-tabs-group {{
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-evenly;
-    border-radius: 14px;
-    border: 1px solid var(--border);
-    background: var(--card-bg);
-    overflow: hidden;
-  }}
-  :root.tabs-mode .app-home-tabs-group > details.tab-section {{
-    flex-shrink: 0;
-    margin-top: 0;
-    border: none;
-    border-radius: 0;
-    background: transparent;
-    border-bottom: 1px solid var(--border);
-  }}
-  :root.tabs-mode .app-home-tabs-group > details.tab-section:last-child {{ border-bottom: none; }}
-  :root.tabs-mode .app-home-tabs-group summary {{ padding: 22px 16px; font-size: 1.0625rem; }}
+  :root.tabs-mode .app-home-tabs-group {{ display: flex; flex-direction: column; }}
   .pull-refresh-indicator {{
     position: fixed;
     top: 16px;
