@@ -429,19 +429,6 @@ TEMPLATE = """<!DOCTYPE html>
     border: 1px solid var(--border);
     border-radius: 4px;
   }}
-  .conf-badge {{
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 14px;
-    height: 14px;
-    border-radius: 3px;
-    font-size: 9px;
-    font-weight: 700;
-    color: #fff;
-  }}
-  .conf-badge-east {{ background: #3b6fd6; }}
-  .conf-badge-west {{ background: #c0392b; }}
   .bracket-record {{
     font-size: 9px;
     font-weight: 400;
@@ -1703,11 +1690,12 @@ def _conference_bracket_columns(playoff_series: list[dict], conference: str) -> 
 
 def _finals_match_html(series: dict | None, conf_by_team: dict) -> str:
     """
-    Finals-specific version of _bracket_series_html: shows a colored W/E
-    conference badge instead of a seed number, since the two teams' seeds
-    (1-8 independently within each conference) aren't a meaningful basis for
-    comparison across conferences the way they are within a single bracket -
-    knowing which conference each team is from is the more useful signal here.
+    Finals-specific version of _bracket_series_html: same look as every
+    other bracket cell (seed badge, no conference-color badge), but ordered
+    by conference (West on top, East below) to match the West/East block
+    order on the page above it, instead of by seed - seeds aren't
+    comparable across conferences, so sorting by them wouldn't reliably put
+    the same conference on top from one Finals to the next.
     """
     if series is None:
         return (
@@ -1719,21 +1707,21 @@ def _finals_match_html(series: dict | None, conf_by_team: dict) -> str:
     teams = series["teams"]
     if len(teams) != 2:
         return _finals_match_html(None, conf_by_team)
+    conf_order = {"West": 0, "East": 1}
+    ordered = sorted(teams, key=lambda t: conf_order.get(conf_by_team.get(t["team_id"]), 99))
     max_wins = max(t["wins"] for t in teams)
 
     def _team(team: dict) -> str:
         cls = " winner" if series["is_over"] and team["wins"] == max_wins else ""
-        conf = conf_by_team.get(team["team_id"])
-        badge_html = (
-            f'<span class="conf-badge conf-badge-{conf.lower()}">{conf[0]}</span>' if conf else ""
-        )
+        seed = team.get("seed")
+        seed_html = f'<span class="bracket-seed">{seed}</span>' if seed else ""
         return (
             f'<div class="bracket-team{cls}">'
-            f'<span class="bracket-team-label">{badge_html}<span>{html.escape(team["tricode"])}</span></span>'
+            f'<span class="bracket-team-label">{seed_html}<span>{html.escape(team["tricode"])}</span></span>'
             f'<span class="bracket-score">{team["wins"]}</span></div>'
         )
 
-    return '<div class="bracket-match">' + "".join(_team(t) for t in teams) + "</div>"
+    return '<div class="bracket-match">' + "".join(_team(t) for t in ordered) + "</div>"
 
 
 def _finals_champion_line(series: dict | None) -> str:
