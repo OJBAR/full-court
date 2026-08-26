@@ -642,6 +642,7 @@ TEMPLATE = """<!DOCTYPE html>
     font-weight: 700;
     cursor: pointer;
   }}
+  :root.tabs-mode .header .logo-img {{ cursor: pointer; }}
   .back-toggle {{ display: none; }}
   :root.tabs-mode .back-toggle {{
     display: flex;
@@ -1013,6 +1014,9 @@ TEMPLATE = """<!DOCTYPE html>
         main.scrollIntoView({{ behavior: "smooth", block: "start" }});
       }}
       backBtn.onclick = showHome;
+      Array.prototype.forEach.call(document.querySelectorAll(".header .logo-img"), function(img) {{
+        img.addEventListener("click", showHome);
+      }});
 
       if (summaryDiv) {{
         var bigBtn = document.createElement("button");
@@ -1021,6 +1025,7 @@ TEMPLATE = """<!DOCTYPE html>
         bigBtn.textContent = "סיכום הלילה";
         bigBtn.onclick = showSummary;
         home.appendChild(bigBtn);
+        summaryDiv.addEventListener("click", showHome); // tapping the summary itself also returns home, not just the 🏠 button
       }}
 
       // The section accordions move into the home screen as-is (still real
