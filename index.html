@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FULL COURT - 17/04/2026</title>
+<title>FULL COURT - 28/11/2025</title>
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
@@ -341,6 +341,27 @@
      Coupled to bracket-match's real rendered height (56px) via the constants
      above - update this if that height ever changes. */
   .bracket-pair-r2 { gap: 92px; }
+  /* Play-In's pair is the only one where each match has its own caption
+     underneath it (see .bracket-caption) - that extra content below each
+     match throws off the plain 50%-based connector (which naturally landed
+     on the pair's overall midpoint, i.e. roughly between the two captions,
+     not between the two actual score boxes). Here the connector is
+     positioned with fixed pixels instead, tied to bracket-match's real
+     height (56px, so a match's own center is 28px from its wrap's top) and
+     bracket-match-wrap's real height (86px = 56 match + 4 caption margin +
+     26 caption min-height) + this pair's own 16px gap = 102px between the
+     two matches' centers. */
+  .bracket-pair-captioned { border-right: none; }
+  .bracket-pair-captioned::before {
+    content: "";
+    position: absolute;
+    top: 28px;
+    right: 0;
+    width: 2px;
+    height: 102px;
+    background: var(--text-muted);
+  }
+  .bracket-pair-captioned::after { top: 79px; }
   .bracket-match {
     width: 128px;
     flex-shrink: 0;
@@ -569,34 +590,69 @@
       <img class="logo-img logo-light" src="assets/logo_light.png" alt="Full Court">
       <img class="logo-img logo-dark" src="assets/logo_dark.png" alt="Full Court">
       <h1>סיכום הלילה ב-NBA</h1>
-      <div class="date">17/04/2026, הלילה בין שישי לשבת</div>
+      <div class="date">28/11/2025, הלילה בין שישי לשבת</div>
     </header>
     <main>
       <div class="summary">
-        <p>ליל פליי-אין שקבע סופית מי ממשיך הלילה לפלייאוף ומי הולך הביתה - שני משחקי הכרעה על ה-seed השמיני, בלי מקום לטעויות.</p>
-      <p>באורלנדו לא היה הרבה מתח: המג&#x27;יק דהרו קדימה מהצלצול הראשון וסיימו עם ניצחון מוחץ 121-90 על שרלוט. הורנטס, שהגיעו למשחק ההכרעה הזה אחרי דרך ארוכה, נשארו מאחור לאורך כל המפגש ומסיימים בכך את העונה שלהם, בעוד אורלנדו מבטיחים את המקום השמיני ועולים לפלייאוף.</p>
-      <p>הרבה יותר מעניין קרה בפיניקס, שם הסאנס גברו על גולדן סטייט 111-96 ובכך שלחו את הוריורס הביתה במה שהיה עבורם המשחק השלישי ברצף שהסתיים בהפסד. ג&#x27;יילן גרין היה הכוכב הבולט של הערב עם 36 נקודות, 6 ריבאונדים ו-4 אסיסטים, וסחף את פיניקס למקום השמיני בפלייאוף. אצל גולדן סטייט, העונה מסתיימת בצל פציעות כואבות: ג&#x27;ימי באטלר נעדר כשהוא עדיין בשלבים המוקדמים של שיקום הברך, ומוזס מודי לא שיחק בעקבות קרע בגיד הפיקה בברך שמאל - שני חסרים משמעותיים שליוו את הקבוצה בסיום עונה מאכזב.</p>
+        <p>לילה עמוס במיוחד בסימן שלב הבתים של גביע ה-NBA, עם 11 משחקים ולא מעט דרמה קלעים.</p>
+      <p>בקליבלנד-אטלנטה נפלה התוצאה הגבוהה ביותר של הערב, כשהוקס גברו 130-123. ג&#x27;יילן ג&#x27;markonson (Johnson) חתם טריפל-דאבל של 29 נקודות, 12 ריבאונדים ו-12 אסיסטים, ניקיל אלכסנדר-ווקר הוסיף 30 נקודות משלו, אבל כל זה כמעט לא הספיק מול דונובן מיטשל שהתפרע עם 42 נקודות בהפסד של קאבלירס.</p>
+      <p>בפילדלפיה סיקסרס פרקו את נטס 115-103, בהמשך לרצף הפסדים מטריד של שלושה משחקים לברוקלין. מצד שני דטרויט ממשיכה לגלגל, אך הפעם נעצרה - אורלנדו ניצחה 112-109 במשחק צמוד שגם סווג כהפתעה משמעותית, כשהמג&#x27;יק המדורגת נמוך גברה על הפיסטונס המדורגים גבוה בהרבה. קייד קנינגהאם היה מדהים עם 39 נקודות, 13 ריבאונדים ו-11 אסיסטים בטריפל-דאבל, אבל דזמונדביין ענה עם 37 נקודות ואורלנדו לקחה את הניצחון.</p>
+      <p>שיקגו נפלה 123-116 מול שרלוט, וושינגטון ספגה מכה כואבת מול אינדיאנה 119-86 - הפסד עשירי ברצף לוויזארדס, שגם מתמודדת עם הפציעות של ג&#x27;יימיר ווטקינס וג&#x27;וני פרפי (שאובחן עם קרע ברצועה הצולבת ויעדר עד סוף העונה, מהצד של אינדיאנה). ניו יורק המשיכה לגבור על מילווקי 118-109, כשג&#x27;יילן ברנסון קלע 37 נקודות וג&#x27;וש הארט הוסיף טריפל-דאבל כמעט מלא של 19-15-7. יאניס אנטטקומפו סיפק 30 נקודות ו-15 ריבאונדים בהפסד, וקארל-אנתוני טאונס מהניקס עבר לילה חלש יחסית עם 9 נקודות בלבד, רחוק מהממוצע העונתי שלו של כ-20.</p>
+      <p>במערב, אוקלהומה סיטי המשיכה בעקביות מול פיניקס 123-119 בזכות 37 נקודות של שיי גילג&#x27;ס-אלכסנדר. בסן אנטוניו נגמר קרב קלעים דרמטי מול דנבר 139-136 - הרצף המרשים של דנבר שעמד על 12 ניצחונות ברצף נקטע, למרות 37 נקודות של ג&#x27;מאל מארי, מול דבין ווסל שהוביל את ספרס עם 35. יוטה גברה על סקרמנטו 128-119 בזכות 31 נקודות של קיונטה ג&#x27;ורג&#x27;, כשראסל ווסטברוק תרם טריפל-דאבל (16-12-14) וזאק לאווין קלע 34 בצד המפסיד.</p>
+      <p>לוס אנג&#x27;לס לייקרס המשיכו במומנטום עם ניצחון שלישי ברצף, 129-119 על דאלאס, כשאוסטין ריבס קלע 38 נקודות ולוקה דונצ&#x27;יץ&#x27; הוסיף 35-5-11. ולסיום, ממפיס שברה רצף הפסדים כבד של שמונה משחקים בזכות ניצחון צמוד 112-107 על קליפרס - זאק אדיי תרם 19 ריבאונדים מרשימים, וקוואי לנארד קלע 39 נקודות בצד המפסיד.</p>
       </div>
 
       <details>
         <summary>כל תוצאות הלילה</summary>
         <div class="details-body">
-          <div class="game-block"><div class="game-row"><span class="team winner">ORL</span><span class="score winner">121</span><span class="score">–</span><span class="score">90</span><span class="team">CHA</span></div><div class="game-sub">Play-In · ORL clinch 8 seed</div></div>
-        <div class="game-block"><div class="game-row"><span class="team winner">PHX</span><span class="score winner">111</span><span class="score">–</span><span class="score">96</span><span class="team">GSW</span></div><div class="game-sub">Play-In · PHX clinch 8 seed</div></div>
+          <div class="game-block"><div class="game-row"><span class="team winner">ATL<span class="team-record">12-8</span></span><span class="score winner">130</span><span class="score">–</span><span class="score">123</span><span class="team">CLE<span class="team-record">12-8</span></span></div><div class="game-sub">NBA Cup · East Group A</div></div>
+        <div class="game-block"><div class="game-row"><span class="team">BKN<span class="team-record">3-15</span></span><span class="score">103</span><span class="score">–</span><span class="score winner">115</span><span class="team winner">PHI<span class="team-record">10-8</span></span></div><div class="game-sub">NBA Cup · East Group B</div></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">CHA<span class="team-record">5-14</span></span><span class="score winner">123</span><span class="score">–</span><span class="score">116</span><span class="team">CHI<span class="team-record">9-9</span></span></div><div class="game-sub">NBA Cup · East Group C</div></div>
+        <div class="game-block"><div class="game-row"><span class="team">DET<span class="team-record">15-4</span></span><span class="score">109</span><span class="score">–</span><span class="score winner">112</span><span class="team winner">ORL<span class="team-record">12-8</span></span></div><div class="game-sub">NBA Cup · East Group B</div></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">IND<span class="team-record">3-16</span></span><span class="score winner">119</span><span class="score">–</span><span class="score">86</span><span class="team">WAS<span class="team-record">2-16</span></span></div><div class="game-sub">NBA Cup · East Group A</div></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">NYK<span class="team-record">12-6</span></span><span class="score winner">118</span><span class="score">–</span><span class="score">109</span><span class="team">MIL<span class="team-record">8-12</span></span></div><div class="game-sub">NBA Cup · East Group C</div></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">OKC<span class="team-record">19-1</span></span><span class="score winner">123</span><span class="score">–</span><span class="score">119</span><span class="team">PHX<span class="team-record">12-8</span></span></div><div class="game-sub">NBA Cup · West Group A</div></div>
+        <div class="game-block"><div class="game-row"><span class="team">DEN<span class="team-record">13-5</span></span><span class="score">136</span><span class="score">–</span><span class="score winner">139</span><span class="team winner">SAS<span class="team-record">13-5</span></span></div><div class="game-sub">NBA Cup · West Group C</div></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">UTA<span class="team-record">6-12</span></span><span class="score winner">128</span><span class="score">–</span><span class="score">119</span><span class="team">SAC<span class="team-record">5-15</span></span></div><div class="game-sub">NBA Cup · West Group A</div></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">LAL<span class="team-record">14-4</span></span><span class="score winner">129</span><span class="score">–</span><span class="score">119</span><span class="team">DAL<span class="team-record">5-15</span></span></div><div class="game-sub">NBA Cup · West Group B</div></div>
+        <div class="game-block"><div class="game-row"><span class="team">LAC<span class="team-record">5-14</span></span><span class="score">107</span><span class="score">–</span><span class="score winner">112</span><span class="team winner">MEM<span class="team-record">8-12</span></span></div><div class="game-sub">NBA Cup · West Group B</div></div>
         </div>
       </details>
 
       <details>
-      <summary>פלייאין מערב</summary>
+      <summary>בתי הגביע</summary>
       <div class="details-body" dir="ltr">
-        <div class="bracket"><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">7</span><span>PHX</span></span><span class="bracket-score">110</span></div><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">8</span><span>POR</span></span><span class="bracket-score">114</span></div></div><div class="bracket-caption">המנצחת עולה לפלייאוף מהמקום ה-7</div></div><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">9</span><span>LAC</span></span><span class="bracket-score">121</span></div><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">10</span><span>GSW</span></span><span class="bracket-score">126</span></div></div><div class="bracket-caption">המפסידה מודחת</div></div></div></div></div><div class="bracket-column"><div class="bracket-round bracket-final"><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">7</span><span>PHX</span></span><span class="bracket-score">111</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">10</span><span>GSW</span></span><span class="bracket-score">96</span></div></div><div class="bracket-caption">המנצחת עולה לפלייאוף מהמקום ה-8</div></div></div></div></div>
-      </div>
-    </details>
-
-    <details>
-      <summary>פלייאין מזרח</summary>
-      <div class="details-body" dir="ltr">
-        <div class="bracket"><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">7</span><span>PHI</span></span><span class="bracket-score">109</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">8</span><span>ORL</span></span><span class="bracket-score">97</span></div></div><div class="bracket-caption">המנצחת עולה לפלייאוף מהמקום ה-7</div></div><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">9</span><span>CHA</span></span><span class="bracket-score">127</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">10</span><span>MIA</span></span><span class="bracket-score">126</span></div></div><div class="bracket-caption">המפסידה מודחת</div></div></div></div></div><div class="bracket-column"><div class="bracket-round bracket-final"><div class="bracket-match-wrap"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">8</span><span>ORL</span></span><span class="bracket-score">121</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">9</span><span>CHA</span></span><span class="bracket-score">90</span></div></div><div class="bracket-caption">המנצחת עולה לפלייאוף מהמקום ה-8</div></div></div></div></div>
+        <div class="conferences"><div class="conference standings-block"><h3>מערב</h3><div class="cup-group"><h4>Group A</h4><div class="standing-row boundary"><span class="standing-team">Oklahoma City Thunder</span><span class="standing-record">4-0</span><span class="standing-diff">+75</span></div>
+            <div class="standing-row"><span class="standing-team">Phoenix Suns <span class="wildcard-badge">WC</span></span><span class="standing-record">3-1</span><span class="standing-diff">+31</span></div>
+            <div class="standing-row"><span class="standing-team">Minnesota Timberwolves</span><span class="standing-record">2-2</span><span class="standing-diff">+45</span></div>
+            <div class="standing-row"><span class="standing-team">Utah Jazz</span><span class="standing-record">1-3</span><span class="standing-diff">-85</span></div>
+            <div class="standing-row"><span class="standing-team">Sacramento Kings</span><span class="standing-record">0-4</span><span class="standing-diff">-66</span></div></div>
+          <div class="cup-group"><h4>Group B</h4><div class="standing-row boundary"><span class="standing-team">Los Angeles Lakers</span><span class="standing-record">4-0</span><span class="standing-diff">+46</span></div>
+            <div class="standing-row"><span class="standing-team">Memphis Grizzlies</span><span class="standing-record">3-1</span><span class="standing-diff">+19</span></div>
+            <div class="standing-row"><span class="standing-team">LA Clippers</span><span class="standing-record">2-2</span><span class="standing-diff">-14</span></div>
+            <div class="standing-row"><span class="standing-team">Dallas Mavericks</span><span class="standing-record">1-3</span><span class="standing-diff">-27</span></div>
+            <div class="standing-row"><span class="standing-team">New Orleans Pelicans</span><span class="standing-record">0-4</span><span class="standing-diff">-24</span></div></div>
+          <div class="cup-group"><h4>Group C</h4><div class="standing-row boundary"><span class="standing-team">San Antonio Spurs</span><span class="standing-record">3-1</span><span class="standing-diff">+26</span></div>
+            <div class="standing-row"><span class="standing-team">Denver Nuggets</span><span class="standing-record">2-2</span><span class="standing-diff">+23</span></div>
+            <div class="standing-row"><span class="standing-team">Houston Rockets</span><span class="standing-record">2-2</span><span class="standing-diff">+14</span></div>
+            <div class="standing-row"><span class="standing-team">Portland Trail Blazers</span><span class="standing-record">2-2</span><span class="standing-diff">-31</span></div>
+            <div class="standing-row"><span class="standing-team">Golden State Warriors</span><span class="standing-record">1-3</span><span class="standing-diff">-32</span></div></div></div>
+      <div class="conference standings-block"><h3>מזרח</h3><div class="cup-group"><h4>Group A</h4><div class="standing-row boundary"><span class="standing-team">Toronto Raptors</span><span class="standing-record">4-0</span><span class="standing-diff">+55</span></div>
+            <div class="standing-row"><span class="standing-team">Cleveland Cavaliers</span><span class="standing-record">2-2</span><span class="standing-diff">+26</span></div>
+            <div class="standing-row"><span class="standing-team">Atlanta Hawks</span><span class="standing-record">2-2</span><span class="standing-diff">-4</span></div>
+            <div class="standing-row"><span class="standing-team">Indiana Pacers</span><span class="standing-record">1-3</span><span class="standing-diff">0</span></div>
+            <div class="standing-row"><span class="standing-team">Washington Wizards</span><span class="standing-record">1-3</span><span class="standing-diff">-77</span></div></div>
+          <div class="cup-group"><h4>Group B</h4><div class="standing-row boundary"><span class="standing-team">Orlando Magic</span><span class="standing-record">4-0</span><span class="standing-diff">+64</span></div>
+            <div class="standing-row"><span class="standing-team">Detroit Pistons</span><span class="standing-record">2-2</span><span class="standing-diff">+21</span></div>
+            <div class="standing-row"><span class="standing-team">Boston Celtics</span><span class="standing-record">2-2</span><span class="standing-diff">-17</span></div>
+            <div class="standing-row"><span class="standing-team">Brooklyn Nets</span><span class="standing-record">1-3</span><span class="standing-diff">-29</span></div>
+            <div class="standing-row"><span class="standing-team">Philadelphia 76ers</span><span class="standing-record">1-3</span><span class="standing-diff">-39</span></div></div>
+          <div class="cup-group"><h4>Group C</h4><div class="standing-row boundary"><span class="standing-team">Miami Heat</span><span class="standing-record">3-1</span><span class="standing-diff">+49</span></div>
+            <div class="standing-row"><span class="standing-team">New York Knicks <span class="wildcard-badge">WC</span></span><span class="standing-record">3-1</span><span class="standing-diff">+35</span></div>
+            <div class="standing-row"><span class="standing-team">Milwaukee Bucks</span><span class="standing-record">2-2</span><span class="standing-diff">+17</span></div>
+            <div class="standing-row"><span class="standing-team">Chicago Bulls</span><span class="standing-record">1-3</span><span class="standing-diff">-49</span></div>
+            <div class="standing-row"><span class="standing-team">Charlotte Hornets</span><span class="standing-record">1-3</span><span class="standing-diff">-52</span></div></div></div>
+      <p class="wildcard-legend" dir="rtl">WC - הסגנית עם המאזן הטוב ביותר.</p></div>
       </div>
     </details>
 
@@ -653,7 +709,7 @@
         <p>יש הערה, באג, או הצעה לשיפור? אשמח לשמוע.</p>
         <a class="a11y-link-btn" href="https://github.com/OJBAR/full-court/issues/new" target="_blank" rel="noopener">GitHub Issues</a>
         <div class="email-row">
-          <a class="a11y-link-btn" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=ojbar30@gmail.com&amp;su=%D7%A4%D7%A0%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT-+(%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%94)&amp;body=%D7%AA%D7%95%D7%9B%D7%9F+%D7%94%D7%9E%D7%99%D7%99%D7%9C" target="_blank" rel="noopener">ojbar30@gmail.com</a>
+          <a class="a11y-link-btn" href="mailto:ojbar30@gmail.com?subject=%D7%A4%D7%A0%D7%99%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT:+%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%99%D7%94">ojbar30@gmail.com</a>
           <button type="button" class="copy-email-btn" onclick="copyEmailAddress(this)" aria-label="העתק את כתובת המייל">📋</button>
         </div>
       </div>
