@@ -95,6 +95,7 @@ TEMPLATE = """<!DOCTYPE html>
     zoom: var(--a11y-zoom, 1);
   }}
   .theme-toggle,
+  .refresh-toggle,
   .a11y-toggle {{
     position: absolute;
     top: 24px;
@@ -111,6 +112,7 @@ TEMPLATE = """<!DOCTYPE html>
     justify-content: center;
   }}
   .theme-toggle {{ left: 16px; }}
+  .refresh-toggle {{ left: 64px; }}
   .a11y-toggle {{ right: 16px; }}
   .header {{
     text-align: center;
@@ -600,6 +602,7 @@ TEMPLATE = """<!DOCTYPE html>
 <body>
   <div class="wrapper">
     <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="החלף תצוגה בהירה/כהה">🌙</button>
+    <button class="refresh-toggle" onclick="location.reload()" aria-label="רענן את הדף">🔄</button>
     <button class="a11y-toggle" id="a11y-toggle" onclick="openA11yPanel()" aria-haspopup="dialog" aria-expanded="false" aria-label="פתח הגדרות נגישות">♿</button>
     <header class="header">
       <img class="logo-img logo-light" src="assets/logo_light.png" alt="Full Court">
