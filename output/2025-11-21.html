@@ -994,14 +994,43 @@
       }
     }
 
+    function animateSplashAway(splash) {
+      // Moves the splash's own logo so it visually lands exactly on top of
+      // the header's logo, while the splash background fades to transparent
+      // underneath it - the logo appears to glide up into its final header
+      // position, instead of the splash just disappearing and the header
+      // logo separately appearing in a different spot.
+      var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var visible = function(img) { return getComputedStyle(img).display !== "none"; };
+      var splashLogo = Array.prototype.filter.call(splash.querySelectorAll(".logo-img"), visible)[0];
+      var headerLogo = Array.prototype.filter.call(document.querySelectorAll(".header .logo-img"), visible)[0];
+
+      if (reducedMotion || !splashLogo || !headerLogo) {
+        splash.classList.add("fade-out");
+        setTimeout(function() { splash.remove(); }, 300);
+        return;
+      }
+
+      var splashRect = splashLogo.getBoundingClientRect();
+      var headerRect = headerLogo.getBoundingClientRect();
+      var scale = headerRect.height / splashRect.height;
+      var deltaX = (headerRect.left + headerRect.width / 2) - (splashRect.left + splashRect.width / 2);
+      var deltaY = (headerRect.top + headerRect.height / 2) - (splashRect.top + splashRect.height / 2);
+
+      splash.style.transition = "background-color 0.5s ease";
+      splashLogo.style.transition = "transform 0.5s ease";
+      void splash.offsetWidth; // force reflow so the transition applies to the change below, not the initial state
+      splash.style.backgroundColor = "transparent";
+      splashLogo.style.transform = "translate(" + deltaX + "px, " + deltaY + "px) scale(" + scale + ")";
+
+      setTimeout(function() { splash.remove(); }, 520);
+    }
+
     function dismissSplash() {
       var splash = document.getElementById("splash-screen");
       if (!splash) return;
       if (splash.classList.contains("visible")) {
-        setTimeout(function() {
-          splash.classList.add("fade-out");
-          setTimeout(function() { splash.remove(); }, 300);
-        }, 400);
+        setTimeout(function() { animateSplashAway(splash); }, 400);
       } else {
         splash.remove();
       }
