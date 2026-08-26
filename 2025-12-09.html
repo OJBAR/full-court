@@ -1128,22 +1128,23 @@
     })();
 
     (function initPlayoffBracketPager() {
-      // The playoff bracket's pager: stops 0/1 pan a continuous strip per
-      // conference (see _bracket_strip_html) by exactly one column's real
-      // measured width, so the round shared between them never appears
-      // twice mid-transition; stop 2 swaps to the separate Finals page,
-      // since it isn't part of either conference's own strip.
+      // The playoff bracket's pager: all 3 stops pan a continuous strip
+      // per conference (see _bracket_strip_html) by exactly one column's
+      // real measured width, so a round shared between two adjacent stops
+      // (e.g. Conf. Semis, visible at stops 0 and 1) is the same element
+      // throughout, never two overlapping copies mid-transition - the
+      // Finals column is just the 4th column, so the last stop pans the
+      // same way as every other one instead of swapping to a separate page.
       var wrap = document.querySelector(".bracket-pager");
       if (!wrap) return;
 
       var step = parseInt(wrap.getAttribute("data-step"), 10) || 0;
-      var stripsEl = wrap.querySelector(".bracket-pager-strips");
-      var finalsEl = wrap.querySelector(".bracket-pager-finals");
+      var maxStep = 2;
       var tracks = Array.prototype.slice.call(wrap.querySelectorAll(".strip-track"));
       var prevBtn = wrap.querySelector(".pager-prev");
       var nextBtn = wrap.querySelector(".pager-next");
 
-      function maxShift() {
+      function unitShift() {
         var track = tracks[0];
         var firstCol = track && track.children[0];
         if (!firstCol) return 0;
@@ -1159,20 +1160,13 @@
       }
 
       function render(animate) {
-        if (step < 2) {
-          stripsEl.hidden = false;
-          finalsEl.hidden = true;
-          setTracks(step === 1 ? maxShift() : 0, animate);
-        } else {
-          stripsEl.hidden = true;
-          finalsEl.hidden = false;
-        }
+        setTracks(step * unitShift(), animate);
         prevBtn.disabled = step === 0;
-        nextBtn.disabled = step === 2;
+        nextBtn.disabled = step === maxStep;
       }
 
       function goTo(newStep) {
-        step = Math.max(0, Math.min(newStep, 2));
+        step = Math.max(0, Math.min(newStep, maxStep));
         render(true);
       }
 
@@ -1190,31 +1184,23 @@
       }, { passive: true });
 
       wrap.addEventListener("touchmove", function(e) {
-        if (startX === null || step === 2) return;
+        if (startX === null) return;
         var dx = e.touches[0].clientX - startX;
         var dy = e.touches[0].clientY - startY;
         if (!dragging && Math.abs(dx) < Math.abs(dy)) return;
         dragging = true;
-        var base = step === 1 ? maxShift() : 0;
-        var target = Math.max(0, Math.min(base - dx, maxShift()));
+        var unit = unitShift();
+        var target = Math.max(0, Math.min(step * unit - dx, maxStep * unit));
         setTracks(target, false);
       }, { passive: true });
 
       wrap.addEventListener("touchend", function(e) {
-        if (startX === null) return;
+        if (!dragging) { startX = null; startY = null; return; }
         var dx = e.changedTouches[0].clientX - startX;
         var threshold = 40;
-        if (dragging) {
-          if (dx < -threshold) { goTo(step + 1); }
-          else if (dx > threshold) { goTo(step - 1); }
-          else { render(true); }
-        } else {
-          // No live drag preview on the Finals page (it isn't part of the
-          // strip) - a plain swipe there still pages, just without a
-          // dragged-along preview.
-          if (dx < -threshold) { goTo(step + 1); }
-          else if (dx > threshold) { goTo(step - 1); }
-        }
+        if (dx < -threshold) { goTo(step + 1); }
+        else if (dx > threshold) { goTo(step - 1); }
+        else { render(true); }
         startX = null;
         startY = null;
         dragging = false;
