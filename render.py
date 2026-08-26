@@ -532,7 +532,8 @@ TEMPLATE = """<!DOCTYPE html>
       </div>
       <div class="a11y-statement-body" dir="rtl">
         <p>יש הערה, באג, או הצעה לשיפור? אשמח לשמוע.</p>
-        <p><a href="https://github.com/OJBAR/full-court/issues/new" target="_blank" rel="noopener">פתחו Issue ב-GitHub</a></p>
+        <a class="a11y-link-btn" href="https://github.com/OJBAR/full-court/issues/new" target="_blank" rel="noopener">GitHub Issues</a>
+        <a class="a11y-link-btn" href="mailto:PLACEHOLDER@EXAMPLE.COM">PLACEHOLDER@EXAMPLE.COM</a>
       </div>
     </div>
   </div>
