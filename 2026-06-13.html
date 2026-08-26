@@ -642,6 +642,47 @@
     pointer-events: none;
   }
 
+  .install-banner {
+    display: none;
+    flex-direction: column;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    z-index: 150;
+    gap: 8px;
+  }
+  .install-banner.visible { display: flex; }
+  .install-banner-row { display: flex; align-items: center; gap: 10px; }
+  .install-banner-row img { width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0; }
+  .install-banner-text { flex: 1; min-width: 0; font-size: 12px; color: var(--text-body); }
+  .install-banner-text strong { display: block; font-size: 13px; color: var(--text-heading); margin-bottom: 2px; }
+  .install-banner-action {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: var(--card-bg);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .install-banner-close {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .install-banner-hint { font-size: 12px; color: var(--text-muted); text-align: center; }
+
   @media (prefers-reduced-motion: no-preference) {
     .wrapper { animation: fc-fade-in 0.3s ease; }
     @keyframes fc-fade-in {
@@ -965,6 +1006,88 @@
       window.addEventListener("load", dismissSplash);
     }
     setTimeout(dismissSplash, 2500);
+
+    (function initInstallBanner() {
+      var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+      if (standalone) return;
+      if (localStorage.getItem("nba-brief-install-dismissed")) return;
+
+      var ua = navigator.userAgent;
+      var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+      var isAndroid = /Android/.test(ua);
+      if (!isIOS && !isAndroid) return; // desktop - not relevant
+
+      var banner = document.createElement("div");
+      banner.className = "install-banner";
+      banner.setAttribute("role", "dialog");
+      banner.setAttribute("aria-label", "התקנת האפליקציה");
+
+      var row = document.createElement("div");
+      row.className = "install-banner-row";
+
+      var icon = document.createElement("img");
+      icon.src = "assets/icon-192.png";
+      icon.alt = "";
+
+      var text = document.createElement("div");
+      text.className = "install-banner-text";
+      text.innerHTML = "<strong>הוסיפו את Full Court למסך הבית</strong>גישה מהירה, כמו אפליקציה";
+
+      var actionBtn = document.createElement("button");
+      actionBtn.type = "button";
+      actionBtn.className = "install-banner-action";
+
+      var closeBtn = document.createElement("button");
+      closeBtn.type = "button";
+      closeBtn.className = "install-banner-close";
+      closeBtn.setAttribute("aria-label", "סגור");
+      closeBtn.textContent = "✕";
+
+      function dismiss() {
+        banner.classList.remove("visible");
+        localStorage.setItem("nba-brief-install-dismissed", "1");
+      }
+      closeBtn.onclick = dismiss;
+
+      row.appendChild(icon);
+      row.appendChild(text);
+      row.appendChild(actionBtn);
+      row.appendChild(closeBtn);
+      banner.appendChild(row);
+
+      if (isIOS) {
+        // iOS has no programmatic install API at all - the only way is the
+        // manual Share -> Add to Home Screen flow, so this just shows those
+        // instructions rather than triggering anything itself.
+        var hint = document.createElement("div");
+        hint.className = "install-banner-hint";
+        hint.hidden = true;
+        hint.textContent = "לחצו על כפתור השיתוף (⬆️) למטה בספארי, ואז "הוסף למסך הבית"";
+        actionBtn.textContent = "איך?";
+        actionBtn.onclick = function() { hint.hidden = !hint.hidden; };
+        banner.appendChild(hint);
+        banner.classList.add("visible");
+      } else if (isAndroid) {
+        // Android/Chrome has a real install API - capture the browser's own
+        // prompt event (this also suppresses Chrome's default mini-infobar)
+        // and trigger it from our button instead, so both platforms share
+        // one consistent banner even though the underlying mechanism differs.
+        var deferredPrompt = null;
+        actionBtn.textContent = "התקנה";
+        window.addEventListener("beforeinstallprompt", function(e) {
+          e.preventDefault();
+          deferredPrompt = e;
+          banner.classList.add("visible");
+        });
+        actionBtn.onclick = function() {
+          if (!deferredPrompt) return;
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function() { dismiss(); });
+        };
+      }
+
+      document.body.appendChild(banner);
+    })();
 
     (function initPullToRefresh() {
       // Regular browser tabs already have a native pull-to-refresh gesture -
