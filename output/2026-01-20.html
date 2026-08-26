@@ -632,7 +632,7 @@
     font-weight: 700;
     cursor: pointer;
   }
-  :root.tabs-mode .header .logo-img { cursor: pointer; }
+  :root.tabs-mode .header { cursor: pointer; }
 
   @media (prefers-reduced-motion: no-preference) {
     .wrapper { animation: fc-fade-in 0.3s ease; }
@@ -1024,10 +1024,11 @@
         main.scrollIntoView({ behavior: "smooth", block: "start" });
       }
       // No dedicated back button - returning home is done by tapping the
-      // header logo or the summary itself (see below).
-      Array.prototype.forEach.call(document.querySelectorAll(".header .logo-img"), function(img) {
-        img.addEventListener("click", showHome);
-      });
+      // header or the summary itself (see below). Listens on the whole
+      // header, not just the logo <img> itself, so it always fires
+      // regardless of exactly where within the logo/title/date area the
+      // tap lands, rather than requiring a precise hit on the image.
+      document.querySelector(".header").addEventListener("click", showHome);
 
       if (summaryDiv) {
         var bigBtn = document.createElement("button");
