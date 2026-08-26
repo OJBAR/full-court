@@ -78,7 +78,6 @@
     zoom: var(--a11y-zoom, 1);
   }
   .theme-toggle,
-  .refresh-toggle,
   .a11y-toggle {
     position: absolute;
     top: 24px;
@@ -95,7 +94,6 @@
     justify-content: center;
   }
   .theme-toggle { left: 16px; }
-  .refresh-toggle { left: 64px; }
   .a11y-toggle { right: 16px; }
   .header {
     text-align: center;
@@ -633,6 +631,16 @@
     cursor: pointer;
   }
   :root.tabs-mode .header { cursor: pointer; }
+  .pull-refresh-indicator {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    opacity: 0;
+    font-size: 20px;
+    z-index: 150;
+    pointer-events: none;
+  }
 
   @media (prefers-reduced-motion: no-preference) {
     .wrapper { animation: fc-fade-in 0.3s ease; }
@@ -660,7 +668,6 @@
   </script>
   <div class="wrapper">
     <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="החלף תצוגה בהירה/כהה">🌙</button>
-    <button class="refresh-toggle" onclick="location.reload()" aria-label="רענן את הדף">🔄</button>
     <button class="a11y-toggle" id="a11y-toggle" onclick="openA11yPanel()" aria-haspopup="dialog" aria-expanded="false" aria-label="פתח הגדרות נגישות">♿</button>
     <header class="header">
       <img class="logo-img logo-light" src="assets/logo_light.png" alt="Full Court">
@@ -1025,6 +1032,53 @@
       window.addEventListener("load", dismissSplash);
     }
     setTimeout(dismissSplash, 2500);
+
+    (function initPullToRefresh() {
+      // Regular browser tabs already have a native pull-to-refresh gesture -
+      // this is only needed because iOS disables that gesture once the PWA
+      // runs in standalone mode (the same platform limitation the old
+      // visible refresh button worked around).
+      var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+      if (!standalone) return;
+
+      var startY = null;
+      var currentPull = 0;
+      var threshold = 70;
+
+      var indicator = document.createElement("div");
+      indicator.className = "pull-refresh-indicator";
+      indicator.textContent = "🔄";
+      document.body.appendChild(indicator);
+
+      document.addEventListener("touchstart", function(e) {
+        startY = window.scrollY === 0 ? e.touches[0].clientY : null;
+        currentPull = 0;
+      }, { passive: true });
+
+      document.addEventListener("touchmove", function(e) {
+        if (startY === null) return;
+        var delta = e.touches[0].clientY - startY;
+        if (delta <= 0) {
+          currentPull = 0;
+          indicator.style.opacity = 0;
+          return;
+        }
+        currentPull = Math.min(delta, threshold * 1.5);
+        indicator.style.opacity = Math.min(currentPull / threshold, 1);
+        indicator.style.transform = "translateX(-50%) translateY(" + currentPull + "px) rotate(" + (currentPull * 3) + "deg)";
+      }, { passive: true });
+
+      document.addEventListener("touchend", function() {
+        if (currentPull >= threshold) {
+          location.reload();
+        } else {
+          indicator.style.opacity = 0;
+          indicator.style.transform = "translateX(-50%) translateY(0)";
+        }
+        startY = null;
+        currentPull = 0;
+      }, { passive: true });
+    })();
 
     (function initAppHome() {
       var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
