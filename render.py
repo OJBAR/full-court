@@ -362,13 +362,6 @@ TEMPLATE = """<!DOCTYPE html>
      Cup/Play-In brackets' own column sizing. */
   .bracket-pager .bracket-column,
   .cup-bracket-pager .bracket-column {{ width: 146px; }}
-  /* The Finals row isn't part of the synced pan (see _bracket_finals_row_html),
-     so it doesn't need the 146px uniform width forced above - narrower
-     columns and a tighter gap keep it closer to fitting a phone's width
-     without a fixed pan target to preserve; initFitToWidth() (JS) then
-     scales the whole row to whatever the actual available width allows. */
-  .bracket-finals-row {{ gap: 14px; }}
-  .bracket-finals-row .bracket-column {{ width: 128px; }}
   .bracket-pair {{
     display: flex;
     flex-direction: column;
@@ -1159,7 +1152,6 @@ TEMPLATE = """<!DOCTYPE html>
 
       document.querySelectorAll(".cup-bracket-pager .strip-viewport").forEach(function(el) {{ fit(el, 1.25); }});
       fit(document.querySelector(".play-in-bracket"), 1.25);
-      fit(document.querySelector(".bracket-finals-row"), 1.1);
     }})();
 
     (function initPagers() {{
@@ -2206,22 +2198,32 @@ def _bracket_strip_html(conf_label: str, columns: dict[str, str]) -> str:
     )
 
 
-def _bracket_finals_row_html(columns_by_conf: dict[str, dict[str, str]], finals_series: dict | None, conf_by_team: dict) -> str:
+def _bracket_finals_row_html(playoff_series: list[dict], finals_series: dict | None, conf_by_team: dict) -> str:
     """
     The last stop (Conf. Finals -> NBA Finals) isn't part of either
-    conference's own strip - the Finals combine both conferences, so it's
-    a separate, differently-shaped page: the two Conf. Finals columns
-    flank the NBA Finals column in the middle. No region label on the two
-    side columns (which team is which conference is already obvious from
-    the seed badge/side) - only "NBA Finals" in the middle, since that's
-    the one column that actually needs identifying.
+    conference's own strip - the Finals combine both conferences. Built as
+    a real two-column bracket instead of three loose columns: the two
+    Conf. Finals matches (West on top, East below) form one .bracket-pair
+    -r2, connected by the same vertical/horizontal lines used everywhere
+    else a round-2 pair feeds into a single round-3 match - reusing that
+    already-proven connector geometry (and its fixed width) means this
+    page is exactly as wide as every other 2-column bracket page, with no
+    separate shrink-to-fit needed the way three side-by-side columns did.
     """
-    west_col = f'<div class="bracket-column">{columns_by_conf["West"]["Conf. Finals"]}</div>'
-    east_col = f'<div class="bracket-column">{columns_by_conf["East"]["Conf. Finals"]}</div>'
+
+    def _conf_finals_match(conference: str) -> str:
+        series = next(
+            (s for s in playoff_series if s.get("round") == "Conf. Finals" and s.get("conference") == conference),
+            None,
+        )
+        return _bracket_series_html(series)
+
+    pair = f'<div class="bracket-pair bracket-pair-r2">{_conf_finals_match("West")}{_conf_finals_match("East")}</div>'
+    pair_column = f'<div class="bracket-column"><div class="bracket-round">{pair}</div></div>'
     finals_col = _bracket_column_html(
         "NBA Finals", f'<div class="bracket-round bracket-final">{_finals_match_html(finals_series, conf_by_team)}</div>'
     )
-    return f'<div class="bracket bracket-finals-row">{west_col}{finals_col}{east_col}</div>' + _finals_champion_line(finals_series)
+    return f'<div class="bracket">{pair_column}{finals_col}</div>' + _finals_champion_line(finals_series)
 
 
 def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list[dict]) -> str:
@@ -2259,7 +2261,7 @@ def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list
     round_header = _bracket_round_header_track(_PLAYOFF_ROUNDS[:3])
     west_strip = _bracket_strip_html("מערב", columns_by_conf["West"])
     east_strip = _bracket_strip_html("מזרח", columns_by_conf["East"])
-    finals_row = _bracket_finals_row_html(columns_by_conf, finals_series, conf_by_team)
+    finals_row = _bracket_finals_row_html(playoff_series, finals_series, conf_by_team)
 
     strips_hidden = " hidden" if start_step == 2 else ""
     finals_hidden = "" if start_step == 2 else " hidden"

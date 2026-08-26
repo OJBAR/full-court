@@ -345,13 +345,6 @@
      Cup/Play-In brackets' own column sizing. */
   .bracket-pager .bracket-column,
   .cup-bracket-pager .bracket-column { width: 146px; }
-  /* The Finals row isn't part of the synced pan (see _bracket_finals_row_html),
-     so it doesn't need the 146px uniform width forced above - narrower
-     columns and a tighter gap keep it closer to fitting a phone's width
-     without a fixed pan target to preserve; initFitToWidth() (JS) then
-     scales the whole row to whatever the actual available width allows. */
-  .bracket-finals-row { gap: 14px; }
-  .bracket-finals-row .bracket-column { width: 128px; }
   .bracket-pair {
     display: flex;
     flex-direction: column;
@@ -1226,7 +1219,6 @@
 
       document.querySelectorAll(".cup-bracket-pager .strip-viewport").forEach(function(el) { fit(el, 1.25); });
       fit(document.querySelector(".play-in-bracket"), 1.25);
-      fit(document.querySelector(".bracket-finals-row"), 1.1);
     })();
 
     (function initPagers() {
