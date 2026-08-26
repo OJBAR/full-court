@@ -173,7 +173,13 @@
   .game-block:last-child { border-bottom: none; margin-bottom: 0; }
   .game-row {
     display: flex;
-    align-items: center;
+    /* Top-aligned, not centered: .team is taller than .score when a
+       record is shown (name line + record line below it) - centering
+       would line up .score against the midpoint of that whole two-line
+       block instead of against just the team name, throwing the two out
+       of alignment. Top-aligning keeps the name and score on the same
+       line regardless, with the record simply continuing below. */
+    align-items: flex-start;
     justify-content: center;
     padding-top: 8px;
     font-size: 0.875rem;
@@ -284,6 +290,13 @@
     letter-spacing: 0.5px;
     margin: 0 0 4px 0;
   }
+  /* Compact the Cup groups specifically (not the league standings, which
+     already got a deliberate size bump elsewhere) so 3 groups per
+     conference fit one app screen without needing to scroll to see the
+     rest. */
+  :root.tabs-mode .cup-group { margin-bottom: 6px; padding: 6px 8px 4px; }
+  :root.tabs-mode .cup-group .standing-row { padding: 5px 0; font-size: 0.8125rem; }
+  :root.tabs-mode .cup-group .standing-team { font-size: 0.75rem; }
 
   /* Every font-size inside the bracket diagram (this section down through
      .bracket-conf-label/.pager-arrow) deliberately stays in px, not
@@ -330,7 +343,8 @@
      columns paired, some not) would drift out of sync as they pan
      together. Scoped to the playoff pager only, so it doesn't touch the
      Cup/Play-In brackets' own column sizing. */
-  .bracket-pager .bracket-column { width: 146px; }
+  .bracket-pager .bracket-column,
+  .cup-bracket-pager .bracket-column { width: 146px; }
   .bracket-pair {
     display: flex;
     flex-direction: column;
@@ -450,6 +464,14 @@
 
   .bracket-conf-block { margin-bottom: 18px; }
   .bracket-conf-block:last-child { margin-bottom: 0; }
+  /* Play-In is just two stacked conference brackets with no pager, so it
+     doesn't naturally use up the screen the way the paged brackets do -
+     `zoom` scales the whole thing (including its own layout footprint,
+     unlike `transform`) so surrounding spacing reflows correctly, without
+     touching the fixed-pixel connector math inside .bracket-pair-captioned
+     (everything scales together proportionally, so that math stays
+     internally consistent either way). */
+  :root.tabs-mode .play-in-bracket { zoom: 1.2; }
   .bracket-conf-label {
     font-size: 11px;
     font-weight: 700;
@@ -492,6 +514,12 @@
      instead of the generic page-based .pager above, so the round shared
      between two adjacent stops never appears as two separate copies. */
   .strip-viewport { overflow: hidden; touch-action: pan-y; }
+  /* Constrained to exactly 2 columns' width (146px each + the 24px gap
+     between them) and centered, instead of stretching to the full width
+     of its container and leaving the visible columns pinned to one side
+     with empty space on the other. */
+  .bracket-pager .strip-viewport,
+  .cup-bracket-pager .strip-viewport { max-width: 316px; margin: 0 auto; }
   .strip-track {
     display: flex;
     justify-content: flex-start;
@@ -1235,6 +1263,86 @@
         if (dx < -threshold) { goTo(step + 1); }
         else if (dx > threshold) { goTo(step - 1); }
         else if (dragging) { render(true); }
+        startX = null;
+        startY = null;
+        dragging = false;
+      });
+
+      window.addEventListener("resize", function() { render(false); });
+      render(false);
+    })();
+
+    (function initCupBracketPager() {
+      // Same idea as the playoff bracket's pager, but simpler - the Cup
+      // knockout bracket is a single unified tree (not split by
+      // conference), so there's just one strip plus the shared round-name
+      // header, both panned together, no separate Finals page needed.
+      var wrap = document.querySelector(".cup-bracket-pager");
+      if (!wrap) return;
+
+      var step = parseInt(wrap.getAttribute("data-step"), 10) || 0;
+      var maxStep = 1;
+      var tracks = Array.prototype.slice.call(wrap.querySelectorAll(".strip-track"));
+      var prevBtn = wrap.querySelector(".pager-prev");
+      var nextBtn = wrap.querySelector(".pager-next");
+
+      function unitShift() {
+        var track = tracks[0];
+        var firstCol = track && track.children[0];
+        if (!firstCol) return 0;
+        var gap = parseFloat(getComputedStyle(track).gap || "0") || 0;
+        return firstCol.getBoundingClientRect().width + gap;
+      }
+
+      function setTracks(px, animate) {
+        tracks.forEach(function(track) {
+          track.style.transition = animate ? "transform 0.35s ease" : "none";
+          track.style.transform = "translateX(-" + px + "px)";
+        });
+      }
+
+      function render(animate) {
+        setTracks(step * unitShift(), animate);
+        prevBtn.disabled = step === 0;
+        nextBtn.disabled = step === maxStep;
+      }
+
+      function goTo(newStep) {
+        step = Math.max(0, Math.min(newStep, maxStep));
+        render(true);
+      }
+
+      prevBtn.addEventListener("click", function() { goTo(step - 1); });
+      nextBtn.addEventListener("click", function() { goTo(step + 1); });
+
+      var startX = null;
+      var startY = null;
+      var dragging = false;
+
+      wrap.addEventListener("touchstart", function(e) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        dragging = false;
+      }, { passive: true });
+
+      wrap.addEventListener("touchmove", function(e) {
+        if (startX === null) return;
+        var dx = e.touches[0].clientX - startX;
+        var dy = e.touches[0].clientY - startY;
+        if (!dragging && Math.abs(dx) < Math.abs(dy)) return;
+        dragging = true;
+        var unit = unitShift();
+        var target = Math.max(0, Math.min(step * unit - dx, maxStep * unit));
+        setTracks(target, false);
+      }, { passive: true });
+
+      wrap.addEventListener("touchend", function(e) {
+        if (!dragging) { startX = null; startY = null; return; }
+        var dx = e.changedTouches[0].clientX - startX;
+        var threshold = 40;
+        if (dx < -threshold) { goTo(step + 1); }
+        else if (dx > threshold) { goTo(step - 1); }
+        else { render(true); }
         startX = null;
         startY = null;
         dragging = false;

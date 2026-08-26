@@ -190,7 +190,13 @@ TEMPLATE = """<!DOCTYPE html>
   .game-block:last-child {{ border-bottom: none; margin-bottom: 0; }}
   .game-row {{
     display: flex;
-    align-items: center;
+    /* Top-aligned, not centered: .team is taller than .score when a
+       record is shown (name line + record line below it) - centering
+       would line up .score against the midpoint of that whole two-line
+       block instead of against just the team name, throwing the two out
+       of alignment. Top-aligning keeps the name and score on the same
+       line regardless, with the record simply continuing below. */
+    align-items: flex-start;
     justify-content: center;
     padding-top: 8px;
     font-size: 0.875rem;
@@ -301,6 +307,13 @@ TEMPLATE = """<!DOCTYPE html>
     letter-spacing: 0.5px;
     margin: 0 0 4px 0;
   }}
+  /* Compact the Cup groups specifically (not the league standings, which
+     already got a deliberate size bump elsewhere) so 3 groups per
+     conference fit one app screen without needing to scroll to see the
+     rest. */
+  :root.tabs-mode .cup-group {{ margin-bottom: 6px; padding: 6px 8px 4px; }}
+  :root.tabs-mode .cup-group .standing-row {{ padding: 5px 0; font-size: 0.8125rem; }}
+  :root.tabs-mode .cup-group .standing-team {{ font-size: 0.75rem; }}
 
   /* Every font-size inside the bracket diagram (this section down through
      .bracket-conf-label/.pager-arrow) deliberately stays in px, not
@@ -347,7 +360,8 @@ TEMPLATE = """<!DOCTYPE html>
      columns paired, some not) would drift out of sync as they pan
      together. Scoped to the playoff pager only, so it doesn't touch the
      Cup/Play-In brackets' own column sizing. */
-  .bracket-pager .bracket-column {{ width: 146px; }}
+  .bracket-pager .bracket-column,
+  .cup-bracket-pager .bracket-column {{ width: 146px; }}
   .bracket-pair {{
     display: flex;
     flex-direction: column;
@@ -467,6 +481,14 @@ TEMPLATE = """<!DOCTYPE html>
 
   .bracket-conf-block {{ margin-bottom: 18px; }}
   .bracket-conf-block:last-child {{ margin-bottom: 0; }}
+  /* Play-In is just two stacked conference brackets with no pager, so it
+     doesn't naturally use up the screen the way the paged brackets do -
+     `zoom` scales the whole thing (including its own layout footprint,
+     unlike `transform`) so surrounding spacing reflows correctly, without
+     touching the fixed-pixel connector math inside .bracket-pair-captioned
+     (everything scales together proportionally, so that math stays
+     internally consistent either way). */
+  :root.tabs-mode .play-in-bracket {{ zoom: 1.2; }}
   .bracket-conf-label {{
     font-size: 11px;
     font-weight: 700;
@@ -509,6 +531,12 @@ TEMPLATE = """<!DOCTYPE html>
      instead of the generic page-based .pager above, so the round shared
      between two adjacent stops never appears as two separate copies. */
   .strip-viewport {{ overflow: hidden; touch-action: pan-y; }}
+  /* Constrained to exactly 2 columns' width (146px each + the 24px gap
+     between them) and centered, instead of stretching to the full width
+     of its container and leaving the visible columns pinned to one side
+     with empty space on the other. */
+  .bracket-pager .strip-viewport,
+  .cup-bracket-pager .strip-viewport {{ max-width: 316px; margin: 0 auto; }}
   .strip-track {{
     display: flex;
     justify-content: flex-start;
@@ -1247,6 +1275,86 @@ TEMPLATE = """<!DOCTYPE html>
         if (dx < -threshold) {{ goTo(step + 1); }}
         else if (dx > threshold) {{ goTo(step - 1); }}
         else if (dragging) {{ render(true); }}
+        startX = null;
+        startY = null;
+        dragging = false;
+      }});
+
+      window.addEventListener("resize", function() {{ render(false); }});
+      render(false);
+    }})();
+
+    (function initCupBracketPager() {{
+      // Same idea as the playoff bracket's pager, but simpler - the Cup
+      // knockout bracket is a single unified tree (not split by
+      // conference), so there's just one strip plus the shared round-name
+      // header, both panned together, no separate Finals page needed.
+      var wrap = document.querySelector(".cup-bracket-pager");
+      if (!wrap) return;
+
+      var step = parseInt(wrap.getAttribute("data-step"), 10) || 0;
+      var maxStep = 1;
+      var tracks = Array.prototype.slice.call(wrap.querySelectorAll(".strip-track"));
+      var prevBtn = wrap.querySelector(".pager-prev");
+      var nextBtn = wrap.querySelector(".pager-next");
+
+      function unitShift() {{
+        var track = tracks[0];
+        var firstCol = track && track.children[0];
+        if (!firstCol) return 0;
+        var gap = parseFloat(getComputedStyle(track).gap || "0") || 0;
+        return firstCol.getBoundingClientRect().width + gap;
+      }}
+
+      function setTracks(px, animate) {{
+        tracks.forEach(function(track) {{
+          track.style.transition = animate ? "transform 0.35s ease" : "none";
+          track.style.transform = "translateX(-" + px + "px)";
+        }});
+      }}
+
+      function render(animate) {{
+        setTracks(step * unitShift(), animate);
+        prevBtn.disabled = step === 0;
+        nextBtn.disabled = step === maxStep;
+      }}
+
+      function goTo(newStep) {{
+        step = Math.max(0, Math.min(newStep, maxStep));
+        render(true);
+      }}
+
+      prevBtn.addEventListener("click", function() {{ goTo(step - 1); }});
+      nextBtn.addEventListener("click", function() {{ goTo(step + 1); }});
+
+      var startX = null;
+      var startY = null;
+      var dragging = false;
+
+      wrap.addEventListener("touchstart", function(e) {{
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        dragging = false;
+      }}, {{ passive: true }});
+
+      wrap.addEventListener("touchmove", function(e) {{
+        if (startX === null) return;
+        var dx = e.touches[0].clientX - startX;
+        var dy = e.touches[0].clientY - startY;
+        if (!dragging && Math.abs(dx) < Math.abs(dy)) return;
+        dragging = true;
+        var unit = unitShift();
+        var target = Math.max(0, Math.min(step * unit - dx, maxStep * unit));
+        setTracks(target, false);
+      }}, {{ passive: true }});
+
+      wrap.addEventListener("touchend", function(e) {{
+        if (!dragging) {{ startX = null; startY = null; return; }}
+        var dx = e.changedTouches[0].clientX - startX;
+        var threshold = 40;
+        if (dx < -threshold) {{ goTo(step + 1); }}
+        else if (dx > threshold) {{ goTo(step - 1); }}
+        else {{ render(true); }}
         startX = null;
         startY = null;
         dragging = false;
@@ -2274,11 +2382,15 @@ def _bracket_projected_match_html(teams: list[dict]) -> str:
 def _build_cup_bracket_html(cup_bracket: list[dict]) -> str:
     """
     Renders the Cup knockout bracket as a connected tree (QF -> SF ->
-    Championship) - only 7 games total, so this fits. Always shows the full
-    shape (4 QF / 2 SF / 1 Final slots) even early in the knockout stage.
-    Anything not played yet is either a TBD placeholder (participants still
-    unknown) or a "projected" matchup (both participants known - e.g. both
-    Quarterfinal winners in a pair - but that game hasn't been played yet).
+    Championship), paged two rounds at a time like the playoff bracket
+    (see initCupBracketPager()) - a shared round-name header pans in sync
+    with a single strip (there's only one bracket here, not split by
+    conference the way playoffs is, so no per-conference strips needed).
+    Always shows the full shape (4 QF / 2 SF / 1 Final slots) even early in
+    the knockout stage. Anything not played yet is either a TBD placeholder
+    (participants still unknown) or a "projected" matchup (both
+    participants known - e.g. both Quarterfinal winners in a pair - but
+    that game hasn't been played yet).
     """
     quarterfinals = [g for g in cup_bracket if "Quarterfinal" in g.get("round", "")]
     semifinals = [g for g in cup_bracket if "Semifinal" in g.get("round", "")]
@@ -2327,11 +2439,24 @@ def _build_cup_bracket_html(cup_bracket: list[dict]) -> str:
             final_column = _bracket_match_html(None)
 
     columns = [
-        _bracket_column_html("Quarterfinals", f'<div class="bracket-round">{"".join(qf_pairs)}</div>'),
-        _bracket_column_html("Semifinals", f'<div class="bracket-round">{sf_pair}</div>'),
-        _bracket_column_html("Championship", f'<div class="bracket-round bracket-final">{final_column}</div>'),
+        f'<div class="bracket-column"><div class="bracket-round">{"".join(qf_pairs)}</div></div>',
+        f'<div class="bracket-column"><div class="bracket-round">{sf_pair}</div></div>',
+        f'<div class="bracket-column"><div class="bracket-round bracket-final">{final_column}</div></div>',
     ]
-    return f'<div class="bracket">{"".join(columns)}</div>'
+    round_header = _bracket_round_header_track(["Quarterfinals", "Semifinals", "Championship"])
+    # Defaults to whichever two rounds are relevant: once any Semifinal (or
+    # the Championship itself) has a real result, show Semifinals+
+    # Championship rather than starting back at Quarterfinals+Semifinals.
+    start_step = 1 if (final or semifinals) else 0
+    return (
+        f'<div class="cup-bracket-pager" data-step="{start_step}">'
+        f"{round_header}"
+        f'<div class="strip-viewport"><div class="strip-track">{"".join(columns)}</div></div>'
+        '<div class="pager-nav">'
+        '<button type="button" class="pager-arrow pager-prev" aria-label="הקודם">‹</button>'
+        '<button type="button" class="pager-arrow pager-next" aria-label="הבא">›</button>'
+        "</div></div>"
+    )
 
 
 def _build_cup_group_standings_html(cup_group_standings: list[dict]) -> str:
@@ -2456,7 +2581,7 @@ def _build_secondary_section(data: dict) -> str:
                 f'<div class="bracket-conf-block"><div class="bracket-conf-label">{label}</div>{_build_play_in_html(games, conf)}</div>'
                 for conf, label in (("West", "מערב"), ("East", "מזרח"))
             )
-            sections.append(("פלייאין", play_in_blocks))
+            sections.append(("פלייאין", f'<div class="play-in-bracket">{play_in_blocks}</div>'))
         sections.append(standings_section)
 
     return "\n\n    ".join(_details_block(title, body_html) for title, body_html in sections)
