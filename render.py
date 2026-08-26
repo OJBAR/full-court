@@ -246,8 +246,8 @@ TEMPLATE = """<!DOCTYPE html>
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 0;
-    font-size: 0.8125rem;
+    padding: 8px 0;
+    font-size: 0.9375rem;
     border-bottom: 1px solid var(--border);
   }}
   .standing-row:last-child {{ border-bottom: none; }}
@@ -258,7 +258,9 @@ TEMPLATE = """<!DOCTYPE html>
     min-width: 0;
     color: var(--text-heading);
     white-space: nowrap;
-    font-size: 0.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.875rem;
   }}
   .standing-record {{ color: var(--text-muted); flex-shrink: 0; }}
   .standing-streak {{ width: 3em; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }}
@@ -2128,10 +2130,11 @@ def _build_play_in_conference_bracket_html(conf_games: list[dict]) -> str:
 
 def _build_play_in_html(games: list[dict], conference: str) -> str:
     """
-    Play-In bracket for one conference (its own tab - "פלייאין מזרח"/"פלייאין
-    מערב" - same as the two playoff conference-bracket tabs). The 3 games are
-    identified by their teams' seeds, not by date - the two conferences don't
-    always play their games on the same nights, so date order alone doesn't
+    Play-In bracket for one conference - one page of the shared "פלייאין"
+    pager (see _build_secondary_section), one conference at a time. The 3
+    games are identified by their teams' seeds, not by date - the two
+    conferences don't always play their games on the same nights, so date
+    order alone doesn't
     tell you which game is which. {7,8} is the opener, {9,10} is the loser-out
     game, and the mismatched pair (e.g. {7,9} or {8,10}) is the decider for
     the conference's final 8 seed.
@@ -2371,8 +2374,11 @@ def _build_secondary_section(data: dict) -> str:
             sections.append(("בראקט הגביע", _build_cup_bracket_html(data.get("cup_bracket", []))))
         if data.get("is_play_in"):
             games = data.get("play_in_bracket", [])
-            sections.append(("פלייאין מערב", _build_play_in_html(games, "West")))
-            sections.append(("פלייאין מזרח", _build_play_in_html(games, "East")))
+            play_in_pages = [
+                f'<div class="bracket-conf-block"><div class="bracket-conf-label">{label}</div>{_build_play_in_html(games, conf)}</div>'
+                for conf, label in (("West", "מערב"), ("East", "מזרח"))
+            ]
+            sections.append(("פלייאין", _build_pager_html(play_in_pages)))
         sections.append(standings_section)
 
     return "\n\n    ".join(_details_block(title, body_html) for title, body_html in sections)
