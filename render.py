@@ -395,6 +395,16 @@ TEMPLATE = """<!DOCTYPE html>
      Coupled to bracket-match's real rendered height (56px) and the two gaps
      above - update this if any of those three ever change. */
   .bracket-pair-r2 {{ gap: 78px; }}
+  /* .bracket-pair::after's 25px stub is calibrated to reach the next
+     round's box when that box is itself a .bracket-pair (which occupies a
+     column's full 146px width, so the stub only needs to bridge the 24px
+     track gap between columns). A round-2 pair always feeds a single,
+     centered .bracket-final match instead (Conf. Finals / Cup
+     Championship) - that box is 128px inside a 146px column, inset 9px
+     from the column's own edge, so the plain 25px stub falls 8px short of
+     actually touching it. +8px closes that gap to the same "touches with
+     nothing left over" distance every other round's connector has. */
+  .bracket-pair-r2::after {{ width: 33px; }}
   /* Play-In's pair is the only one where each match has its own caption
      underneath it (see .bracket-caption) - that extra content below each
      match throws off the plain 50%-based connector (which naturally landed
