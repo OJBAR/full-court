@@ -334,10 +334,20 @@ TEMPLATE = """<!DOCTYPE html>
     display: flex;
     flex: 1;
     flex-direction: column;
+    align-items: center;
     justify-content: space-around;
     gap: 12px;
   }}
   .bracket-final {{ justify-content: center; }}
+  /* The playoff bracket's strips and shared round-header track need every
+     column to be exactly the same width (146px = a match's 128px plus a
+     paired round's 16px padding + 2px border, which round 3's lone match
+     doesn't have on its own) - otherwise the header track (label-only
+     columns, sized to their text) and the two conference strips (some
+     columns paired, some not) would drift out of sync as they pan
+     together. Scoped to the playoff pager only, so it doesn't touch the
+     Cup/Play-In brackets' own column sizing. */
+  .bracket-pager .bracket-column {{ width: 146px; }}
   .bracket-pair {{
     display: flex;
     flex-direction: column;
@@ -1152,18 +1162,22 @@ TEMPLATE = """<!DOCTYPE html>
     }})();
 
     (function initPlayoffBracketPager() {{
-      // The playoff bracket's pager: all 3 stops pan a continuous strip
-      // per conference (see _bracket_strip_html) by exactly one column's
-      // real measured width, so a round shared between two adjacent stops
-      // (e.g. Conf. Semis, visible at stops 0 and 1) is the same element
-      // throughout, never two overlapping copies mid-transition - the
-      // Finals column is just the 4th column, so the last stop pans the
-      // same way as every other one instead of swapping to a separate page.
+      // The playoff bracket's pager: stops 0/1 pan a continuous strip per
+      // conference (see _bracket_strip_html, plus the shared round-name
+      // header track) by exactly one column's real measured width, so a
+      // round shared between them (e.g. Conf. Semis, visible at both
+      // stops) is the same element throughout, never two overlapping
+      // copies mid-transition. Stop 2 (the Finals) swaps to a separate,
+      // differently-shaped page instead - it isn't part of either
+      // conference's strip, so that one transition is a swap rather than
+      // a pan (same cards, same swipe gesture, just not a shared element).
       var wrap = document.querySelector(".bracket-pager");
       if (!wrap) return;
 
       var step = parseInt(wrap.getAttribute("data-step"), 10) || 0;
       var maxStep = 2;
+      var stripsEl = wrap.querySelector(".bracket-pager-strips");
+      var finalsEl = wrap.querySelector(".bracket-pager-finals");
       var tracks = Array.prototype.slice.call(wrap.querySelectorAll(".strip-track"));
       var prevBtn = wrap.querySelector(".pager-prev");
       var nextBtn = wrap.querySelector(".pager-next");
@@ -1184,7 +1198,14 @@ TEMPLATE = """<!DOCTYPE html>
       }}
 
       function render(animate) {{
-        setTracks(step * unitShift(), animate);
+        if (step < 2) {{
+          stripsEl.hidden = false;
+          finalsEl.hidden = true;
+          setTracks(Math.min(step, 1) * unitShift(), animate);
+        }} else {{
+          stripsEl.hidden = true;
+          finalsEl.hidden = false;
+        }}
         prevBtn.disabled = step === 0;
         nextBtn.disabled = step === maxStep;
       }}
@@ -1208,23 +1229,24 @@ TEMPLATE = """<!DOCTYPE html>
       }}, {{ passive: true }});
 
       wrap.addEventListener("touchmove", function(e) {{
-        if (startX === null) return;
+        if (startX === null || step === 2) return;
         var dx = e.touches[0].clientX - startX;
         var dy = e.touches[0].clientY - startY;
         if (!dragging && Math.abs(dx) < Math.abs(dy)) return;
         dragging = true;
         var unit = unitShift();
-        var target = Math.max(0, Math.min(step * unit - dx, maxStep * unit));
+        var base = Math.min(step, 1) * unit;
+        var target = Math.max(0, Math.min(base - dx, unit));
         setTracks(target, false);
       }}, {{ passive: true }});
 
       wrap.addEventListener("touchend", function(e) {{
-        if (!dragging) {{ startX = null; startY = null; return; }}
+        if (startX === null) return;
         var dx = e.changedTouches[0].clientX - startX;
         var threshold = 40;
         if (dx < -threshold) {{ goTo(step + 1); }}
         else if (dx > threshold) {{ goTo(step - 1); }}
-        else {{ render(true); }}
+        else if (dragging) {{ render(true); }}
         startX = null;
         startY = null;
         dragging = false;
@@ -1890,10 +1912,12 @@ def _bracket_half_for_series(series: dict) -> str | None:
 
 def _conference_bracket_columns(playoff_series: list[dict], conference: str) -> dict[str, str]:
     """
-    One conference's three playoff-round columns (1st Round -> Conf.
-    Semifinals -> Conf. Finals), each returned separately (keyed by round
-    name) so a caller can combine any two adjacent rounds onto one page
-    instead of always showing the full three-round bracket at once.
+    One conference's three playoff rounds (1st Round -> Conf. Semifinals ->
+    Conf. Finals), each returned as bare .bracket-round/.bracket-final
+    content (no .bracket-column wrapper, no round-name label) - the round
+    name is shown once in a shared header above both conferences instead of
+    repeated per column (see _bracket_round_header_track), so this only
+    needs to produce the matches themselves.
     """
     conf_series = [s for s in playoff_series if s.get("conference") == conference]
     round1 = [s for s in conf_series if s.get("round") == "1st Round"]
@@ -1924,9 +1948,9 @@ def _conference_bracket_columns(playoff_series: list[dict], conference: str) -> 
     final_column = _bracket_series_html(finals[0] if finals else None)
 
     return {
-        "1st Round": _bracket_column_html("1st Round", f'<div class="bracket-round">{"".join(round1_pairs)}</div>'),
-        "Conf. Semifinals": _bracket_column_html("Conf. Semifinals", f'<div class="bracket-round">{semis_pair}</div>'),
-        "Conf. Finals": _bracket_column_html("Conf. Finals", f'<div class="bracket-round bracket-final">{final_column}</div>'),
+        "1st Round": f'<div class="bracket-round">{"".join(round1_pairs)}</div>',
+        "Conf. Semifinals": f'<div class="bracket-round">{semis_pair}</div>',
+        "Conf. Finals": f'<div class="bracket-round bracket-final">{final_column}</div>',
     }
 
 
@@ -1996,23 +2020,33 @@ def _build_pager_html(pages: list[str], start_page: int = 0) -> str:
     )
 
 
-def _bracket_strip_html(conf_label: str, columns: dict[str, str], finals_col: str) -> str:
+def _bracket_round_header_track(labels: list[str]) -> str:
     """
-    One conference's full Round 1 -> Conf. Semis -> Conf. Finals -> NBA
-    Finals bracket as a single continuous strip (all 4 columns, always in
-    the DOM together), instead of splitting it across separate pages.
-    initPlayoffBracketPager() pans a fixed viewport across this strip by
-    exactly one column's width at a time, so a round shared between two
-    "stops" (e.g. Conf. Semis, visible at both stop 0 and stop 1) is the
-    same element throughout - it just slides from the trailing position to
-    the leading one, instead of two independent copies appearing to
-    overlap mid-transition the way two separate pages sliding past each
-    other would. The Finals column itself is identical content in both
-    conferences' strips (it's shared, not conference-specific) - appending
-    the same column to both keeps every stop, including the last one,
-    a real pan instead of a special-cased swap.
+    The round name shown once, shared above both conferences, instead of
+    repeated per column inside each conference's own strip - this track
+    carries no bracket content, just labels, but it's included as one more
+    ".strip-track" so initPlayoffBracketPager() pans it in perfect sync
+    with the two real conference strips (same measured column width).
     """
-    track_html = columns["1st Round"] + columns["Conf. Semifinals"] + columns["Conf. Finals"] + finals_col
+    cols = "".join(f'<div class="bracket-column"><h4 class="bracket-round-label">{html.escape(l)}</h4></div>' for l in labels)
+    return f'<div class="strip-viewport"><div class="strip-track">{cols}</div></div>'
+
+
+def _bracket_strip_html(conf_label: str, columns: dict[str, str]) -> str:
+    """
+    One conference's full Round 1 -> Conf. Semis -> Conf. Finals bracket as
+    a single continuous strip (all 3 columns, always in the DOM together,
+    each just wrapped bare in .bracket-column - no per-column round label,
+    see _bracket_round_header_track), instead of splitting it across
+    separate pages. initPlayoffBracketPager() pans a fixed viewport across
+    this strip by exactly one column's width at a time, so a round shared
+    between two stops (e.g. Conf. Semis, visible at both stop 0 and stop 1)
+    is the same element throughout - it just slides from the trailing
+    position to the leading one, instead of two independent copies
+    appearing to overlap mid-transition the way two separate pages sliding
+    past each other would.
+    """
+    track_html = "".join(f'<div class="bracket-column">{columns[r]}</div>' for r in _PLAYOFF_ROUNDS[:3])
     return (
         '<div class="bracket-conf-block">'
         f'<div class="bracket-conf-label">{html.escape(conf_label)}</div>'
@@ -2021,19 +2055,42 @@ def _bracket_strip_html(conf_label: str, columns: dict[str, str], finals_col: st
     )
 
 
+def _bracket_finals_row_html(columns_by_conf: dict[str, dict[str, str]], finals_series: dict | None, conf_by_team: dict) -> str:
+    """
+    The last stop (Conf. Finals -> NBA Finals) isn't part of either
+    conference's own strip - the Finals combine both conferences, so it's
+    a separate, differently-shaped page: the two Conf. Finals columns
+    flank the NBA Finals column in the middle, each with its own label
+    (in English, matching the round names elsewhere) instead of the
+    "מערב"/"מזrח" used for the strips, since these three columns aren't a
+    repeated round shared across two regions the way the strips' columns
+    are - each is a distinct, one-off matchup.
+    """
+    west_col = _bracket_column_html("Western Conf. Finals", columns_by_conf["West"]["Conf. Finals"])
+    east_col = _bracket_column_html("Eastern Conf. Finals", columns_by_conf["East"]["Conf. Finals"])
+    finals_col = _bracket_column_html(
+        "NBA Finals", f'<div class="bracket-round bracket-final">{_finals_match_html(finals_series, conf_by_team)}</div>'
+    )
+    return f'<div class="bracket">{west_col}{finals_col}{east_col}</div>' + _finals_champion_line(finals_series)
+
+
 def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list[dict]) -> str:
     """
     A single bracket covering the whole playoffs (both conferences, no
     separate tab per conference or for the Finals) - only two adjacent
     rounds are shown at a time, since a full 4-round bracket is too wide for
-    mobile. All 3 stops (1st Round<->Conf. Semis<->Conf. Finals<->NBA
-    Finals) are one continuous pan across a strip per conference (see
-    _bracket_strip_html) - the Finals column is appended identically to
-    both conferences' strips, so even the last stop is a real pan rather
-    than a special-cased page swap. Defaults to whichever stop is relevant
-    tonight: if tonight's games span more than one round (e.g. a 1st Round
-    Game 7 and a Conf. Semifinals Game 1 on the same night), the earliest
-    round wins, since that series isn't fully resolved league-wide yet.
+    mobile. Stops 0 and 1 (1st Round<->Conf. Semis<->Conf. Finals) pan one
+    continuous strip per conference (see _bracket_strip_html), with the
+    round name shown once in a shared header above both strips instead of
+    repeated per conference. Stop 2 (Conf. Finals -> NBA Finals) is a
+    separate, differently-shaped page (see _bracket_finals_row_html) - the
+    Finals combine both conferences, so it can't be part of either strip -
+    same graphic language (same cards, same swipe gesture) even though
+    that one transition is a swap rather than a continuous pan. Defaults to
+    whichever stop is relevant tonight: if tonight's games span more than
+    one round (e.g. a 1st Round Game 7 and a Conf. Semifinals Game 1 on the
+    same night), the earliest round wins, since that series isn't fully
+    resolved league-wide yet.
     """
     round_index = {r: i for i, r in enumerate(_PLAYOFF_ROUNDS)}
     current_indices = [round_index[g["po_round"]] for g in games if g.get("po_round") in round_index]
@@ -2048,12 +2105,14 @@ def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list
         if s.get("round") != "NBA Finals"
         for t in s["teams"]
     }
-    finals_col = _bracket_column_html(
-        "NBA Finals", f'<div class="bracket-round bracket-final">{_finals_match_html(finals_series, conf_by_team)}</div>'
-    )
 
-    west_strip = _bracket_strip_html("מערב", columns_by_conf["West"], finals_col)
-    east_strip = _bracket_strip_html("מזרח", columns_by_conf["East"], finals_col)
+    round_header = _bracket_round_header_track(_PLAYOFF_ROUNDS[:3])
+    west_strip = _bracket_strip_html("מערב", columns_by_conf["West"])
+    east_strip = _bracket_strip_html("מזרח", columns_by_conf["East"])
+    finals_row = _bracket_finals_row_html(columns_by_conf, finals_series, conf_by_team)
+
+    strips_hidden = " hidden" if start_step == 2 else ""
+    finals_hidden = "" if start_step == 2 else " hidden"
 
     # The content itself (and everything around it) is forced dir="ltr" (see
     # _details_block) since it's mostly seed numbers/English round names, so
@@ -2062,8 +2121,8 @@ def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list
     # RTL-mirrored, since the ambient direction here already isn't RTL.
     return (
         f'<div class="bracket-pager" data-step="{start_step}">'
-        f'<div class="bracket-pager-strips">{west_strip}{east_strip}</div>'
-        f"{_finals_champion_line(finals_series)}"
+        f'<div class="bracket-pager-strips"{strips_hidden}>{round_header}{west_strip}{east_strip}</div>'
+        f'<div class="bracket-pager-finals"{finals_hidden}>{finals_row}</div>'
         '<div class="pager-nav">'
         '<button type="button" class="pager-arrow pager-prev" aria-label="הקודם">‹</button>'
         '<button type="button" class="pager-arrow pager-next" aria-label="הבא">›</button>'
