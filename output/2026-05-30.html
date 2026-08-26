@@ -635,12 +635,22 @@
     position: fixed;
     top: 16px;
     left: 50%;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transform: translateX(-50%) translateY(0);
     opacity: 0;
-    font-size: 20px;
     z-index: 150;
     pointer-events: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   }
+  .pull-refresh-indicator svg { width: 18px; height: 18px; }
 
   .install-banner {
     display: none;
@@ -1026,7 +1036,7 @@
 
       var text = document.createElement("div");
       text.className = "install-banner-text";
-      text.innerHTML = "<strong>הוסיפו את Full Court למסך הבית</strong>גישה מהירה, כמו אפליקציה";
+      text.innerHTML = "<strong>הוסיפו את Full Court למסך הבית</strong>תצוגה מותאמת מובייל וגישה מהירה - ישר מהמסך הבית";
 
       var actionBtn = document.createElement("button");
       actionBtn.type = "button";
@@ -1057,7 +1067,7 @@
         var hint = document.createElement("div");
         hint.className = "install-banner-hint";
         hint.hidden = true;
-        hint.textContent = "לחצו על כפתור השיתוף (⬆️) למטה בספארי, ואז ״הוסף למסך הבית״";
+        hint.textContent = "לחצו על כפתור השיתוף למטה בספארי, ואז ״הוסף למסך הבית״";
         actionBtn.textContent = "איך?";
         actionBtn.onclick = function() { hint.hidden = !hint.hidden; };
         banner.appendChild(hint);
@@ -1098,7 +1108,7 @@
 
       var indicator = document.createElement("div");
       indicator.className = "pull-refresh-indicator";
-      indicator.textContent = "🔄";
+      indicator.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M12 19l-6-6M12 19l6-6"/></svg>';
       document.body.appendChild(indicator);
 
       document.addEventListener("touchstart", function(e) {
