@@ -1060,7 +1060,7 @@ TEMPLATE = """<!DOCTYPE html>
         var hint = document.createElement("div");
         hint.className = "install-banner-hint";
         hint.hidden = true;
-        hint.textContent = "לחצו על כפתור השיתוף (⬆️) למטה בספארי, ואז \"הוסף למסך הבית\"";
+        hint.textContent = "לחצו על כפתור השיתוף (⬆️) למטה בספארי, ואז ״הוסף למסך הבית״";
         actionBtn.textContent = "איך?";
         actionBtn.onclick = function() {{ hint.hidden = !hint.hidden; }};
         banner.appendChild(hint);
