@@ -620,6 +620,13 @@ TEMPLATE = """<!DOCTYPE html>
      button) - every other section (results/standings/brackets/etc.) stays
      a normal accordion, inline on the home screen itself, just enforced to
      only one open at a time (see the "toggle" listener in the JS). */
+  /* Removes the iOS rubber-band bounce that happens even when there's
+     nothing to actually scroll (a big part of what makes a PWA feel like a
+     browser tab instead of an app) - real scrolling still works fine when a
+     screen's content is genuinely taller than the viewport, this only kills
+     the overshoot-past-the-edge effect. */
+  :root.tabs-mode html,
+  :root.tabs-mode body {{ overscroll-behavior: none; }}
   :root.tabs-mode main > .summary {{
     display: none;
   }}
@@ -643,23 +650,6 @@ TEMPLATE = """<!DOCTYPE html>
     cursor: pointer;
   }}
   :root.tabs-mode .header .logo-img {{ cursor: pointer; }}
-  .back-toggle {{ display: none; }}
-  :root.tabs-mode .back-toggle {{
-    display: flex;
-    position: absolute;
-    top: 24px;
-    right: 64px;
-    width: 36px;
-    height: 36px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--card-bg);
-    color: var(--text-heading);
-    font-size: 16px;
-    cursor: pointer;
-    align-items: center;
-    justify-content: center;
-  }}
 
   @media (prefers-reduced-motion: no-preference) {{
     .wrapper {{ animation: fc-fade-in 0.3s ease; }}
@@ -995,25 +985,17 @@ TEMPLATE = """<!DOCTYPE html>
       var home = document.createElement("div");
       home.className = "app-home";
 
-      var backBtn = document.createElement("button");
-      backBtn.type = "button";
-      backBtn.className = "back-toggle";
-      backBtn.setAttribute("aria-label", "חזרה למסך הבית");
-      backBtn.textContent = "🏠";
-      backBtn.style.display = "none";
-
       function showHome() {{
         home.classList.remove("hidden");
         if (summaryDiv) summaryDiv.classList.remove("app-screen-active");
-        backBtn.style.display = "none";
       }}
       function showSummary() {{
         home.classList.add("hidden");
         if (summaryDiv) summaryDiv.classList.add("app-screen-active");
-        backBtn.style.display = "flex";
         main.scrollIntoView({{ behavior: "smooth", block: "start" }});
       }}
-      backBtn.onclick = showHome;
+      // No dedicated back button - returning home is done by tapping the
+      // header logo or the summary itself (see below).
       Array.prototype.forEach.call(document.querySelectorAll(".header .logo-img"), function(img) {{
         img.addEventListener("click", showHome);
       }});
@@ -1025,7 +1007,7 @@ TEMPLATE = """<!DOCTYPE html>
         bigBtn.textContent = "סיכום הלילה";
         bigBtn.onclick = showSummary;
         home.appendChild(bigBtn);
-        summaryDiv.addEventListener("click", showHome); // tapping the summary itself also returns home, not just the 🏠 button
+        summaryDiv.addEventListener("click", showHome); // tapping the summary itself also returns home
       }}
 
       // The section accordions move into the home screen as-is (still real
@@ -1034,7 +1016,6 @@ TEMPLATE = """<!DOCTYPE html>
       sections.forEach(function(section) {{ home.appendChild(section); }});
 
       main.insertBefore(home, main.firstChild);
-      document.querySelector(".wrapper").appendChild(backBtn);
     }})();
 
     function toggleTheme() {{
