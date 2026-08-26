@@ -488,6 +488,23 @@
     text-align: center;
     cursor: pointer;
   }
+  .email-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .email-row .a11y-link-btn { flex: 1; min-width: 0; }
+  .copy-email-btn {
+    flex-shrink: 0;
+    width: 40px;
+    margin-top: 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--accent);
+    font-size: 15px;
+    cursor: pointer;
+  }
   .a11y-statement-body {
     font-size: 13px;
     line-height: 1.7;
@@ -584,7 +601,10 @@
       <div class="a11y-statement-body" dir="rtl">
         <p>יש הערה, באג, או הצעה לשיפור? אשמח לשמוע.</p>
         <a class="a11y-link-btn" href="https://github.com/OJBAR/full-court/issues/new" target="_blank" rel="noopener">GitHub Issues</a>
-        <a class="a11y-link-btn" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=ojbar30@gmail.com&amp;su=%D7%A4%D7%A0%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT-+(%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%94)&amp;body=%D7%AA%D7%95%D7%9B%D7%9F+%D7%94%D7%9E%D7%99%D7%99%D7%9C" target="_blank" rel="noopener">ojbar30@gmail.com</a>
+        <div class="email-row">
+          <a class="a11y-link-btn" href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=ojbar30@gmail.com&amp;su=%D7%A4%D7%A0%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT-+(%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%94)&amp;body=%D7%AA%D7%95%D7%9B%D7%9F+%D7%94%D7%9E%D7%99%D7%99%D7%9C" target="_blank" rel="noopener">ojbar30@gmail.com</a>
+          <button type="button" class="copy-email-btn" onclick="copyEmailAddress(this)" aria-label="העתק את כתובת המייל">📋</button>
+        </div>
       </div>
     </div>
   </div>
@@ -719,6 +739,14 @@
       buttons.forEach(function(btn) {
         btn.setAttribute("aria-pressed", btn.getAttribute("data-fontsize") === size ? "true" : "false");
       });
+    }
+
+    function copyEmailAddress(btn) {
+      var original = btn.textContent;
+      navigator.clipboard.writeText("ojbar30@gmail.com").then(function() {
+        btn.textContent = "✓";
+        setTimeout(function() { btn.textContent = original; }, 1500);
+      }).catch(function() {});
     }
 
     var contactLastFocused = null;
