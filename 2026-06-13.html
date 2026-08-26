@@ -763,6 +763,22 @@
     flex-direction: column;
     flex: 1;
   }
+  /* A tab (results/standings/bracket/etc.) opened from the app home screen
+     becomes its own full screen too, same as the summary - promoted to a
+     direct child of <main> (see showSection() in initAppHome()), stripped
+     of its little-card look, and its +/- toggle icon becomes a back
+     arrow instead (clicking it returns home rather than collapsing it
+     in place). */
+  :root.tabs-mode main > details.tab-section.app-screen-active {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    margin-top: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+  }
+  :root.tabs-mode details.tab-section.app-screen-active > summary::after { content: "‹"; }
   .app-home { display: none; }
   :root.tabs-mode .app-home {
     display: flex;
@@ -1540,29 +1556,41 @@
 
       document.documentElement.classList.add("tabs-mode");
 
-      // Only one accordion section open at a time - opening one closes the
-      // rest, same as a normal single-select tab UI, just using the native
-      // <details>/<summary> disclosure instead of custom buttons/screens
-      // (see makeExclusiveAccordion() for the height-animated open/close).
-      makeExclusiveAccordion(sections);
-
       var home = document.createElement("div");
       home.className = "app-home";
 
+      // Returning home always re-collects every section back into the home
+      // list (in their original order) and clears whichever one, if any,
+      // was promoted to a full screen - safe to call unconditionally from
+      // any state (header tap, the summary/a section's own back arrow).
       function showHome() {
         home.classList.remove("hidden");
         if (summaryDiv) summaryDiv.classList.remove("app-screen-active");
+        sections.forEach(function(section) {
+          section.classList.remove("app-screen-active");
+          section.open = false;
+          home.appendChild(section);
+        });
       }
       function showSummary() {
         home.classList.add("hidden");
         if (summaryDiv) summaryDiv.classList.add("app-screen-active");
-        sections.forEach(function(section) { section.open = false; });
         main.scrollIntoView({ behavior: "smooth", block: "start" });
       }
-      // No dedicated back button - returning home is done by tapping the
-      // header or the summary itself (see below). Listens on the whole
-      // header, not just the logo <img> itself, so it always fires
-      // regardless of exactly where within the logo/title/date area the
+      // Opening a tab from the home list promotes it to a full screen of
+      // its own (same treatment as the summary) instead of expanding it
+      // inline - moved out of .app-home to a direct child of <main> so
+      // .app-home's display:none doesn't hide it along with the rest of
+      // the home list.
+      function showSection(section) {
+        home.classList.add("hidden");
+        section.open = true;
+        section.classList.add("app-screen-active");
+        main.insertBefore(section, main.firstChild);
+        main.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      // Listens on the whole header, not just the logo <img> itself, so it
+      // always fires regardless of exactly where within the logo area the
       // tap lands, rather than requiring a precise hit on the image.
       document.querySelector(".header").addEventListener("click", showHome);
 
@@ -1576,10 +1604,18 @@
         summaryDiv.addEventListener("click", showHome); // tapping the summary itself also returns home
       }
 
-      // The section accordions move into the home screen as-is (still real
-      // <details>/<summary> elements) - they stay inline and expand in
-      // place, they never become a separate "screen" like the summary does.
-      sections.forEach(function(section) { home.appendChild(section); });
+      sections.forEach(function(section) {
+        var summary = section.querySelector(":scope > summary");
+        summary.addEventListener("click", function(e) {
+          e.preventDefault();
+          if (section.classList.contains("app-screen-active")) {
+            showHome();
+          } else {
+            showSection(section);
+          }
+        });
+        home.appendChild(section);
+      });
 
       main.insertBefore(home, main.firstChild);
     })();
