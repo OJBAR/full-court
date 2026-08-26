@@ -615,17 +615,15 @@ TEMPLATE = """<!DOCTYPE html>
   .splash-screen.fade-out {{ opacity: 0; }}
   .splash-screen .logo-img {{ height: 56px; }}
 
-  /* App home (standalone + narrow viewport, see initAppHome()). Landing
-     view is a home screen (big "summary" button + a list of the other
-     sections below it) - not the summary/sections themselves, and no
-     hamburger/drawer on the home screen. Navigating into any screen hides
-     the home screen and shows a back button in its place. */
-  :root.tabs-mode main > .summary,
-  :root.tabs-mode main > details.tab-section {{
+  /* App home (standalone + narrow viewport, see initAppHome()). Only the
+     main summary text is a separate "screen" (behind the big button + back
+     button) - every other section (results/standings/brackets/etc.) stays
+     a normal accordion, inline on the home screen itself, just enforced to
+     only one open at a time (see the "toggle" listener in the JS). */
+  :root.tabs-mode main > .summary {{
     display: none;
   }}
-  :root.tabs-mode main > .summary.app-screen-active,
-  :root.tabs-mode main > details.tab-section.app-screen-active {{
+  :root.tabs-mode main > .summary.app-screen-active {{
     display: block;
   }}
   .app-home {{ display: none; }}
@@ -643,24 +641,6 @@ TEMPLATE = """<!DOCTYPE html>
     font-size: 18px;
     font-weight: 700;
     cursor: pointer;
-  }}
-  .app-home-tabs {{
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }}
-  .app-home-tab-btn {{
-    display: block;
-    width: 100%;
-    padding: 14px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--card-bg);
-    color: var(--text-heading);
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    text-align: center;
   }}
   .back-toggle {{ display: none; }}
   :root.tabs-mode .back-toggle {{
@@ -686,8 +666,8 @@ TEMPLATE = """<!DOCTYPE html>
       from {{ opacity: 0; }}
       to {{ opacity: 1; }}
     }}
-    button:active, .app-home-tab-btn:active, .app-home-big-btn:active, summary:active {{ transform: scale(0.96); }}
-    button, .app-home-tab-btn, .app-home-big-btn {{ transition: transform 0.1s ease; }}
+    button:active, .app-home-big-btn:active, summary:active {{ transform: scale(0.96); }}
+    button, .app-home-big-btn {{ transition: transform 0.1s ease; }}
   }}
 </style>
 </head>
@@ -952,13 +932,17 @@ TEMPLATE = """<!DOCTYPE html>
       var deltaX = (headerRect.left + headerRect.width / 2) - (splashRect.left + splashRect.width / 2);
       var deltaY = (headerRect.top + headerRect.height / 2) - (splashRect.top + splashRect.height / 2);
 
-      splash.style.transition = "background-color 0.5s ease";
+      // Background fade is delayed until the logo has nearly finished
+      // travelling - fading them together let the real header logo show
+      // through the background too early, before the animated one arrived,
+      // so both were briefly visible at once ("ghosting").
+      splash.style.transition = "background-color 0.2s ease 0.35s";
       splashLogo.style.transition = "transform 0.5s ease";
       void splash.offsetWidth; // force reflow so the transition applies to the change below, not the initial state
       splash.style.backgroundColor = "transparent";
       splashLogo.style.transform = "translate(" + deltaX + "px, " + deltaY + "px) scale(" + scale + ")";
 
-      setTimeout(function() {{ splash.remove(); }}, 520);
+      setTimeout(function() {{ splash.remove(); }}, 600);
     }}
 
     function dismissSplash() {{
@@ -997,8 +981,18 @@ TEMPLATE = """<!DOCTYPE html>
       if (sections.length < 1) return;
 
       document.documentElement.classList.add("tabs-mode");
+
+      // Only one accordion section open at a time - opening one closes the
+      // rest, same as a normal single-select tab UI, just using the native
+      // <details>/<summary> disclosure instead of custom buttons/screens.
       sections.forEach(function(section) {{
-        section.open = true; // visibility is controlled by .app-screen-active now, not native open/close
+        section.addEventListener("toggle", function() {{
+          if (section.open) {{
+            sections.forEach(function(other) {{
+              if (other !== section) other.open = false;
+            }});
+          }}
+        }});
       }});
 
       var home = document.createElement("div");
@@ -1014,14 +1008,11 @@ TEMPLATE = """<!DOCTYPE html>
       function showHome() {{
         home.classList.remove("hidden");
         if (summaryDiv) summaryDiv.classList.remove("app-screen-active");
-        sections.forEach(function(s) {{ s.classList.remove("app-screen-active"); }});
         backBtn.style.display = "none";
       }}
-      function showScreen(el) {{
+      function showSummary() {{
         home.classList.add("hidden");
-        if (summaryDiv) summaryDiv.classList.remove("app-screen-active");
-        sections.forEach(function(s) {{ s.classList.remove("app-screen-active"); }});
-        el.classList.add("app-screen-active");
+        if (summaryDiv) summaryDiv.classList.add("app-screen-active");
         backBtn.style.display = "flex";
         main.scrollIntoView({{ behavior: "smooth", block: "start" }});
       }}
@@ -1032,22 +1023,14 @@ TEMPLATE = """<!DOCTYPE html>
         bigBtn.type = "button";
         bigBtn.className = "app-home-big-btn";
         bigBtn.textContent = "סיכום הלילה";
-        bigBtn.onclick = function() {{ showScreen(summaryDiv); }};
+        bigBtn.onclick = showSummary;
         home.appendChild(bigBtn);
       }}
 
-      var tabsWrap = document.createElement("div");
-      tabsWrap.className = "app-home-tabs";
-      sections.forEach(function(section) {{
-        var label = section.querySelector("summary").textContent;
-        var btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "app-home-tab-btn";
-        btn.textContent = label;
-        btn.onclick = function() {{ showScreen(section); }};
-        tabsWrap.appendChild(btn);
-      }});
-      home.appendChild(tabsWrap);
+      // The section accordions move into the home screen as-is (still real
+      // <details>/<summary> elements) - they stay inline and expand in
+      // place, they never become a separate "screen" like the summary does.
+      sections.forEach(function(section) {{ home.appendChild(section); }});
 
       main.insertBefore(home, main.firstChild);
       document.querySelector(".wrapper").appendChild(backBtn);
