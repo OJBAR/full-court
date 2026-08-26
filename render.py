@@ -902,14 +902,14 @@ TEMPLATE = """<!DOCTYPE html>
     position: absolute;
     left: 0;
     right: 0;
-    top: 33.34%;
+    top: 25.34%;
     transform: translateY(-50%);
   }}
   :root.tabs-mode .app-home-tabs-group {{
     position: absolute;
     left: 0;
     right: 0;
-    top: 66.67%;
+    top: 58.67%;
     transform: translateY(-50%);
     display: flex;
     flex-direction: column;
