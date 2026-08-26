@@ -907,10 +907,12 @@
 
     function animateSplashAway(splash) {
       // Moves the splash's own logo so it visually lands exactly on top of
-      // the header's logo, while the splash background fades to transparent
-      // underneath it - the logo appears to glide up into its final header
-      // position, instead of the splash just disappearing and the header
-      // logo separately appearing in a different spot.
+      // the header's logo. The splash background stays fully opaque (no
+      // fade) for the entire movement, then the whole splash is removed in
+      // one instant the moment the movement finishes - the real header logo
+      // was always there underneath, just fully hidden by the opaque
+      // background the whole time, so there's a clean hand-off with zero
+      // overlap instead of a cross-fade that can show both logos at once.
       var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       var visible = function(img) { return getComputedStyle(img).display !== "none"; };
       var splashLogo = Array.prototype.filter.call(splash.querySelectorAll(".logo-img"), visible)[0];
@@ -928,17 +930,11 @@
       var deltaX = (headerRect.left + headerRect.width / 2) - (splashRect.left + splashRect.width / 2);
       var deltaY = (headerRect.top + headerRect.height / 2) - (splashRect.top + splashRect.height / 2);
 
-      // Background fade is delayed until the logo has nearly finished
-      // travelling - fading them together let the real header logo show
-      // through the background too early, before the animated one arrived,
-      // so both were briefly visible at once ("ghosting").
-      splash.style.transition = "background-color 0.2s ease 0.35s";
       splashLogo.style.transition = "transform 0.5s ease";
       void splash.offsetWidth; // force reflow so the transition applies to the change below, not the initial state
-      splash.style.backgroundColor = "transparent";
       splashLogo.style.transform = "translate(" + deltaX + "px, " + deltaY + "px) scale(" + scale + ")";
 
-      setTimeout(function() { splash.remove(); }, 600);
+      setTimeout(function() { splash.remove(); }, 520);
     }
 
     function dismissSplash() {
