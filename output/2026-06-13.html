@@ -598,36 +598,76 @@
   .splash-screen.fade-out { opacity: 0; }
   .splash-screen .logo-img { height: 56px; }
 
-  :root.tabs-mode .wrapper { padding-bottom: 72px; }
-  :root.tabs-mode details.tab-section summary { display: none; }
-  .bottom-tabs { display: none; }
-  :root.tabs-mode .bottom-tabs {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    gap: 4px;
-    background: var(--card-bg);
-    border-top: 1px solid var(--border);
-    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
-    z-index: 50;
+  /* App nav (drawer) - only built/shown in tabs-mode (standalone + narrow
+     viewport, see initAppNav()). Nothing is visible by default except the
+     header and the hamburger button - not even the main summary text -
+     until a screen is picked from the drawer. */
+  :root.tabs-mode main > .summary,
+  :root.tabs-mode main > details.tab-section {
+    display: none;
   }
-  .bottom-tab-btn {
-    flex: 1;
-    min-width: 0;
+  :root.tabs-mode main > .summary.app-screen-active,
+  :root.tabs-mode main > details.tab-section.app-screen-active {
+    display: block;
+  }
+  .drawer-toggle { display: none; }
+  :root.tabs-mode .drawer-toggle {
+    display: flex;
+    position: absolute;
+    top: 24px;
+    right: 64px;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text-heading);
+    font-size: 16px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+  }
+  .drawer-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 90;
+  }
+  .drawer-overlay.open { display: block; }
+  .side-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 80%;
+    max-width: 300px;
+    background: var(--card-bg);
+    border-left: 1px solid var(--border);
+    z-index: 95;
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px;
+    overflow-y: auto;
+  }
+  .side-drawer.open { transform: translateX(0); }
+  .drawer-item {
+    display: block;
+    width: 100%;
+    text-align: right;
     border: none;
     background: none;
-    color: var(--text-muted);
-    font-size: 10px;
-    padding: 6px 2px;
-    border-radius: 8px;
+    color: var(--text-heading);
+    font-size: 15px;
+    font-weight: 600;
+    padding: 14px 4px;
+    border-bottom: 1px solid var(--border);
     cursor: pointer;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
-  .bottom-tab-btn.active { color: var(--accent); font-weight: 700; background: var(--bg); }
+  .drawer-item:last-child { border-bottom: none; }
+  .drawer-item.active { color: var(--accent); }
 
   @media (prefers-reduced-motion: no-preference) {
     .wrapper { animation: fc-fade-in 0.3s ease; }
@@ -635,8 +675,8 @@
       from { opacity: 0; }
       to { opacity: 1; }
     }
-    button:active, .bottom-tab-btn:active, summary:active { transform: scale(0.96); }
-    button, .bottom-tab-btn { transition: transform 0.1s ease; }
+    button:active, .drawer-item:active, summary:active { transform: scale(0.96); }
+    button, .drawer-item { transition: transform 0.1s ease; }
   }
 </style>
 </head>
@@ -925,39 +965,77 @@
     }
     setTimeout(dismissSplash, 2500);
 
-    (function initBottomTabs() {
+    (function initAppNav() {
       var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
       var narrow = window.matchMedia("(max-width: 480px)").matches;
       if (!standalone || !narrow) return;
 
+      var summaryDiv = document.querySelector("main > .summary");
       var sections = Array.prototype.slice.call(document.querySelectorAll("main > details.tab-section"));
-      if (sections.length < 2) return;
+      if (sections.length < 1) return;
 
       document.documentElement.classList.add("tabs-mode");
 
-      var bar = document.createElement("nav");
-      bar.className = "bottom-tabs";
-      bar.setAttribute("aria-label", "ניווט בין הסיכומים");
-
-      sections.forEach(function(section, i) {
-        var label = section.querySelector("summary").textContent;
-        var btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "bottom-tab-btn" + (i === 0 ? " active" : "");
-        btn.textContent = label;
-        btn.setAttribute("aria-label", label);
-        btn.onclick = function() {
-          sections.forEach(function(s) { s.open = false; });
-          section.open = true;
-          section.scrollIntoView({ behavior: "smooth", block: "start" });
-          Array.prototype.forEach.call(bar.children, function(b) { b.classList.remove("active"); });
-          btn.classList.add("active");
-        };
-        bar.appendChild(btn);
+      // The main summary text becomes just another drawer item, same as the
+      // existing accordion sections - nothing is shown by default except the
+      // header and the hamburger button, per explicit request.
+      var screens = [];
+      if (summaryDiv) {
+        screens.push({ label: "סיכום הלילה", el: summaryDiv });
+      }
+      sections.forEach(function(section) {
+        section.open = true; // visibility is controlled by .app-screen-active now, not native open/close
+        screens.push({ label: section.querySelector("summary").textContent, el: section });
       });
 
-      document.body.appendChild(bar);
-      sections.forEach(function(s, i) { s.open = (i === 0); });
+      var overlay = document.createElement("div");
+      overlay.className = "drawer-overlay";
+
+      var drawer = document.createElement("nav");
+      drawer.className = "side-drawer";
+      drawer.setAttribute("aria-label", "ניווט בין הסיכומים");
+
+      var menuBtn = document.createElement("button");
+      menuBtn.type = "button";
+      menuBtn.className = "drawer-toggle";
+      menuBtn.setAttribute("aria-label", "פתח תפריט");
+      menuBtn.setAttribute("aria-expanded", "false");
+      menuBtn.textContent = "☰";
+
+      function closeDrawer() {
+        drawer.classList.remove("open");
+        overlay.classList.remove("open");
+        menuBtn.setAttribute("aria-expanded", "false");
+      }
+      function openDrawer() {
+        drawer.classList.add("open");
+        overlay.classList.add("open");
+        menuBtn.setAttribute("aria-expanded", "true");
+      }
+      menuBtn.onclick = function() {
+        if (drawer.classList.contains("open")) { closeDrawer(); } else { openDrawer(); }
+      };
+      overlay.onclick = closeDrawer;
+
+      screens.forEach(function(screen) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "drawer-item";
+        btn.textContent = screen.label;
+        btn.onclick = function() {
+          screens.forEach(function(s) { s.el.classList.remove("app-screen-active"); });
+          screen.el.classList.add("app-screen-active");
+          document.querySelector("main").scrollIntoView({ behavior: "smooth", block: "start" });
+          Array.prototype.forEach.call(drawer.querySelectorAll(".drawer-item"), function(b) { b.classList.remove("active"); });
+          btn.classList.add("active");
+          closeDrawer();
+        };
+        drawer.appendChild(btn);
+      });
+
+      document.body.appendChild(overlay);
+      document.body.appendChild(drawer);
+      document.querySelector(".wrapper").appendChild(menuBtn);
     })();
 
     function toggleTheme() {
