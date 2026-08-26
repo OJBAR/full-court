@@ -2200,7 +2200,7 @@ def _bracket_strip_html(conf_label: str, columns: dict[str, str]) -> str:
     track_html = "".join(f'<div class="bracket-column">{columns[r]}</div>' for r in _PLAYOFF_ROUNDS[:3])
     return (
         '<div class="bracket-conf-block">'
-        f'<div class="bracket-conf-label">{html.escape(conf_label)}</div>'
+        f'<h4 class="sr-only">{html.escape(conf_label)}</h4>'
         f'<div class="strip-viewport"><div class="strip-track">{track_html}</div></div>'
         "</div>"
     )
