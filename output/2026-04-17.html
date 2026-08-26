@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FULL COURT - 17/04/2026</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<meta name="theme-color" content="#EFEAD8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#2A2118" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Full Court">
+<style>
+  :root {
+    --bg: #EFEAD8;
+    --card-bg: #E4DDC5;
+    --border: #DAD2B8;
+    --accent: #A67C1E;
+    --text-heading: #2E2A1E;
+    --text-body: #4A4530;
+    --text-muted: #93876A;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #2A2118;
+      --card-bg: #241C14;
+      --border: #453626;
+      --accent: #E08A3E;
+      --text-heading: #F0E6D6;
+      --text-body: #D8C9AF;
+      --text-muted: #8C7C64;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #2A2118;
+    --card-bg: #241C14;
+    --border: #453626;
+    --accent: #E08A3E;
+    --text-heading: #F0E6D6;
+    --text-body: #D8C9AF;
+    --text-muted: #8C7C64;
+  }
+  :root[data-a11y-fontsize="large"] { --a11y-zoom: 1.15; }
+  :root[data-a11y-fontsize="xlarge"] { --a11y-zoom: 1.3; }
+  * { box-sizing: border-box; }
+  a:focus-visible,
+  button:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  body {
+    font-family: "Segoe UI", "Rubik", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text-body);
+    margin: 0;
+    padding: 0;
+  }
+  .wrapper {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 24px 16px 40px;
+    position: relative;
+    zoom: var(--a11y-zoom, 1);
+  }
+  .theme-toggle,
+  .a11y-toggle {
+    position: absolute;
+    top: 24px;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text-heading);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .theme-toggle { left: 16px; }
+  .a11y-toggle { right: 16px; }
+  .header {
+    text-align: center;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--accent);
+    margin-bottom: 20px;
+  }
+  .logo-img {
+    height: 40px;
+    width: auto;
+    display: block;
+    margin: 0 auto;
+  }
+  .logo-dark { display: none; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .logo-light { display: none; }
+    :root:not([data-theme="light"]) .logo-dark { display: block; }
+  }
+  [data-theme="dark"] .logo-light { display: none; }
+  [data-theme="dark"] .logo-dark { display: block; }
+  .header h1 {
+    font-size: 14px;
+    font-weight: 400;
+    margin: 8px 0 0;
+    color: var(--text-muted);
+  }
+  .header .date {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  .summary {
+    font-size: 16px;
+    line-height: 1.8;
+  }
+  .summary p {
+    margin: 0 0 16px 0;
+  }
+  details {
+    margin-top: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--card-bg);
+  }
+  summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-heading);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after {
+    content: "＋";
+    color: var(--accent);
+    font-size: 16px;
+  }
+  details[open] summary::after { content: "－"; }
+  details[open] summary { border-bottom: 1px solid var(--border); }
+  .details-body { padding: 12px 16px 16px; }
+
+  .game-block {
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .game-block:last-child { border-bottom: none; margin-bottom: 0; }
+  .game-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 8px;
+    font-size: 14px;
+  }
+  .team { width: 4.5em; color: var(--text-muted); text-align: center; }
+  .team.winner { color: var(--text-heading); font-weight: 700; }
+  .team-record {
+    display: block;
+    font-size: 9px;
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+  .score { width: 2.2em; text-align: center; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .score.winner { color: var(--accent); font-weight: 700; }
+  .game-sub {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  .conferences {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  @media (min-width: 480px) {
+    .conferences { grid-template-columns: 1fr 1fr; }
+  }
+  .conference h3 {
+    font-size: 13px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 0 8px 0;
+    text-align: center;
+  }
+  .standings-block {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    background: var(--bg);
+  }
+  .standing-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+  .standing-row:last-child { border-bottom: none; }
+  .standing-row.boundary { border-bottom: 1px dashed var(--accent); }
+  .standing-rank { color: var(--text-muted); width: 1.6em; flex-shrink: 0; }
+  .standing-team {
+    flex: 1;
+    min-width: 0;
+    color: var(--text-heading);
+    white-space: nowrap;
+    font-size: 12px;
+  }
+  .standing-record { color: var(--text-muted); flex-shrink: 0; }
+  .standing-streak { width: 3em; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .standing-streak.win { color: #4caf7d; }
+  .standing-streak.loss { color: #e05d5d; }
+  .standing-diff { width: 3em; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+  .wildcard-badge {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 1px 5px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--card-bg);
+    font-size: 9px;
+    font-weight: 700;
+    vertical-align: middle;
+  }
+  .wildcard-legend {
+    grid-column: 1 / -1;
+    margin: 10px 2px 0;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: right;
+  }
+
+  .cup-group {
+    margin-bottom: 10px;
+    padding: 8px 10px 6px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card-bg);
+  }
+  .cup-group:last-child { margin-bottom: 0; }
+  .cup-group h4 {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 4px 0;
+  }
+
+  .bracket {
+    display: flex;
+    justify-content: safe center;
+    gap: 24px;
+    overflow-x: auto;
+    padding: 4px 4px 12px;
+  }
+  .bracket-column {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  .bracket-round-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    margin: 0 0 10px 0;
+  }
+  .bracket-round {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 20px;
+  }
+  .bracket-final { justify-content: center; }
+  .bracket-pair {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 16px;
+    position: relative;
+    padding-right: 16px;
+    border-right: 1px solid var(--border);
+  }
+  .bracket-pair::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -16px;
+    width: 16px;
+    height: 1px;
+    background: var(--border);
+  }
+  .bracket-match {
+    width: 128px;
+    flex-shrink: 0;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+  }
+  .bracket-team {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 2px 0;
+  }
+  .bracket-team.winner { color: var(--text-heading); font-weight: 700; }
+  .bracket-team-name {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+  }
+  .bracket-record {
+    font-size: 9px;
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+  .bracket-score { font-variant-numeric: tabular-nums; }
+  .bracket-match-tbd { opacity: 0.55; border-style: dashed; font-style: italic; }
+
+  .a11y-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+  }
+  .a11y-overlay[hidden] { display: none; }
+  .a11y-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    max-width: 320px;
+    width: 100%;
+  }
+  .a11y-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .a11y-panel-header h2 {
+    font-size: 16px;
+    color: var(--text-heading);
+    margin: 0;
+  }
+  .a11y-panel-close {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-heading);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .a11y-field-label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .a11y-fontsize-options {
+    display: flex;
+    gap: 8px;
+  }
+  .a11y-fontsize-btn {
+    flex: 1;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-body);
+    cursor: pointer;
+  }
+  .a11y-fontsize-btn[aria-pressed="true"] {
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .a11y-fontsize-btn.a11y-fontsize-sm { font-size: 14px; }
+  .a11y-fontsize-btn.a11y-fontsize-md { font-size: 19px; }
+  .a11y-fontsize-btn.a11y-fontsize-lg { font-size: 24px; }
+  .a11y-link-btn {
+    display: block;
+    width: 100%;
+    margin-top: 14px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+  }
+  .a11y-statement-body {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-body);
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .a11y-statement-body p { margin: 0 0 10px 0; }
+  .a11y-statement-body p:last-child { margin-bottom: 0; }
+  .a11y-statement-body ul { margin: 0 0 10px 0; padding-right: 20px; }
+
+  .footer {
+    margin-top: 28px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .footer a:hover { text-decoration: underline; }
+  .footer-link-btn {
+    color: var(--accent);
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .footer-link-btn:hover { text-decoration: underline; }
+  .beta-note {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .beta-note a { color: var(--text-muted); text-decoration: underline; }
+</style>
+</head>
+<body>
+  <div class="wrapper">
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="החלף תצוגה בהירה/כהה">🌙</button>
+    <button class="a11y-toggle" id="a11y-toggle" onclick="openA11yPanel()" aria-haspopup="dialog" aria-expanded="false" aria-label="פתח הגדרות נגישות">♿</button>
+    <header class="header">
+      <img class="logo-img logo-light" src="assets/logo_light.png" alt="Full Court">
+      <img class="logo-img logo-dark" src="assets/logo_dark.png" alt="Full Court">
+      <h1>סיכום הלילה ב-NBA</h1>
+      <div class="date">17/04/2026, הלילה בין שישי לשבת</div>
+    </header>
+    <main>
+      <div class="summary">
+        <p>לילה רגוע יחסית ב-NBA עם שני משחקים בלבד על הפרק, ושתי תוצאות שהוכרעו בנוחות למארחות ולאורחות בהתאמה.</p>
+      <p>באורלנדו, המאג&#x27;יק לא הותירו מקום לספק מול שרלוט והביסו את ההורנטס 90-121 בניצחון מוחץ שהיה ברור עוד הרבה לפני הסיום. משחק חסר עניין מיוחד מבחינת דרמה, אבל תוצאה שממחישה את הפער הגדול בין הקבוצות באותו ערב.</p>
+      <p>המשחק השני, בין פיניקס לגולדן סטייט, סיפק קצת יותר בשר על האש. הסאנס גברו על הוואריורס 96-111, כשג&#x27;יילן גרין היה הכוכב הבולט של הערב עם 36 נקודות, לצד 6 ריבאונדים ו-4 אסיסטים - לילה מעולה מבחינתו שדחף את פיניקס לניצחון נוח. עבור גולדן סטייט מדובר בהפסד שלישי ברציפות, המשכיך למגמה שלילית שהקבוצה מתקשה לצאת ממנה בשלב הזה של העונה. להרע את המצב, הוואריורס ממשיכים להתמודד עם בעיות בריאות משמעותיות במסגרת השורה: ג&#x27;ימי באטלר, שנמצא עדיין בשלבים המוקדמים יחסית של החזרה מפציעת ברך, לא היה זמין למשחק, וגם מוזס מודי נעדר לאחר שאובחן עם קרע בגיד הפיקה בברך שמאל - פציעה שעלולה להרחיק אותו לתקופה ארוכה. שילוב של תוצאה גרועה וחדשות רפואיות לא פשוטות הופך את הערב הזה לאחד מהמאתגרים שבהם נתקלה גולדן סטייט העונה.</p>
+      </div>
+
+      <details>
+        <summary>כל תוצאות הלילה</summary>
+        <div class="details-body">
+          <div class="game-block"><div class="game-row"><span class="team winner">ORL<span class="team-record">1-1</span></span><span class="score winner">121</span><span class="score">–</span><span class="score">90</span><span class="team">CHA<span class="team-record">1-1</span></span></div><div class="game-sub">Play-In · ORL clinch 8 seed</div></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">PHX<span class="team-record">1-1</span></span><span class="score winner">111</span><span class="score">–</span><span class="score">96</span><span class="team">GSW<span class="team-record">1-1</span></span></div><div class="game-sub">Play-In · PHX clinch 8 seed</div></div>
+        </div>
+      </details>
+
+      <details>
+      <summary>טבלת הליגה</summary>
+      <div class="details-body" dir="ltr">
+        <div class="conferences"><div class="conference standings-block"><h3>מערב</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Oklahoma City Thunder</span><span class="standing-record">64-18</span><span class="standing-streak loss">L 2</span></div>
+          <div class="standing-row"><span class="standing-rank">2</span><span class="standing-team">San Antonio Spurs</span><span class="standing-record">62-20</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">3</span><span class="standing-team">Denver Nuggets</span><span class="standing-record">54-28</span><span class="standing-streak win">W 12</span></div>
+          <div class="standing-row"><span class="standing-rank">4</span><span class="standing-team">Los Angeles Lakers</span><span class="standing-record">53-29</span><span class="standing-streak win">W 3</span></div>
+          <div class="standing-row"><span class="standing-rank">5</span><span class="standing-team">Houston Rockets</span><span class="standing-record">52-30</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row boundary"><span class="standing-rank">6</span><span class="standing-team">Minnesota Timberwolves</span><span class="standing-record">49-33</span><span class="standing-streak win">W 2</span></div>
+          <div class="standing-row"><span class="standing-rank">7</span><span class="standing-team">Phoenix Suns</span><span class="standing-record">45-37</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row"><span class="standing-rank">8</span><span class="standing-team">Portland Trail Blazers</span><span class="standing-record">42-40</span><span class="standing-streak win">W 2</span></div>
+          <div class="standing-row"><span class="standing-rank">9</span><span class="standing-team">LA Clippers</span><span class="standing-record">42-40</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row boundary"><span class="standing-rank">10</span><span class="standing-team">Golden State Warriors</span><span class="standing-record">37-45</span><span class="standing-streak loss">L 3</span></div>
+          <div class="standing-row"><span class="standing-rank">11</span><span class="standing-team">New Orleans Pelicans</span><span class="standing-record">26-56</span><span class="standing-streak loss">L 2</span></div>
+          <div class="standing-row"><span class="standing-rank">12</span><span class="standing-team">Dallas Mavericks</span><span class="standing-record">26-56</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Memphis Grizzlies</span><span class="standing-record">25-57</span><span class="standing-streak loss">L 8</span></div>
+          <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Sacramento Kings</span><span class="standing-record">22-60</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Utah Jazz</span><span class="standing-record">22-60</span><span class="standing-streak loss">L 1</span></div></div>
+      <div class="conference standings-block"><h3>מזרח</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Detroit Pistons</span><span class="standing-record">60-22</span><span class="standing-streak win">W 3</span></div>
+          <div class="standing-row"><span class="standing-rank">2</span><span class="standing-team">Boston Celtics</span><span class="standing-record">56-26</span><span class="standing-streak win">W 2</span></div>
+          <div class="standing-row"><span class="standing-rank">3</span><span class="standing-team">New York Knicks</span><span class="standing-record">53-29</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">4</span><span class="standing-team">Cleveland Cavaliers</span><span class="standing-record">52-30</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row"><span class="standing-rank">5</span><span class="standing-team">Toronto Raptors</span><span class="standing-record">46-36</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row boundary"><span class="standing-rank">6</span><span class="standing-team">Atlanta Hawks</span><span class="standing-record">46-36</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">7</span><span class="standing-team">Philadelphia 76ers</span><span class="standing-record">45-37</span><span class="standing-streak win">W 2</span></div>
+          <div class="standing-row"><span class="standing-rank">8</span><span class="standing-team">Orlando Magic</span><span class="standing-record">45-37</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">9</span><span class="standing-team">Charlotte Hornets</span><span class="standing-record">44-38</span><span class="standing-streak win">W 1</span></div>
+          <div class="standing-row boundary"><span class="standing-rank">10</span><span class="standing-team">Miami Heat</span><span class="standing-record">43-39</span><span class="standing-streak win">W 2</span></div>
+          <div class="standing-row"><span class="standing-rank">11</span><span class="standing-team">Milwaukee Bucks</span><span class="standing-record">32-50</span><span class="standing-streak loss">L 1</span></div>
+          <div class="standing-row"><span class="standing-rank">12</span><span class="standing-team">Chicago Bulls</span><span class="standing-record">31-51</span><span class="standing-streak loss">L 2</span></div>
+          <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Brooklyn Nets</span><span class="standing-record">20-62</span><span class="standing-streak loss">L 3</span></div>
+          <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Indiana Pacers</span><span class="standing-record">19-63</span><span class="standing-streak loss">L 2</span></div>
+          <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Washington Wizards</span><span class="standing-record">17-65</span><span class="standing-streak loss">L 10</span></div></div></div>
+      </div>
+    </details>
+
+    <details>
+      <summary>פלייאין</summary>
+      <div class="details-body" dir="ltr">
+        <div class="conferences"><div class="conference standings-block"><h3>מערב</h3><div class="game-block"><div class="game-sub">7 מול 8</div><div class="game-row"><span class="team">TBD</span></div></div><div class="game-block"><div class="game-sub">9 מול 10</div><div class="game-row"><span class="team">TBD</span></div></div><div class="game-block"><div class="game-sub">קרב על המקום ה-8</div><div class="game-row"><span class="team winner">PHX</span><span class="score winner">111</span><span class="score">–</span><span class="score">96</span><span class="team">GSW</span></div></div></div><div class="conference standings-block"><h3>מזרח</h3><div class="game-block"><div class="game-sub">7 מול 8</div><div class="game-row"><span class="team">TBD</span></div></div><div class="game-block"><div class="game-sub">9 מול 10</div><div class="game-row"><span class="team">TBD</span></div></div><div class="game-block"><div class="game-sub">קרב על המקום ה-8</div><div class="game-row"><span class="team winner">ORL</span><span class="score winner">121</span><span class="score">–</span><span class="score">90</span><span class="team">CHA</span></div></div></div></div>
+      </div>
+    </details>
+    </main>
+
+    <footer class="footer">
+      made by Ofek Barel · <button type="button" class="footer-link-btn" onclick="openContactOverlay()">יצירת קשר</button>
+      <div class="beta-note">גרסת בטא · <a href="demos.html">מעבר בין דמואים</a></div>
+    </footer>
+  </div>
+
+  <div class="a11y-overlay" id="contact-overlay" hidden onclick="if (event.target === this) closeContactOverlay()">
+    <div class="a11y-panel" role="dialog" aria-modal="true" aria-labelledby="contact-title">
+      <div class="a11y-panel-header">
+        <h2 id="contact-title">יצירת קשר</h2>
+        <button class="a11y-panel-close" onclick="closeContactOverlay()" aria-label="סגור יצירת קשר">✕</button>
+      </div>
+      <div class="a11y-statement-body" dir="rtl">
+        <p>יש הערה, באג, או הצעה לשיפור? אשמח לשמוע.</p>
+        <p><a href="mailto:PLACEHOLDER@EXAMPLE.COM">PLACEHOLDER@EXAMPLE.COM</a></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="a11y-overlay" id="a11y-overlay" hidden onclick="if (event.target === this) closeA11yOverlays()">
+    <div class="a11y-panel" role="dialog" aria-modal="true" aria-labelledby="a11y-panel-title">
+      <div class="a11y-panel-header">
+        <h2 id="a11y-panel-title">נגישות</h2>
+        <button class="a11y-panel-close" onclick="closeA11yOverlays()" aria-label="סגור הגדרות נגישות">✕</button>
+      </div>
+      <div class="a11y-field">
+        <span class="a11y-field-label" id="a11y-fontsize-label">גודל טקסט</span>
+        <div class="a11y-fontsize-options" role="group" aria-labelledby="a11y-fontsize-label">
+          <button type="button" class="a11y-fontsize-btn a11y-fontsize-sm" data-fontsize="normal" aria-pressed="true" aria-label="גודל טקסט רגיל" onclick="setFontSize('normal')">א</button>
+          <button type="button" class="a11y-fontsize-btn a11y-fontsize-md" data-fontsize="large" aria-pressed="false" aria-label="גודל טקסט גדול" onclick="setFontSize('large')">א</button>
+          <button type="button" class="a11y-fontsize-btn a11y-fontsize-lg" data-fontsize="xlarge" aria-pressed="false" aria-label="גודל טקסט גדול מאוד" onclick="setFontSize('xlarge')">א</button>
+        </div>
+      </div>
+      <button type="button" class="a11y-link-btn" onclick="openA11yStatement()">הצהרת נגישות</button>
+    </div>
+  </div>
+
+  <div class="a11y-overlay" id="a11y-statement-overlay" hidden onclick="if (event.target === this) closeA11yOverlays()">
+    <div class="a11y-panel" role="dialog" aria-modal="true" aria-labelledby="a11y-statement-title">
+      <div class="a11y-panel-header">
+        <h2 id="a11y-statement-title">הצהרת נגישות</h2>
+        <button class="a11y-panel-close" onclick="closeA11yOverlays()" aria-label="סגור הצהרת נגישות">✕</button>
+      </div>
+      <div class="a11y-statement-body" dir="rtl">
+        <p>
+          Full Court הוא ניוזלטר יומי שמסכם את ליל המשחקים ב-NBA. נעשה מאמץ להנגיש
+          אותו לכלל הקוראים, כולל אנשים עם מוגבלות:
+        </p>
+        <ul>
+          <li>מבנה סמנטי (landmarks) המאפשר ניווט נוח בעזרת קוראי מסך.</li>
+          <li>אפשרות להגדלת גודל הטקסט בשלוש רמות, מהפאנל הזה.</li>
+          <li>ניגודיות צבעים מותאמת במצב בהיר וכהה</li>
+          <li>ניווט מקלדת מלא, כולל סימון מיקוד ברור ופאנלים הנסגרים ב-Escape.</li>
+        </ul>
+        <p>
+          ההתאמות נעשו מתוך שאיפה לעמוד בהנחיות WCAG 2.1 ברמה AA. נתקלת בבעיית נגישות
+          או יש לך הצעה לשיפור? אפשר לפנות אלינו (ראו פרטים בתחתית העמוד) ונשתדל לטפל
+          בכך בהקדם.
+        </p>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function() {
+      var saved = localStorage.getItem("nba-brief-theme");
+      if (saved) {
+        document.documentElement.setAttribute("data-theme", saved);
+      }
+      updateToggleIcon();
+    })();
+
+    (function() {
+      var savedFontSize = localStorage.getItem("nba-brief-fontsize");
+      if (savedFontSize) {
+        applyFontSize(savedFontSize);
+      }
+    })();
+
+    var a11yLastFocused = null;
+    var a11yActiveOverlayId = null;
+
+    function switchA11yOverlay(overlayId) {
+      if (a11yActiveOverlayId) {
+        document.getElementById(a11yActiveOverlayId).hidden = true;
+      }
+      document.getElementById(overlayId).hidden = false;
+      a11yActiveOverlayId = overlayId;
+      var focusTarget = document.querySelector("#" + overlayId + " .a11y-panel-close");
+      if (focusTarget) { focusTarget.focus(); }
+    }
+
+    function openA11yPanel() {
+      a11yLastFocused = document.activeElement;
+      document.getElementById("a11y-toggle").setAttribute("aria-expanded", "true");
+      document.querySelector(".wrapper").setAttribute("aria-hidden", "true");
+      switchA11yOverlay("a11y-overlay");
+      document.addEventListener("keydown", a11yKeydownHandler);
+    }
+
+    function openA11yStatement() {
+      switchA11yOverlay("a11y-statement-overlay");
+    }
+
+    function closeA11yOverlays() {
+      if (a11yActiveOverlayId) {
+        document.getElementById(a11yActiveOverlayId).hidden = true;
+        a11yActiveOverlayId = null;
+      }
+      document.getElementById("a11y-toggle").setAttribute("aria-expanded", "false");
+      document.querySelector(".wrapper").removeAttribute("aria-hidden");
+      document.removeEventListener("keydown", a11yKeydownHandler);
+      if (a11yLastFocused) { a11yLastFocused.focus(); }
+      a11yLastFocused = null;
+    }
+
+    function a11yKeydownHandler(e) {
+      if (e.key === "Escape") {
+        closeA11yOverlays();
+        return;
+      }
+      if (e.key === "Tab" && a11yActiveOverlayId) {
+        var focusable = document.querySelectorAll("#" + a11yActiveOverlayId + " button");
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    function setFontSize(size) {
+      applyFontSize(size);
+      localStorage.setItem("nba-brief-fontsize", size);
+    }
+
+    function applyFontSize(size) {
+      if (size === "normal") {
+        document.documentElement.removeAttribute("data-a11y-fontsize");
+      } else {
+        document.documentElement.setAttribute("data-a11y-fontsize", size);
+      }
+      var buttons = document.querySelectorAll(".a11y-fontsize-btn");
+      buttons.forEach(function(btn) {
+        btn.setAttribute("aria-pressed", btn.getAttribute("data-fontsize") === size ? "true" : "false");
+      });
+    }
+
+    var contactLastFocused = null;
+
+    function openContactOverlay() {
+      contactLastFocused = document.activeElement;
+      document.querySelector(".wrapper").setAttribute("aria-hidden", "true");
+      document.getElementById("contact-overlay").hidden = false;
+      document.querySelector("#contact-overlay .a11y-panel-close").focus();
+      document.addEventListener("keydown", contactKeydownHandler);
+    }
+
+    function closeContactOverlay() {
+      document.getElementById("contact-overlay").hidden = true;
+      document.querySelector(".wrapper").removeAttribute("aria-hidden");
+      document.removeEventListener("keydown", contactKeydownHandler);
+      if (contactLastFocused) { contactLastFocused.focus(); }
+      contactLastFocused = null;
+    }
+
+    function contactKeydownHandler(e) {
+      if (e.key === "Escape") {
+        closeContactOverlay();
+        return;
+      }
+      if (e.key === "Tab") {
+        var focusable = document.querySelectorAll("#contact-overlay button, #contact-overlay a");
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    function toggleTheme() {
+      var current = document.documentElement.getAttribute("data-theme");
+      var systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      var isDark = current ? current === "dark" : systemDark;
+      var next = isDark ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("nba-brief-theme", next);
+      updateToggleIcon();
+    }
+
+    function updateToggleIcon() {
+      var current = document.documentElement.getAttribute("data-theme");
+      var systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      var isDark = current ? current === "dark" : systemDark;
+      document.getElementById("theme-toggle").textContent = isDark ? "☀" : "🌙";
+    }
+  </script>
+</body>
+</html>

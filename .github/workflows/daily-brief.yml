@@ -1,0 +1,31 @@
+name: Deploy Brief to Pages
+
+# GitHub Actions can't run the actual fetch pipeline - stats.nba.com blocks/
+# times out requests from cloud datacenter IPs (confirmed by two failed runs
+# with a "Run scheduler check" step that no longer exists here). The pipeline
+# runs at home instead (scheduler.py, via Task Scheduler or a Raspberry Pi),
+# which pushes each new output/*.html straight to this repo - this workflow's
+# only job is to publish whatever just got pushed to output/ onto GitHub Pages.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "output/**"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy output/ to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./output

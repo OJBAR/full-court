@@ -1,0 +1,12 @@
+.env
+venv/
+__pycache__/
+*.pyc
+_test_*
+# output/*.html WAS gitignored under the old "GitHub Actions runs the whole
+# pipeline" plan (CI would generate them fresh at runtime). That plan doesn't
+# work - stats.nba.com blocks requests from cloud IPs - so the pipeline runs
+# at home and pushes its output/*.html here instead; the "Deploy Brief to
+# Pages" workflow just republishes whatever's in output/ on every push. So
+# output/*.html (including index.html) IS tracked now, same as output/assets/
+# and output/manifest.json.
