@@ -315,7 +315,7 @@
     gap: 16px;
     position: relative;
     padding-right: 16px;
-    border-right: 1px solid var(--text-muted);
+    border-right: 2px solid var(--text-muted);
   }
   .bracket-pair::after {
     content: "";
@@ -323,7 +323,8 @@
     top: 50%;
     left: 100%;
     width: 25px;
-    height: 1px;
+    height: 2px;
+    margin-top: -1px;
     background: var(--text-muted);
   }
   .bracket-match {
@@ -386,9 +387,17 @@
   .bracket-caption {
     margin-top: 4px;
     font-size: 10px;
+    line-height: 1.3;
     color: var(--text-muted);
     text-align: center;
     direction: rtl;
+    /* Fixed height (~2 lines) regardless of actual caption length - the two
+       Play-In captions in a pair are very different lengths ("מנצחת עולה
+       לפלייאוף מהמקום ה-7" vs "מפסידה מודחת"), and without this the
+       .bracket-pair's 50% connector midpoint drifts off from the true
+       midpoint between the two match boxes whenever their wrap heights
+       differ. */
+    min-height: 2.6em;
   }
 
   .a11y-overlay {
