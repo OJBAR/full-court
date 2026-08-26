@@ -811,10 +811,9 @@
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    justify-content: space-evenly;
+    gap: 16px;
   }
   :root.tabs-mode .app-home.hidden { display: none; }
-  :root.tabs-mode .app-home > details.tab-section { margin-top: 0; }
   .app-home-big-btn {
     display: block;
     width: 100%;
@@ -828,9 +827,31 @@
     font-weight: 700;
     cursor: pointer;
   }
-  :root.tabs-mode .app-home details.tab-section { flex-shrink: 0; }
-  :root.tabs-mode .app-home details.tab-section:last-child { margin-bottom: 4px; }
-  :root.tabs-mode .app-home summary { padding: 22px 16px; font-size: 1.0625rem; }
+  /* The rest of the tabs share one bordered/backed block (like a grouped
+     iOS settings list) instead of each being its own little card - this
+     is the "second block" below the summary button, and fills whatever
+     height is left with its rows spread evenly (see initAppHome()). */
+  :root.tabs-mode .app-home-tabs-group {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    overflow: hidden;
+  }
+  :root.tabs-mode .app-home-tabs-group > details.tab-section {
+    flex-shrink: 0;
+    margin-top: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    border-bottom: 1px solid var(--border);
+  }
+  :root.tabs-mode .app-home-tabs-group > details.tab-section:last-child { border-bottom: none; }
+  :root.tabs-mode .app-home-tabs-group summary { padding: 22px 16px; font-size: 1.0625rem; }
   .pull-refresh-indicator {
     position: fixed;
     top: 16px;
@@ -1573,8 +1594,15 @@
       var home = document.createElement("div");
       home.className = "app-home";
 
-      // Returning home always re-collects every section back into the home
-      // list (in their original order) and clears whichever one, if any,
+      // The rest of the tabs live inside their own grouped block, visually
+      // separate from the summary button - one big highlighted tab plus a
+      // shared group underneath, rather than a flat list of same-weight
+      // rows.
+      var tabsGroup = document.createElement("div");
+      tabsGroup.className = "app-home-tabs-group";
+
+      // Returning home always re-collects every section back into the
+      // group (in their original order) and clears whichever one, if any,
       // was promoted to a full screen - safe to call unconditionally from
       // any state (header tap, the summary/a section's own back arrow).
       function showHome() {
@@ -1583,7 +1611,7 @@
         sections.forEach(function(section) {
           section.classList.remove("app-screen-active");
           section.open = false;
-          home.appendChild(section);
+          tabsGroup.appendChild(section);
         });
       }
       function showSummary() {
@@ -1628,8 +1656,9 @@
             showSection(section);
           }
         });
-        home.appendChild(section);
+        tabsGroup.appendChild(section);
       });
+      home.appendChild(tabsGroup);
 
       main.insertBefore(home, main.firstChild);
     })();
