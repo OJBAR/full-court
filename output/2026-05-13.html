@@ -608,29 +608,65 @@
      the overshoot-past-the-edge effect. */
   :root.tabs-mode html,
   :root.tabs-mode body { overscroll-behavior: none; }
+  /* The page shell itself is pinned to exactly one screen's height and
+     never scrolls - only the active screen's own content area (inside
+     <main>) scrolls, and only when it's genuinely taller than the
+     available space. This is also why the footer (contact/beta links)
+     is hidden here - there's no page-level scroll left to reach it by. */
+  :root.tabs-mode html,
+  :root.tabs-mode body {
+    height: 100%;
+    overflow: hidden;
+  }
+  :root.tabs-mode .wrapper {
+    height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+    display: flex;
+    flex-direction: column;
+  }
+  :root.tabs-mode .header { flex-shrink: 0; cursor: pointer; }
+  :root.tabs-mode main {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+  }
+  :root.tabs-mode .footer { display: none; }
   :root.tabs-mode main > .summary {
     display: none;
   }
   :root.tabs-mode main > .summary.app-screen-active {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
   }
   .app-home { display: none; }
-  :root.tabs-mode .app-home { display: block; }
+  :root.tabs-mode .app-home {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
   :root.tabs-mode .app-home.hidden { display: none; }
   .app-home-big-btn {
     display: block;
     width: 100%;
-    padding: 28px 16px;
+    flex-shrink: 0;
+    padding: 40px 16px;
     margin: 4px 0 16px;
     border-radius: 16px;
     border: none;
     background: var(--accent);
     color: var(--card-bg);
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     cursor: pointer;
   }
-  :root.tabs-mode .header { cursor: pointer; }
+  :root.tabs-mode .app-home details.tab-section { flex-shrink: 0; }
+  :root.tabs-mode .app-home details.tab-section:last-child { margin-bottom: 4px; }
+  :root.tabs-mode .app-home summary { padding: 22px 16px; font-size: 17px; }
   .pull-refresh-indicator {
     position: fixed;
     top: 16px;
@@ -1132,8 +1168,19 @@
         indicator.style.transform = "translateX(-50%) translateY(" + px + "px) rotate(" + (px * 3) + "deg)";
       }
 
+      function atTop() {
+        // In tabs-mode the page shell itself no longer scrolls (see the CSS)
+        // - <main> is the actual scrollable region there - so "at the top"
+        // has to be checked against main.scrollTop, not window.scrollY.
+        var main = document.querySelector("main");
+        if (document.documentElement.classList.contains("tabs-mode") && main) {
+          return main.scrollTop === 0;
+        }
+        return window.scrollY === 0;
+      }
+
       document.addEventListener("touchstart", function(e) {
-        startY = window.scrollY === 0 ? e.touches[0].clientY : null;
+        startY = atTop() ? e.touches[0].clientY : null;
         currentPull = 0;
         indicator.style.transition = "none";
       }, { passive: true });
