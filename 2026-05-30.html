@@ -464,29 +464,34 @@
 
   .bracket-conf-block { margin-bottom: 18px; }
   .bracket-conf-block:last-child { margin-bottom: 0; }
-  /* The NBA Finals match is real content embedded as the 4th column of the
-     West strip (see _bracket_strip_html) - not a separately-faded overlay -
-     so it's clipped by the strip's own .strip-viewport and only becomes
-     visible by actually being panned into view in lockstep with everything
-     else, exactly like every other round. The connecting line is the only
-     thing still positioned separately (it can't be clipped inside either
-     strip's own viewport, since it has to reach from the West conference's
-     box down to the East conference's box in a different strip). Its
-     geometry - top, height, and left - is entirely measured live off the
-     two real Conf. Finals boxes by positionFinalsConnector() in
-     initPlayoffBracketPager, not computed from percentages, so it's exact
-     on any phone: top/height span from the top edge of the West box to the
-     bottom edge of the East box (same "vertical bar spans the whole pair"
-     language as .bracket-pair), and left tracks the real right edge of
-     those boxes. positionFinalsConnector() also folds the connector into
-     the same tracks[] array the pager already pans with setTracks(), so
-     the exact same transform that moves the two strips moves this line too
-     - it stays visually locked to the boxes through the whole pan/drag,
-     not just once settled. Its own ::after stub (same 25px length as every
-     other round's connector) comes out of its exact vertical middle,
-     reaching toward the Finals column. Only visible at stop 2, same as the
-     Finals column itself. */
+  /* The NBA Finals match is a real 4th track (see
+     _bracket_nba_finals_track_html), not a separately-faded overlay - it
+     has its own .strip-viewport, so it's clipped and only becomes visible
+     by actually being panned into view, in lockstep with everything else
+     (its .strip-track is picked up by the exact same ".strip-track"
+     selector as every other track in initPlayoffBracketPager, so it needs
+     no special-casing there at all). Its wrapper only needs a vertical
+     position set, live, to span from the top edge of the West conference's
+     Conf. Finals box to the bottom edge of the East one (positionFinals
+     Connector() in initPlayoffBracketPager) - .bracket-final's own
+     justify-content:center then lands the match at the true vertical
+     middle between the two conferences, not squeezed into either one's own
+     much shorter row height. The connecting line is the only thing still
+     positioned separately (it can't live inside any single strip's own
+     viewport, since it has to reach from one conference's box to the
+     other's), sharing that same measured top/height, with its own left
+     tracking those boxes' real right edge plus the same 16px gap
+     .bracket-pair leaves before its own connecting line. Both pieces are
+     folded into the same tracks[] array the pager already pans with
+     setTracks(), so the exact same transform that moves the two conference
+     strips moves them too - locked to the pan/drag the whole way, not just
+     once settled. */
   .bracket-pager-strips { position: relative; }
+  .nba-finals-track-wrap {
+    position: absolute;
+    left: 0;
+    right: 0;
+  }
   .nba-finals-connector {
     position: absolute;
     width: 2px;
@@ -1066,7 +1071,7 @@
       <details class="tab-section">
       <summary>בראקט הפלייאוף</summary>
       <div class="details-body" dir="ltr">
-        <div class="bracket-pager" data-step="2"><div class="bracket-pager-strips"><div class="strip-viewport"><div class="strip-track"><div class="bracket-column"><h4 class="bracket-round-label">1st Round</h4></div><div class="bracket-column"><h4 class="bracket-round-label">Conf. Semifinals</h4></div><div class="bracket-column"><h4 class="bracket-round-label">Conf. Finals</h4></div><div class="bracket-column"><h4 class="bracket-round-label">NBA Finals</h4></div></div></div><div class="bracket-conf-block"><h4 class="sr-only">מערב</h4><div class="strip-viewport"><div class="strip-track"><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>LAL</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">5</span><span>HOU</span></span><span class="bracket-score">2</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>OKC</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">8</span><span>PHX</span></span><span class="bracket-score">0</span></div></div></div><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">3</span><span>DEN</span></span><span class="bracket-score">2</span></div><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">6</span><span>MIN</span></span><span class="bracket-score">4</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">2</span><span>SAS</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">7</span><span>POR</span></span><span class="bracket-score">1</span></div></div></div></div></div><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair bracket-pair-r2"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>OKC</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>LAL</span></span><span class="bracket-score">0</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">2</span><span>SAS</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">6</span><span>MIN</span></span><span class="bracket-score">2</span></div></div></div></div></div><div class="bracket-column"><div class="bracket-round bracket-final bracket-final-conf"><div class="bracket-match"><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>OKC</span></span><span class="bracket-score">3</span></div><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">2</span><span>SAS</span></span><span class="bracket-score">4</span></div></div></div></div><div class="bracket-column"><div class="bracket-round bracket-final"><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div></div></div></div></div></div><div class="bracket-conf-block"><h4 class="sr-only">מזרח</h4><div class="strip-viewport"><div class="strip-track"><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>CLE</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">5</span><span>TOR</span></span><span class="bracket-score">3</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>DET</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">8</span><span>ORL</span></span><span class="bracket-score">3</span></div></div></div><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">2</span><span>BOS</span></span><span class="bracket-score">3</span></div><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">7</span><span>PHI</span></span><span class="bracket-score">4</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">3</span><span>NYK</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">6</span><span>ATL</span></span><span class="bracket-score">2</span></div></div></div></div></div><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair bracket-pair-r2"><div class="bracket-match"><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>DET</span></span><span class="bracket-score">3</span></div><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>CLE</span></span><span class="bracket-score">4</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">3</span><span>NYK</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">7</span><span>PHI</span></span><span class="bracket-score">0</span></div></div></div></div></div><div class="bracket-column"><div class="bracket-round bracket-final bracket-final-conf"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">3</span><span>NYK</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>CLE</span></span><span class="bracket-score">0</span></div></div></div></div><div class="bracket-column"><div class="bracket-round bracket-final"></div></div></div></div></div><div class="nba-finals-connector"></div></div><div class="pager-nav"><button type="button" class="pager-arrow pager-prev" aria-label="הקודם">‹</button><button type="button" class="pager-arrow pager-next" aria-label="הבא">›</button></div></div>
+        <div class="bracket-pager" data-step="2"><div class="bracket-pager-strips"><div class="strip-viewport"><div class="strip-track"><div class="bracket-column"><h4 class="bracket-round-label">1st Round</h4></div><div class="bracket-column"><h4 class="bracket-round-label">Conf. Semifinals</h4></div><div class="bracket-column"><h4 class="bracket-round-label">Conf. Finals</h4></div><div class="bracket-column"><h4 class="bracket-round-label">NBA Finals</h4></div></div></div><div class="bracket-conf-block"><h4 class="sr-only">מערב</h4><div class="strip-viewport"><div class="strip-track"><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>LAL</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">5</span><span>HOU</span></span><span class="bracket-score">2</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>OKC</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">8</span><span>PHX</span></span><span class="bracket-score">0</span></div></div></div><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">3</span><span>DEN</span></span><span class="bracket-score">2</span></div><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">6</span><span>MIN</span></span><span class="bracket-score">4</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">2</span><span>SAS</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">7</span><span>POR</span></span><span class="bracket-score">1</span></div></div></div></div></div><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair bracket-pair-r2"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>OKC</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>LAL</span></span><span class="bracket-score">0</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">2</span><span>SAS</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">6</span><span>MIN</span></span><span class="bracket-score">2</span></div></div></div></div></div><div class="bracket-column"><div class="bracket-round bracket-final bracket-final-conf"><div class="bracket-match"><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>OKC</span></span><span class="bracket-score">3</span></div><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">2</span><span>SAS</span></span><span class="bracket-score">4</span></div></div></div></div></div></div></div><div class="bracket-conf-block"><h4 class="sr-only">מזרח</h4><div class="strip-viewport"><div class="strip-track"><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>CLE</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">5</span><span>TOR</span></span><span class="bracket-score">3</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>DET</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">8</span><span>ORL</span></span><span class="bracket-score">3</span></div></div></div><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">2</span><span>BOS</span></span><span class="bracket-score">3</span></div><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">7</span><span>PHI</span></span><span class="bracket-score">4</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">3</span><span>NYK</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">6</span><span>ATL</span></span><span class="bracket-score">2</span></div></div></div></div></div><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair bracket-pair-r2"><div class="bracket-match"><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>DET</span></span><span class="bracket-score">3</span></div><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>CLE</span></span><span class="bracket-score">4</span></div></div><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">3</span><span>NYK</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">7</span><span>PHI</span></span><span class="bracket-score">0</span></div></div></div></div></div><div class="bracket-column"><div class="bracket-round bracket-final bracket-final-conf"><div class="bracket-match"><div class="bracket-team winner"><span class="bracket-team-label"><span class="bracket-seed">3</span><span>NYK</span></span><span class="bracket-score">4</span></div><div class="bracket-team"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>CLE</span></span><span class="bracket-score">0</span></div></div></div></div></div></div></div><div class="nba-finals-track-wrap"><div class="strip-viewport"><div class="strip-track"><div class="bracket-column"></div><div class="bracket-column"></div><div class="bracket-column"></div><div class="bracket-column"><div class="bracket-round bracket-final"><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div></div></div></div></div></div><div class="nba-finals-connector"></div></div><div class="pager-nav"><button type="button" class="pager-arrow pager-prev" aria-label="הקודם">‹</button><button type="button" class="pager-arrow pager-next" aria-label="הבא">›</button></div></div>
       </div>
     </details>
     </main>
@@ -1298,36 +1303,44 @@
         });
       }
 
-      // The connector isn't inside either strip's own viewport (it can't
-      // be - it has to reach from the West conference's box down to the
-      // East conference's, in a different strip, and would get clipped by
-      // either one's overflow:hidden). So instead of trying to compute its
-      // position from percentages, this measures the two real Conf.
-      // Finals boxes directly - top/height span exactly from the top edge
-      // of the West box to the bottom edge of the East box, left tracks
-      // the boxes' real right edge - then folds the connector into the
-      // same tracks[] array setTracks() already pans, converting the
-      // just-measured on-screen position back to the same untransformed
-      // reference frame the real tracks use (current position + the shift
-      // already applied = where it'd sit at step 0). From then on it gets
-      // the exact same transform as everything else, every time
-      // setTracks() runs (including mid-drag) - it never has to be
-      // re-measured again unless the layout itself changes (resize).
+      // The Finals track (see _bracket_nba_finals_track_html) is already
+      // panned in perfect sync for free - it's just another ".strip-track"
+      // the tracks[] query above already picked up. All that's left is
+      // giving its wrapper a vertical position, and drawing the connecting
+      // line, neither of which can be done from percentages alone: they
+      // have to span exactly from the top edge of the West conference's
+      // Conf. Finals box to the bottom edge of the East one, which varies
+      // by phone/text size. The connector's left tracks those boxes' real
+      // right edge plus the same 16px gap .bracket-pair leaves before its
+      // own connecting line (same distance-0-into-the-next-box math as
+      // every other round). It's converted from the just-measured
+      // on-screen position back to the same untransformed reference frame
+      // the real tracks use (current position + the shift already applied
+      // = where it'd sit at step 0), then folded into the same tracks[]
+      // array setTracks() already pans - from then on it gets the exact
+      // same transform as everything else, every time setTracks() runs
+      // (including mid-drag), never re-measured again unless the layout
+      // itself changes (resize).
       function positionFinalsConnector() {
         var connector = wrap.querySelector(".nba-finals-connector");
+        var finalsWrap = wrap.querySelector(".nba-finals-track-wrap");
         var strips = wrap.querySelector(".bracket-pager-strips");
         var finalBoxes = wrap.querySelectorAll(".bracket-final-conf .bracket-match");
-        if (!connector || !strips || finalBoxes.length < 2) return;
+        if (!connector || !finalsWrap || !strips || finalBoxes.length < 2) return;
         var topBox = finalBoxes[0];
         var bottomBox = finalBoxes[finalBoxes.length - 1];
         var stripsRect = strips.getBoundingClientRect();
         var topRect = topBox.getBoundingClientRect();
         var bottomRect = bottomBox.getBoundingClientRect();
         if (!topRect.height || !bottomRect.height) return;
+        var top = topRect.top - stripsRect.top;
+        var height = bottomRect.bottom - topRect.top;
+        finalsWrap.style.top = top + "px";
+        finalsWrap.style.height = height + "px";
         var currentShift = step * unitShift();
-        connector.style.top = (topRect.top - stripsRect.top) + "px";
-        connector.style.height = (bottomRect.bottom - topRect.top) + "px";
-        connector.style.left = (topRect.right - stripsRect.left + currentShift) + "px";
+        connector.style.top = top + "px";
+        connector.style.height = height + "px";
+        connector.style.left = (topRect.right - stripsRect.left + 16 + currentShift) + "px";
         connector.style.transform = "translateX(-" + currentShift + "px)";
         if (tracks.indexOf(connector) === -1) tracks.push(connector);
       }
