@@ -464,19 +464,34 @@
 
   .bracket-conf-block { margin-bottom: 18px; }
   .bracket-conf-block:last-child { margin-bottom: 0; }
-  /* The NBA Finals overlay (see _bracket_nba_finals_overlay_html) sits
-     just past the strips' own 316px-wide viewport (centered at 50% of
-     .bracket-pager-strips - half its width, 158px, plus the same 24px
-     gap used between every other pair of columns), connected to both
-     conferences' Conf. Finals boxes by the same line style used
-     everywhere else in the bracket. Only shown at stop 2 - the strips
-     themselves stay parked at stop 1 the whole time this is visible. */
+  /* Each strip pans to reveal its own empty 4th column at stop 2 (see
+     _bracket_strip_html) - the NBA Finals overlay (see
+     _bracket_nba_finals_overlay_html) is positioned to land exactly in
+     that now-visible slot instead of floating beside the strips. The
+     316px-wide viewport is centered at 50% of .bracket-pager-strips; at
+     stop 2 it shows columns 3+4, so column 4's own center sits at
+     viewport-left (50% - 158px) + col3(146px) + gap(24px) + half of
+     col4(73px) = 50% + 85px. Connected to both conferences' Conf. Finals
+     boxes by the same line style used everywhere else in the bracket -
+     each one gets its own outgoing stub (like a normal .bracket-pair),
+     joined here by one vertical line spanning between them. */
   .bracket-pager-strips { position: relative; }
+  .bracket-pager .bracket-conf-block .bracket-final { position: relative; }
+  .bracket-pager .bracket-conf-block .bracket-final::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    width: 24px;
+    height: 2px;
+    margin-top: -1px;
+    background: var(--text-muted);
+  }
   .nba-finals-overlay {
     position: absolute;
-    left: calc(50% + 182px);
+    left: calc(50% + 85px);
     top: 50%;
-    transform: translateY(-50%);
+    transform: translate(-50%, -50%);
     display: flex;
     align-items: center;
     opacity: 0;
@@ -491,19 +506,11 @@
   }
   .nba-finals-connector {
     position: relative;
-    width: 24px;
-    height: 2px;
-    background: var(--text-muted);
-    flex-shrink: 0;
-  }
-  .nba-finals-connector::before {
-    content: "";
-    position: absolute;
-    right: 0;
-    top: -110px;
     width: 2px;
     height: 220px;
     background: var(--text-muted);
+    flex-shrink: 0;
+    margin-left: 2px;
   }
   /* Play-In is just two stacked conference brackets with no pager, so it
      doesn't naturally use up the screen the way the paged brackets do. A
@@ -1291,46 +1298,43 @@
     })();
 
     (function initPlayoffBracketPager() {
-      // The playoff bracket's pager: stops 0/1 pan a continuous strip per
-      // conference (see _bracket_strip_html) by exactly one column's real
-      // measured width, so a round shared between two adjacent stops
-      // (e.g. Conf. Semis, visible at both stops) is the same element
-      // throughout, never two overlapping copies mid-transition. The
-      // strips themselves only ever go up to stop 1 - stop 2 doesn't pan
-      // them any further, it just fades in the NBA Finals overlay next to
-      // them (see _bracket_nba_finals_overlay_html), driven purely by the
-      // data-step attribute (kept in sync here) rather than any further
-      // transform. The shared round-name header has one more column than
-      // the strips, so it keeps panning through all 3 stops on its own.
+      // The playoff bracket's pager: all 3 stops pan a continuous strip
+      // per conference (see _bracket_strip_html) plus the shared
+      // round-name header, all moving together by exactly one column's
+      // real measured width, so a round shared between two adjacent
+      // stops (e.g. Conf. Semis, visible at both stops) is the same
+      // element throughout, never two overlapping copies mid-transition.
+      // Stop 2 isn't special-cased at all - it just happens to land on
+      // each strip's empty 4th column, which is where the shared NBA
+      // Finals overlay sits (positioned via CSS, toggled by the
+      // data-step attribute kept in sync here).
       var wrap = document.querySelector(".bracket-pager");
       if (!wrap) return;
 
       var step = parseInt(wrap.getAttribute("data-step"), 10) || 0;
       var maxStep = 2;
-      var headerTrack = wrap.querySelector(":scope > .bracket-pager-strips > .strip-viewport > .strip-track");
-      var confTracks = Array.prototype.slice.call(wrap.querySelectorAll(".bracket-conf-block .strip-track"));
+      var tracks = Array.prototype.slice.call(wrap.querySelectorAll(".strip-track"));
       var prevBtn = wrap.querySelector(".pager-prev");
       var nextBtn = wrap.querySelector(".pager-next");
 
       function unitShift() {
-        var track = confTracks[0] || headerTrack;
+        var track = tracks[0];
         var firstCol = track && track.children[0];
         if (!firstCol) return 0;
         var gap = parseFloat(getComputedStyle(track).gap || "0") || 0;
         return firstCol.getBoundingClientRect().width + gap;
       }
 
-      function setTrack(track, px, animate) {
-        if (!track) return;
-        track.style.transition = animate ? "transform 0.35s ease" : "none";
-        track.style.transform = "translateX(-" + px + "px)";
+      function setTracks(px, animate) {
+        tracks.forEach(function(track) {
+          track.style.transition = animate ? "transform 0.35s ease" : "none";
+          track.style.transform = "translateX(-" + px + "px)";
+        });
       }
 
       function render(animate) {
         wrap.setAttribute("data-step", step);
-        var unit = unitShift();
-        setTrack(headerTrack, step * unit, animate);
-        confTracks.forEach(function(track) { setTrack(track, Math.min(step, 1) * unit, animate); });
+        setTracks(step * unitShift(), animate);
         prevBtn.disabled = step === 0;
         nextBtn.disabled = step === maxStep;
       }
@@ -1354,26 +1358,23 @@
       }, { passive: true });
 
       wrap.addEventListener("touchmove", function(e) {
-        // No live drag preview once the Finals overlay is showing (or
-        // being reached) - that transition is a plain fade, not a pan.
-        if (startX === null || step === 2) return;
+        if (startX === null) return;
         var dx = e.touches[0].clientX - startX;
         var dy = e.touches[0].clientY - startY;
         if (!dragging && Math.abs(dx) < Math.abs(dy)) return;
         dragging = true;
         var unit = unitShift();
-        var target = Math.max(0, Math.min(step * unit - dx, unit));
-        setTrack(headerTrack, target, false);
-        confTracks.forEach(function(track) { setTrack(track, target, false); });
+        var target = Math.max(0, Math.min(step * unit - dx, maxStep * unit));
+        setTracks(target, false);
       }, { passive: true });
 
       wrap.addEventListener("touchend", function(e) {
-        if (startX === null) return;
+        if (!dragging) { startX = null; startY = null; return; }
         var dx = e.changedTouches[0].clientX - startX;
         var threshold = 40;
         if (dx < -threshold) { goTo(step + 1); }
         else if (dx > threshold) { goTo(step - 1); }
-        else if (dragging) { render(true); }
+        else { render(true); }
         startX = null;
         startY = null;
         dragging = false;

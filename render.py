@@ -481,19 +481,34 @@ TEMPLATE = """<!DOCTYPE html>
 
   .bracket-conf-block {{ margin-bottom: 18px; }}
   .bracket-conf-block:last-child {{ margin-bottom: 0; }}
-  /* The NBA Finals overlay (see _bracket_nba_finals_overlay_html) sits
-     just past the strips' own 316px-wide viewport (centered at 50% of
-     .bracket-pager-strips - half its width, 158px, plus the same 24px
-     gap used between every other pair of columns), connected to both
-     conferences' Conf. Finals boxes by the same line style used
-     everywhere else in the bracket. Only shown at stop 2 - the strips
-     themselves stay parked at stop 1 the whole time this is visible. */
+  /* Each strip pans to reveal its own empty 4th column at stop 2 (see
+     _bracket_strip_html) - the NBA Finals overlay (see
+     _bracket_nba_finals_overlay_html) is positioned to land exactly in
+     that now-visible slot instead of floating beside the strips. The
+     316px-wide viewport is centered at 50% of .bracket-pager-strips; at
+     stop 2 it shows columns 3+4, so column 4's own center sits at
+     viewport-left (50% - 158px) + col3(146px) + gap(24px) + half of
+     col4(73px) = 50% + 85px. Connected to both conferences' Conf. Finals
+     boxes by the same line style used everywhere else in the bracket -
+     each one gets its own outgoing stub (like a normal .bracket-pair),
+     joined here by one vertical line spanning between them. */
   .bracket-pager-strips {{ position: relative; }}
+  .bracket-pager .bracket-conf-block .bracket-final {{ position: relative; }}
+  .bracket-pager .bracket-conf-block .bracket-final::after {{
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    width: 24px;
+    height: 2px;
+    margin-top: -1px;
+    background: var(--text-muted);
+  }}
   .nba-finals-overlay {{
     position: absolute;
-    left: calc(50% + 182px);
+    left: calc(50% + 85px);
     top: 50%;
-    transform: translateY(-50%);
+    transform: translate(-50%, -50%);
     display: flex;
     align-items: center;
     opacity: 0;
@@ -508,19 +523,11 @@ TEMPLATE = """<!DOCTYPE html>
   }}
   .nba-finals-connector {{
     position: relative;
-    width: 24px;
-    height: 2px;
-    background: var(--text-muted);
-    flex-shrink: 0;
-  }}
-  .nba-finals-connector::before {{
-    content: "";
-    position: absolute;
-    right: 0;
-    top: -110px;
     width: 2px;
     height: 220px;
     background: var(--text-muted);
+    flex-shrink: 0;
+    margin-left: 2px;
   }}
   /* Play-In is just two stacked conference brackets with no pager, so it
      doesn't naturally use up the screen the way the paged brackets do. A
@@ -1266,46 +1273,43 @@ TEMPLATE = """<!DOCTYPE html>
     }})();
 
     (function initPlayoffBracketPager() {{
-      // The playoff bracket's pager: stops 0/1 pan a continuous strip per
-      // conference (see _bracket_strip_html) by exactly one column's real
-      // measured width, so a round shared between two adjacent stops
-      // (e.g. Conf. Semis, visible at both stops) is the same element
-      // throughout, never two overlapping copies mid-transition. The
-      // strips themselves only ever go up to stop 1 - stop 2 doesn't pan
-      // them any further, it just fades in the NBA Finals overlay next to
-      // them (see _bracket_nba_finals_overlay_html), driven purely by the
-      // data-step attribute (kept in sync here) rather than any further
-      // transform. The shared round-name header has one more column than
-      // the strips, so it keeps panning through all 3 stops on its own.
+      // The playoff bracket's pager: all 3 stops pan a continuous strip
+      // per conference (see _bracket_strip_html) plus the shared
+      // round-name header, all moving together by exactly one column's
+      // real measured width, so a round shared between two adjacent
+      // stops (e.g. Conf. Semis, visible at both stops) is the same
+      // element throughout, never two overlapping copies mid-transition.
+      // Stop 2 isn't special-cased at all - it just happens to land on
+      // each strip's empty 4th column, which is where the shared NBA
+      // Finals overlay sits (positioned via CSS, toggled by the
+      // data-step attribute kept in sync here).
       var wrap = document.querySelector(".bracket-pager");
       if (!wrap) return;
 
       var step = parseInt(wrap.getAttribute("data-step"), 10) || 0;
       var maxStep = 2;
-      var headerTrack = wrap.querySelector(":scope > .bracket-pager-strips > .strip-viewport > .strip-track");
-      var confTracks = Array.prototype.slice.call(wrap.querySelectorAll(".bracket-conf-block .strip-track"));
+      var tracks = Array.prototype.slice.call(wrap.querySelectorAll(".strip-track"));
       var prevBtn = wrap.querySelector(".pager-prev");
       var nextBtn = wrap.querySelector(".pager-next");
 
       function unitShift() {{
-        var track = confTracks[0] || headerTrack;
+        var track = tracks[0];
         var firstCol = track && track.children[0];
         if (!firstCol) return 0;
         var gap = parseFloat(getComputedStyle(track).gap || "0") || 0;
         return firstCol.getBoundingClientRect().width + gap;
       }}
 
-      function setTrack(track, px, animate) {{
-        if (!track) return;
-        track.style.transition = animate ? "transform 0.35s ease" : "none";
-        track.style.transform = "translateX(-" + px + "px)";
+      function setTracks(px, animate) {{
+        tracks.forEach(function(track) {{
+          track.style.transition = animate ? "transform 0.35s ease" : "none";
+          track.style.transform = "translateX(-" + px + "px)";
+        }});
       }}
 
       function render(animate) {{
         wrap.setAttribute("data-step", step);
-        var unit = unitShift();
-        setTrack(headerTrack, step * unit, animate);
-        confTracks.forEach(function(track) {{ setTrack(track, Math.min(step, 1) * unit, animate); }});
+        setTracks(step * unitShift(), animate);
         prevBtn.disabled = step === 0;
         nextBtn.disabled = step === maxStep;
       }}
@@ -1329,26 +1333,23 @@ TEMPLATE = """<!DOCTYPE html>
       }}, {{ passive: true }});
 
       wrap.addEventListener("touchmove", function(e) {{
-        // No live drag preview once the Finals overlay is showing (or
-        // being reached) - that transition is a plain fade, not a pan.
-        if (startX === null || step === 2) return;
+        if (startX === null) return;
         var dx = e.touches[0].clientX - startX;
         var dy = e.touches[0].clientY - startY;
         if (!dragging && Math.abs(dx) < Math.abs(dy)) return;
         dragging = true;
         var unit = unitShift();
-        var target = Math.max(0, Math.min(step * unit - dx, unit));
-        setTrack(headerTrack, target, false);
-        confTracks.forEach(function(track) {{ setTrack(track, target, false); }});
+        var target = Math.max(0, Math.min(step * unit - dx, maxStep * unit));
+        setTracks(target, false);
       }}, {{ passive: true }});
 
       wrap.addEventListener("touchend", function(e) {{
-        if (startX === null) return;
+        if (!dragging) {{ startX = null; startY = null; return; }}
         var dx = e.changedTouches[0].clientX - startX;
         var threshold = 40;
         if (dx < -threshold) {{ goTo(step + 1); }}
         else if (dx > threshold) {{ goTo(step - 1); }}
-        else if (dragging) {{ render(true); }}
+        else {{ render(true); }}
         startX = null;
         startY = null;
         dragging = false;
@@ -2217,19 +2218,22 @@ def _bracket_round_header_track(labels: list[str]) -> str:
 def _bracket_strip_html(conf_label: str, columns: dict[str, str]) -> str:
     """
     One conference's full Round 1 -> Conf. Semis -> Conf. Finals bracket as
-    a single continuous strip (all 3 columns, always in the DOM together,
-    each just wrapped bare in .bracket-column - no per-column round label,
-    see _bracket_round_header_track), instead of splitting it across
-    separate pages. initPlayoffBracketPager() pans a fixed viewport across
-    this strip by exactly one column's width at a time, so a round shared
+    a single continuous strip, plus one more, empty 4th column - it has no
+    content of its own (the Finals combine both conferences, so there's
+    nothing conference-specific to put there), it's only there so the
+    strip has somewhere real to pan to at stop 2, landing Conf. Finals in
+    the left-visible slot and leaving the right-visible slot empty for the
+    shared NBA Finals overlay (see _bracket_nba_finals_overlay_html) to
+    sit in - initPlayoffBracketPager() pans a fixed viewport across this
+    strip by exactly one column's width at a time, so a round shared
     between two stops (e.g. Conf. Semis, visible at both stop 0 and stop 1)
-    is the same element throughout - it just slides from the trailing
-    position to the leading one. The strip itself only ever goes up to
-    stop 1 (there's nothing conference-specific past Conf. Finals) - stop
-    2 doesn't pan it any further, it just reveals the NBA Finals overlay
-    (see _bracket_nba_finals_overlay_html) next to it instead.
+    is the same element throughout, it just slides from the trailing
+    position to the leading one - same for stop 2, the strip keeps panning
+    the exact same way, it just happens to reveal an empty slot instead of
+    another round.
     """
     track_html = "".join(f'<div class="bracket-column">{columns[r]}</div>' for r in _PLAYOFF_ROUNDS[:3])
+    track_html += '<div class="bracket-column"></div>'
     return (
         '<div class="bracket-conf-block">'
         f'<h4 class="sr-only">{html.escape(conf_label)}</h4>'
@@ -2241,13 +2245,13 @@ def _bracket_strip_html(conf_label: str, columns: dict[str, str]) -> str:
 def _bracket_nba_finals_overlay_html(finals_series: dict | None, conf_by_team: dict) -> str:
     """
     The NBA Finals match, shown once - not part of either conference's own
-    strip (the Finals combine both), so it sits beside them as an overlay,
-    connected by the same vertical+horizontal line style used everywhere
-    else in the bracket, positioned to reach both conferences' Conf.
-    Finals boxes. Only revealed at stop 2 (see the [data-step="2"] CSS
-    rule) - the strips themselves stay parked at stop 1 the whole time
-    stop 2 is active, so this doesn't need to pan anything, just fade in
-    next to wherever the strips already are.
+    strip (the Finals combine both), so instead of being a 4th strip
+    column (which would mean showing it twice, once per conference) it's
+    absolutely positioned to land exactly in the empty 4th-column slot
+    both strips pan to reveal at stop 2 (see the [data-step="2"] CSS rule
+    and the position math next to .nba-finals-overlay), connected to both
+    conferences' Conf. Finals boxes by the same line style used everywhere
+    else in the bracket.
     """
     match = _finals_match_html(finals_series, conf_by_team)
     return f'<div class="nba-finals-overlay"><div class="nba-finals-connector"></div><div class="bracket-column">{match}</div></div>'
@@ -2258,19 +2262,16 @@ def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list
     A single bracket covering the whole playoffs (both conferences, no
     separate tab per conference or for the Finals) - only two adjacent
     rounds are shown at a time, since a full 4-round bracket is too wide for
-    mobile. Stops 0 and 1 (1st Round<->Conf. Semis<->Conf. Finals) pan one
-    continuous strip per conference (see _bracket_strip_html), with the
-    round name shown once in a shared header above both strips instead of
-    repeated per conference. Stop 2 doesn't pan anything further - the
-    strips stay at stop 1's position, and the NBA Finals match simply
-    appears next to them, connected by lines to both conferences' Conf.
-    Finals boxes (see _bracket_nba_finals_overlay_html), rather than being
-    a 4th strip column (which would've meant showing it twice, once per
-    conference) or a separate page (which didn't animate well). Defaults
-    to whichever stop is relevant tonight: if tonight's games span more
-    than one round (e.g. a 1st Round Game 7 and a Conf. Semifinals Game 1
-    on the same night), the earliest round wins, since that series isn't
-    fully resolved league-wide yet.
+    mobile. All 3 stops are one continuous pan across a strip per
+    conference (see _bracket_strip_html) plus the shared round-name header,
+    all 3 tracks moving together by the same measured column width - stop
+    2 isn't special-cased, it just happens to land on an empty 4th column
+    in each strip, which is where the shared NBA Finals overlay (see
+    _bracket_nba_finals_overlay_html) sits. Defaults to whichever stop is
+    relevant tonight: if tonight's games span more than one round (e.g. a
+    1st Round Game 7 and a Conf. Semifinals Game 1 on the same night), the
+    earliest round wins, since that series isn't fully resolved
+    league-wide yet.
     """
     round_index = {r: i for i, r in enumerate(_PLAYOFF_ROUNDS)}
     current_indices = [round_index[g["po_round"]] for g in games if g.get("po_round") in round_index]
