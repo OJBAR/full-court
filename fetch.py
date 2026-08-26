@@ -187,6 +187,53 @@ def get_cup_bracket(as_of_date: str) -> list[dict]:
     return list(games_by_id.values())
 
 
+def get_play_in_bracket(as_of_date: str) -> list[dict]:
+    """
+    Returns every Play-In Tournament game played this season up to the given
+    date - not just the games from a single night. Needed because the daily
+    brief only fetches that one date's games by default, so on the deciding
+    night (game 3), the earlier 7-vs-8/9-vs-10 games from a few nights before
+    would otherwise show as TBD even though they're long since final.
+
+    Play-In games aren't tagged with their own gameSubtype or season_type
+    the way Cup/Playoff games are - the only reliable identifier is the
+    "005" gameId prefix - so this follows the same "filter the full season
+    schedule, then fetch line scores for just the relevant dates" approach
+    as get_cup_bracket(), rather than the single LeagueGameFinder call
+    get_playoff_series() gets to use with season_type_nullable="Playoffs".
+    """
+    season = season_string_for(as_of_date)
+    result = scheduleleaguev2.ScheduleLeagueV2(season=season)
+    schedule_df = _dataframe_for(result, "SeasonGames")
+
+    play_in = schedule_df[schedule_df["gameId"].str.startswith("005")].copy()
+    play_in["date_str"] = pd.to_datetime(play_in["gameDate"]).dt.strftime("%Y-%m-%d")
+    play_in = play_in[play_in["date_str"] <= as_of_date]
+    if play_in.empty:
+        return []
+
+    dates_needed = sorted(play_in["date_str"].unique())
+    games_by_id: dict[str, dict] = {}
+    for game_date in dates_needed:
+        game_header, line_score = get_games_for_date(game_date)
+        for _, game in game_header.iterrows():
+            if not game["gameId"].startswith("005"):
+                continue
+            teams = line_score[line_score["gameId"] == game["gameId"]].to_dict(
+                orient="records"
+            )
+            if len(teams) != 2:
+                continue
+            games_by_id[game["gameId"]] = {
+                "game_id": game["gameId"],
+                "series_conference": game["seriesConference"],
+                "line_score": teams,
+            }
+        time.sleep(REQUEST_DELAY_SECONDS)
+
+    return list(games_by_id.values())
+
+
 def get_cup_group_standings(as_of_date: str) -> list[dict]:
     """
     Computes each team's win-loss record and point differential within
@@ -350,6 +397,7 @@ def fetch_for_date(date_str: str) -> dict:
     # Playoffs/Finals games are - is_playoffs stays False for them, since the
     # Play-In isn't officially "Playoffs". Detected by game_id prefix instead.
     is_play_in = any(g["game_id"].startswith("005") for g in games)
+    play_in_bracket = get_play_in_bracket(date_str) if is_play_in else []
 
     # Both unofficial/undocumented on top of everything above - degrade
     # gracefully (empty results) rather than failing the whole brief if
@@ -376,6 +424,7 @@ def fetch_for_date(date_str: str) -> dict:
         "is_cup_groups": is_cup_groups,
         "cup_group_standings": cup_group_standings,
         "is_play_in": is_play_in,
+        "play_in_bracket": play_in_bracket,
         "injuries": injuries,
         "player_power_ratings": power_ratings,
     }

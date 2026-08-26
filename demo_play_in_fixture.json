@@ -4900,6 +4900,212 @@
     "is_cup_groups": false,
     "cup_group_standings": [],
     "is_play_in": true,
+    "play_in_bracket": [
+      {
+        "game_id": "0052500111",
+        "series_conference": "East",
+        "line_score": [
+          {
+            "gameId": "0052500111",
+            "teamId": 1610612766,
+            "teamCity": "Charlotte",
+            "teamName": "Hornets",
+            "teamTricode": "CHA",
+            "teamSlug": "hornets",
+            "wins": 1,
+            "losses": 0,
+            "score": 127,
+            "seed": 9,
+            "inBonus": null,
+            "timeoutsRemaining": 0
+          },
+          {
+            "gameId": "0052500111",
+            "teamId": 1610612748,
+            "teamCity": "Miami",
+            "teamName": "Heat",
+            "teamTricode": "MIA",
+            "teamSlug": "heat",
+            "wins": 0,
+            "losses": 1,
+            "score": 126,
+            "seed": 10,
+            "inBonus": null,
+            "timeoutsRemaining": 0
+          }
+        ]
+      },
+      {
+        "game_id": "0052500121",
+        "series_conference": "West",
+        "line_score": [
+          {
+            "gameId": "0052500121",
+            "teamId": 1610612756,
+            "teamCity": "Phoenix",
+            "teamName": "Suns",
+            "teamTricode": "PHX",
+            "teamSlug": "suns",
+            "wins": 0,
+            "losses": 1,
+            "score": 110,
+            "seed": 7,
+            "inBonus": null,
+            "timeoutsRemaining": 0
+          },
+          {
+            "gameId": "0052500121",
+            "teamId": 1610612757,
+            "teamCity": "Portland",
+            "teamName": "Trail Blazers",
+            "teamTricode": "POR",
+            "teamSlug": "blazers",
+            "wins": 1,
+            "losses": 0,
+            "score": 114,
+            "seed": 8,
+            "inBonus": null,
+            "timeoutsRemaining": 0
+          }
+        ]
+      },
+      {
+        "game_id": "0052500101",
+        "series_conference": "East",
+        "line_score": [
+          {
+            "gameId": "0052500101",
+            "teamId": 1610612755,
+            "teamCity": "Philadelphia",
+            "teamName": "76ers",
+            "teamTricode": "PHI",
+            "teamSlug": "sixers",
+            "wins": 1,
+            "losses": 0,
+            "score": 109,
+            "seed": 7,
+            "inBonus": null,
+            "timeoutsRemaining": 1
+          },
+          {
+            "gameId": "0052500101",
+            "teamId": 1610612753,
+            "teamCity": "Orlando",
+            "teamName": "Magic",
+            "teamTricode": "ORL",
+            "teamSlug": "magic",
+            "wins": 0,
+            "losses": 1,
+            "score": 97,
+            "seed": 8,
+            "inBonus": null,
+            "timeoutsRemaining": 0
+          }
+        ]
+      },
+      {
+        "game_id": "0052500131",
+        "series_conference": "West",
+        "line_score": [
+          {
+            "gameId": "0052500131",
+            "teamId": 1610612746,
+            "teamCity": "LA",
+            "teamName": "Clippers",
+            "teamTricode": "LAC",
+            "teamSlug": "clippers",
+            "wins": 0,
+            "losses": 1,
+            "score": 121,
+            "seed": 9,
+            "inBonus": null,
+            "timeoutsRemaining": 0
+          },
+          {
+            "gameId": "0052500131",
+            "teamId": 1610612744,
+            "teamCity": "Golden State",
+            "teamName": "Warriors",
+            "teamTricode": "GSW",
+            "teamSlug": "warriors",
+            "wins": 1,
+            "losses": 0,
+            "score": 126,
+            "seed": 10,
+            "inBonus": null,
+            "timeoutsRemaining": 1
+          }
+        ]
+      },
+      {
+        "game_id": "0052500201",
+        "series_conference": "East",
+        "line_score": [
+          {
+            "gameId": "0052500201",
+            "teamId": 1610612753,
+            "teamCity": "Orlando",
+            "teamName": "Magic",
+            "teamTricode": "ORL",
+            "teamSlug": "magic",
+            "wins": 1,
+            "losses": 1,
+            "score": 121,
+            "seed": 8,
+            "inBonus": null,
+            "timeoutsRemaining": 1
+          },
+          {
+            "gameId": "0052500201",
+            "teamId": 1610612766,
+            "teamCity": "Charlotte",
+            "teamName": "Hornets",
+            "teamTricode": "CHA",
+            "teamSlug": "hornets",
+            "wins": 1,
+            "losses": 1,
+            "score": 90,
+            "seed": 9,
+            "inBonus": null,
+            "timeoutsRemaining": 1
+          }
+        ]
+      },
+      {
+        "game_id": "0052500211",
+        "series_conference": "West",
+        "line_score": [
+          {
+            "gameId": "0052500211",
+            "teamId": 1610612756,
+            "teamCity": "Phoenix",
+            "teamName": "Suns",
+            "teamTricode": "PHX",
+            "teamSlug": "suns",
+            "wins": 1,
+            "losses": 1,
+            "score": 111,
+            "seed": 7,
+            "inBonus": null,
+            "timeoutsRemaining": 1
+          },
+          {
+            "gameId": "0052500211",
+            "teamId": 1610612744,
+            "teamCity": "Golden State",
+            "teamName": "Warriors",
+            "teamTricode": "GSW",
+            "teamSlug": "warriors",
+            "wins": 1,
+            "losses": 1,
+            "score": 96,
+            "seed": 10,
+            "inBonus": null,
+            "timeoutsRemaining": 0
+          }
+        ]
+      }
+    ],
     "injuries": [
       {
         "player_name": "Mouhamed Gueye",
@@ -4935,7 +5141,7 @@
         "player_name": "Brandon Miller",
         "team": "Charlotte Hornets",
         "status": "Day-To-Day",
-        "comment": "Miller (shoulder) appears poised to become Charlotte's primary offensive focal point following Lamelo Ball's departure, according to Cholo Magsino of Yahoo Sports."
+        "comment": "Miller (shoulder) provided an update on his rehab after surgery in comments to Roderick Boone of The Charlotte Observer on Tuesday."
       },
       {
         "player_name": "PJ Hall",

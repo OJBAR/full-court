@@ -355,6 +355,16 @@ TEMPLATE = """<!DOCTYPE html>
     flex-direction: column;
     line-height: 1.3;
   }}
+  .bracket-team-label {{
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }}
+  .bracket-seed {{
+    font-size: 10px;
+    color: var(--text-muted);
+    min-width: 1.2em;
+  }}
   .bracket-record {{
     font-size: 9px;
     font-weight: 400;
@@ -861,16 +871,24 @@ def _bracket_series_html(series: dict | None) -> str:
     teams = series["teams"]
     if len(teams) != 2:
         return _bracket_series_html(None)
-    team_a, team_b = teams  # team_a has >= wins (see get_playoff_series)
-    leader_class = " winner" if series["is_over"] else ""
-    return (
-        '<div class="bracket-match">'
-        f'<div class="bracket-team{leader_class}"><span>{html.escape(team_a["tricode"])}</span>'
-        f'<span class="bracket-score">{team_a["wins"]}</span></div>'
-        f'<div class="bracket-team"><span>{html.escape(team_b["tricode"])}</span>'
-        f'<span class="bracket-score">{team_b["wins"]}</span></div>'
-        "</div>"
-    )
+    # Home-court advantage always belongs to the better (lower-numbered) seed
+    # in a playoff series, regardless of who's currently leading in games -
+    # display them on top for that reason, not by win count.
+    ordered = sorted(teams, key=lambda t: t.get("seed") if t.get("seed") is not None else 99)
+    max_wins = max(t["wins"] for t in teams)
+
+    def _team(team: dict) -> str:
+        is_winner = series["is_over"] and team["wins"] == max_wins
+        cls = " winner" if is_winner else ""
+        seed = team.get("seed")
+        seed_html = f'<span class="bracket-seed">{seed}</span>' if seed else ""
+        return (
+            f'<div class="bracket-team{cls}">'
+            f'<span class="bracket-team-label">{seed_html}<span>{html.escape(team["tricode"])}</span></span>'
+            f'<span class="bracket-score">{team["wins"]}</span></div>'
+        )
+
+    return '<div class="bracket-match">' + "".join(_team(t) for t in ordered) + "</div>"
 
 
 _ROUND1_BRACKET_HALF_BY_SEED = {1: "A", 8: "A", 4: "A", 5: "A", 2: "B", 7: "B", 3: "B", 6: "B"}
@@ -1012,7 +1030,7 @@ def _build_play_in_conference_bracket_html(conf_games: list[dict]) -> str:
     round1_pair = (
         '<div class="bracket-pair">'
         f'{_play_in_bracket_match_html(seven_eight, "המנצחת עולה לפלייאוף מהמקום ה-7")}'
-        f'{_play_in_bracket_match_html(nine_ten, "המפסיד מודחת")}'
+        f'{_play_in_bracket_match_html(nine_ten, "המפסידה מודחת")}'
         "</div>"
     )
     decider_cell = _play_in_bracket_match_html(decider, "המנצחת עולה לפלייאוף מהמקום ה-8")
@@ -1271,7 +1289,7 @@ def _build_secondary_section(data: dict) -> str:
         if data.get("is_cup_knockout"):
             sections.append(("בראקט הגביע", _build_cup_bracket_html(data.get("cup_bracket", []))))
         if data.get("is_play_in"):
-            games = data.get("games", [])
+            games = data.get("play_in_bracket", [])
             sections.append(("פלייאין מזרח", _build_play_in_html(games, "East")))
             sections.append(("פלייאין מערב", _build_play_in_html(games, "West")))
 
