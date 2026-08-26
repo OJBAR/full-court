@@ -84,7 +84,7 @@ page = f"""<!DOCTYPE html>
     --text-muted: #93876A;
   }}
   @media (prefers-color-scheme: dark) {{
-    :root:not([data-theme="light"]) {{
+    :root {{
       --bg: #2A2118;
       --card-bg: #241C14;
       --border: #453626;
@@ -94,15 +94,6 @@ page = f"""<!DOCTYPE html>
       --text-muted: #8C7C64;
     }}
   }}
-  :root[data-theme="dark"] {{
-    --bg: #2A2118;
-    --card-bg: #241C14;
-    --border: #453626;
-    --accent: #E08A3E;
-    --text-heading: #F0E6D6;
-    --text-body: #D8C9AF;
-    --text-muted: #8C7C64;
-  }}
   * {{ box-sizing: border-box; }}
   body {{
     font-family: "Segoe UI", "Rubik", Arial, sans-serif;
@@ -110,22 +101,6 @@ page = f"""<!DOCTYPE html>
     color: var(--text-body);
     margin: 0;
     padding: 24px 16px;
-  }}
-  .theme-toggle {{
-    position: absolute;
-    top: 24px;
-    left: 16px;
-    width: 36px;
-    height: 36px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--card-bg);
-    color: var(--text-heading);
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }}
   h1 {{ font-size: 18px; color: var(--text-heading); text-align: center; }}
   p.note {{ color: var(--text-muted); font-size: 13px; text-align: center; }}
@@ -142,34 +117,11 @@ page = f"""<!DOCTYPE html>
 </style>
 </head>
 <body>
-  <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="החלף תצוגה בהירה/כהה">🌙</button>
   <h1>דמואים זמינים (זמני)</h1>
   <p class="note">דף זמני לבדיקת פרסום בלבד - זה offseason, אין עדיין תוכן אמיתי. ייעלם כשהעונה תתחיל.</p>
   <ul>
     {items_html}
   </ul>
-  <script>
-    (function() {{
-      var saved = localStorage.getItem("nba-brief-theme");
-      if (saved) {{ document.documentElement.setAttribute("data-theme", saved); }}
-      updateToggleIcon();
-    }})();
-    function toggleTheme() {{
-      var current = document.documentElement.getAttribute("data-theme");
-      var systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      var isDark = current ? current === "dark" : systemDark;
-      var next = isDark ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", next);
-      localStorage.setItem("nba-brief-theme", next);
-      updateToggleIcon();
-    }}
-    function updateToggleIcon() {{
-      var current = document.documentElement.getAttribute("data-theme");
-      var systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      var isDark = current ? current === "dark" : systemDark;
-      document.getElementById("theme-toggle").textContent = isDark ? "☀" : "🌙";
-    }}
-  </script>
 </body>
 </html>
 """
