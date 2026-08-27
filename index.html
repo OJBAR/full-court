@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-27T14:57:06.392163+00:00">
+<meta name="app-version" content="2026-08-27T15:07:27.572439+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -670,6 +670,15 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     scroll-snap-type: x mandatory;
+    /* The shared .strip-viewport rule above sets touch-action:pan-y, which
+       made sense for the playoff bracket's own pager (custom JS captures
+       horizontal drags itself, pan-y just lets vertical page-scroll pass
+       through) - but here it actively blocks the whole point of switching
+       to real native scrolling, since pan-y tells the browser horizontal
+       touch gestures aren't this element's to handle. Overridden back to
+       the default so an actual swipe here works like any other native
+       horizontal scroller. */
+    touch-action: auto;
   }
   .cup-bracket-pager .strip-viewport::-webkit-scrollbar { display: none; }
   .cup-bracket-pager .strip-track { transition: none; }
@@ -1684,14 +1693,45 @@
       // so that's what's used: on any class change, re-run goTo() if the
       // element now actually has real size (still nothing to do while it's
       // hidden).
+      // This bracket is short enough that it doesn't fill the tab's full
+      // screen height, and .details-body's own flex-grow (which should
+      // make justify-content:safe center vertically center it, the same
+      // way every other tab already centers its own content) doesn't
+      // actually stretch to the available height here specifically -
+      // confirmed directly, not assumed: forcing flex-grow as high as 999
+      // still left it at its own content height, something specific to
+      // this <details>-based flex container that wasn't worth chasing
+      // further. Centers it directly instead: measured space above the
+      // pager (the summary bar) and below (the rest of the screen), pushed
+      // down by half the difference.
+      function centerVertically() {
+        if (!detailsEl) return;
+        var summary = detailsEl.querySelector(":scope > summary");
+        var summaryHeight = summary ? summary.getBoundingClientRect().height : 0;
+        var available = detailsEl.getBoundingClientRect().height - summaryHeight;
+        var contentHeight = wrap.getBoundingClientRect().height;
+        var offset = Math.max(0, (available - contentHeight) / 2);
+        wrap.style.marginTop = offset + "px";
+      }
+
       var detailsEl = wrap.closest("details");
       if (detailsEl && window.MutationObserver) {
         var classObserver = new MutationObserver(function() {
-          if (wrap.getBoundingClientRect().width > 0) goTo(step);
+          if (wrap.getBoundingClientRect().width > 0) {
+            goTo(step);
+            centerVertically();
+            // The tab's own reveal (showSection()) isn't instant - height
+            // measured at the moment this class change first fires can
+            // still reflect a mid-transition size, not the settled one, so
+            // this is re-measured once more a beat later to catch it.
+            setTimeout(centerVertically, 300);
+          }
         });
         classObserver.observe(detailsEl, { attributes: true, attributeFilter: ["class"] });
       }
+      window.addEventListener("resize", centerVertically);
       goTo(step);
+      centerVertically();
     })();
 
     // Shared by the settings panel and the app-home tab list: an
