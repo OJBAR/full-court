@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-27T15:20:00.897669+00:00">
+<meta name="app-version" content="2026-08-27T15:25:37.356068+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -1774,12 +1774,21 @@
       // down by half the difference.
       function centerVertically() {
         if (!detailsEl) return;
+        var content = wrap.querySelector(":scope > .cup-bracket-content");
+        if (!content) return;
         var summary = detailsEl.querySelector(":scope > summary");
         var summaryHeight = summary ? summary.getBoundingClientRect().height : 0;
-        var available = detailsEl.getBoundingClientRect().height - summaryHeight;
-        var contentHeight = wrap.getBoundingClientRect().height;
+        // The round-name header (Quarterfinals/Semifinals/Championship) is
+        // content's previous sibling - kept out of the centering entirely
+        // (see _build_cup_bracket_html) so it stays locked directly under
+        // the tab title at every step, rather than drifting up/down with
+        // however tall the bracket happens to be at that step.
+        var header = content.previousElementSibling;
+        var headerHeight = header ? header.getBoundingClientRect().height : 0;
+        var available = detailsEl.getBoundingClientRect().height - summaryHeight - headerHeight;
+        var contentHeight = content.getBoundingClientRect().height;
         var offset = Math.max(0, (available - contentHeight) / 2);
-        wrap.style.marginTop = offset + "px";
+        content.style.marginTop = offset + "px";
       }
 
       var detailsEl = wrap.closest("details");
