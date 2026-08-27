@@ -814,9 +814,14 @@ TEMPLATE = """<!DOCTYPE html>
   }}
   .beta-note a {{ color: var(--accent); text-decoration: none; }}
 
-  /* App-like extras: only active when installed to the home screen
-     (display-mode: standalone) - a normal browser tab never sees any of
-     this, on phone or desktop. */
+  /* App-like extras. Most of this section (splash screen, pull-to-refresh)
+     is genuinely standalone-only - things a real installed app needs that a
+     browser tab already has natively or doesn't need at all. The tabs-mode
+     shell itself (below) is the one exception - it's phone-width-gated, not
+     standalone-gated, specifically so a regular mobile browser visit looks
+     like the app too (see initAppHome()) - that's what makes someone want
+     to install it in the first place, not something worth hiding until
+     after they already have. */
   .splash-screen {{
     position: fixed;
     inset: 0;
@@ -831,7 +836,8 @@ TEMPLATE = """<!DOCTYPE html>
   .splash-screen.fade-out {{ opacity: 0; }}
   .splash-screen .logo-img {{ height: 84px; }}
 
-  /* App home (standalone + narrow viewport, see initAppHome()). Only the
+  /* App home (narrow viewport, see initAppHome()) - active in a regular
+     mobile browser tab too, not just once installed. Only the
      main summary text is a separate "screen" (behind the big button + back
      button) - every other section (results/standings/brackets/etc.) stays
      a normal accordion, inline on the home screen itself, just enforced to
@@ -1903,9 +1909,14 @@ TEMPLATE = """<!DOCTYPE html>
     }})();
 
     (function initAppHome() {{
-      var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+      // Deliberately NOT gated on standalone (display-mode) - a first-time
+      // visitor in a regular mobile browser tab is exactly who needs to see
+      // this to want to install at all; gating the app-like UI behind
+      // already being installed meant nobody ever saw the thing that would
+      // have convinced them to install it. Narrow-viewport only (not
+      // desktop) - this layout is phone-shaped, not a browser-chrome check.
       var narrow = window.matchMedia("(max-width: 480px)").matches;
-      if (!standalone || !narrow) return;
+      if (!narrow) return;
 
       var main = document.querySelector("main");
       var summaryDiv = main.querySelector(":scope > .summary");
