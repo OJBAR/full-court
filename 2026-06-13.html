@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-27T14:48:54.553102+00:00">
+<meta name="app-version" content="2026-08-27T14:57:06.233324+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -643,15 +643,16 @@
     padding: 4px 4px 12px;
     transition: transform 0.35s ease;
   }
-  /* The Cup pager's own viewport (see initCupBracketPager()) is scaled down
-     by initFitToWidth()'s CSS zoom, and translateX() on a zoomed element
-     turned out not to be reliable on real iOS Safari at all - confirmed
-     directly on a real device, not just theorized: the transform simply
-     never took effect, panel stuck in place no matter how long you waited.
-     Real native scrolling doesn't have that problem - overflow-x here
-     overrides the shared .strip-viewport rule above (which stays
-     hidden/transform-based for the playoff bracket's own pager, unaffected
-     since it never used zoom to begin with). scroll-snap-type (with
+  /* The Cup pager's own viewport (see initCupBracketPager()) used to be
+     scaled down by initFitToWidth()'s CSS zoom, but that turned out both
+     unnecessary (it shares the exact same column width/viewport constraint
+     as the playoff bracket's own pager, which was never scaled and fits
+     fine) and the source of real bugs - translateX() on a zoomed element
+     wasn't reliable on real iOS Safari at all, confirmed directly on a
+     real device, not just theorized. Real native scrolling doesn't have
+     that problem regardless - overflow-x here overrides the shared
+     .strip-viewport rule above (which stays hidden/transform-based for the
+     playoff bracket's own pager). scroll-snap-type (with
      scroll-snap-align below, on the first two columns only - snapping to
      the last column would leave dead space past it) handles a free-drag
      swipe settling on a whole step natively, instead of a hand-rolled JS
@@ -1320,7 +1321,14 @@
         if (scale > 0.05) { el.style.zoom = scale; }
       }
 
-      document.querySelectorAll(".cup-bracket-pager .strip-viewport").forEach(function(el) { fit(el, 1.25); });
+      // The Cup bracket used to be scaled here too, but it shares the exact
+      // same column width (146px) and viewport constraint (max-width:316px)
+      // as the playoff bracket's own pager - which was never scaled and
+      // fits fine - so there was never actually a real overflow reason for
+      // it to be smaller. Removed entirely (not just left unused) since it
+      // was also the whole source of a long chain of zoom-related pager
+      // bugs (see initCupBracketPager()) - simplest fix once the real
+      // problem (it never needed shrinking to begin with) was clear.
       fit(document.querySelector(".play-in-bracket"), 1.25);
     })();
 
@@ -1531,23 +1539,19 @@
     (function initCupBracketPager() {
       // Real native horizontal scrolling instead of a JS-transformed track -
       // rewritten after confirming directly on a real device that
-      // translateX() on an element inside this pager's CSS-zoomed viewport
-      // (initFitToWidth()) simply doesn't work reliably: not just the
-      // animated case (a transition on transform silently never applied),
-      // the same zoom/transform interaction turned out not to be trustworthy
-      // full stop. scrollLeft doesn't have that problem - but it does have a
-      // different one, also confirmed directly rather than assumed:
-      // scrollLeft/clientWidth/scrollWidth are measured in the zoomed
-      // element's own PRE-zoom ("local") pixels, while getBoundingClientRect()
-      // on the exact same element's children reports real POST-zoom screen
-      // pixels - two different coordinate spaces on the same zoomed
-      // subtree. Measuring a column's rect and feeding that straight into
-      // scrollTo() mixes the two and undershoots, the same class of bug as
-      // the old translateX one just mentioned. Since the column width (146)
-      // and gap (24, see .strip-track/.bracket-column above) are fixed,
-      // authored CSS values, not something that varies per device, using
-      // them directly here sidesteps the whole zoom-coordinate-space
-      // question rather than trying to measure through it.
+      // translateX() on an element inside a CSS-zoomed viewport simply
+      // doesn't work reliably (not just the animated case, the same
+      // zoom/transform interaction wasn't trustworthy full stop), back when
+      // this pager's own viewport was still scaled down by
+      // initFitToWidth(). That scaling turned out to be unnecessary
+      // entirely - this pager uses the exact same column width and
+      // viewport constraint as the playoff bracket's own pager, which was
+      // never scaled and fits fine - and removing it removed the whole
+      // zoom-coordinate-space problem category along with it. The column
+      // width (146) and gap (24, see .strip-track/.bracket-column above)
+      // are still used directly here rather than measured, since they're
+      // fixed, authored CSS values, not something that varies per device -
+      // simpler and no less reliable than measuring them live.
       var wrap = document.querySelector(".cup-bracket-pager");
       if (!wrap) return;
 
