@@ -2,8 +2,10 @@ import html
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 OUTPUT_DIR = Path(__file__).parent / "output"
+_ISRAEL = ZoneInfo("Asia/Jerusalem")
 
 _HEBREW_WEEKDAYS = {
     0: "שני",
@@ -2338,6 +2340,33 @@ def _build_standings_html(standings: list[dict]) -> str:
     return _build_pager_html(pages)
 
 
+def _build_upcoming_games_html(upcoming_games: list[dict]) -> str:
+    """
+    A preview of tonight's slate (the US Eastern day right after the one this
+    brief covers) - away @ home matchups with tip-off time converted to
+    Israel time, reusing the same .game-block/.game-row/.team/.score classes
+    as the results tab so it looks like part of the same list, just without
+    a score (the game hasn't been played yet).
+    """
+    if not upcoming_games:
+        return '<p style="color:var(--text-muted); font-size:0.875rem;">אין משחקים קרובים ידועים.</p>'
+
+    rows = []
+    for game in upcoming_games:
+        tipoff_utc = datetime.fromisoformat(str(game["tipoff_utc"]).replace("Z", "+00:00"))
+        tipoff_israel = tipoff_utc.astimezone(_ISRAEL).strftime("%H:%M")
+        rows.append(
+            '<div class="game-block">'
+            '<div class="game-row">'
+            f'<span class="team">{html.escape(game["away_tricode"])}</span>'
+            f'<span class="score">{tipoff_israel}</span>'
+            f'<span class="team">{html.escape(game["home_tricode"])}</span>'
+            "</div>"
+            "</div>"
+        )
+    return "\n        ".join(rows)
+
+
 def _pad_series(series_list: list[dict], count: int) -> list[dict | None]:
     padded = list(series_list[:count])
     while len(padded) < count:
@@ -3073,6 +3102,9 @@ def _build_secondary_section(data: dict) -> str:
     the Championship counts toward the regular season - plus a group-standings
     tab on group-stage days and a connected bracket tab on knockout days.
     Otherwise: standings only.
+    Last, in every case: a preview of tonight's slate (see
+    _build_upcoming_games_html) - always the final tab, after everything
+    else including the results tab itself.
     """
     if data.get("is_playoffs"):
         playoff_series = data.get("playoff_series", [])
@@ -3097,6 +3129,8 @@ def _build_secondary_section(data: dict) -> str:
             )
             sections.append(("פלייאין", f'<div class="play-in-bracket">{play_in_blocks}</div>'))
         sections.append(standings_section)
+
+    sections.append(("משחקי הלילה הבא", _build_upcoming_games_html(data.get("upcoming_games", []))))
 
     return "\n\n    ".join(_details_block(title, body_html) for title, body_html in sections)
 

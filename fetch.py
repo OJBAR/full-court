@@ -1,5 +1,6 @@
 import json
 import time
+from datetime import datetime, timedelta
 
 import pandas as pd
 import requests
@@ -373,6 +374,43 @@ def highlight_url_for_game(game_code: str, line_score_rows: list[dict], date_str
     return find_highlight_url(home_name, away_name, date_str)
 
 
+def get_upcoming_games(date_str: str) -> list[dict]:
+    """
+    Returns the next US Eastern calendar day's scheduled games - team
+    matchups and tip-off time - so the brief can preview tonight's slate
+    alongside last night's results. Unlike get_cup_bracket()/
+    get_play_in_bracket(), this needs no second ScoreboardV3 call: these
+    games haven't been played yet (no line score/box score to fetch), and
+    ScheduleLeagueV2's own SeasonGames dataframe already carries the home/
+    away team names and the real scheduled gameDateTimeUTC tip-off timestamp
+    for the full season, future dates included.
+    """
+    next_date = (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+    season = season_string_for(next_date)
+    result = scheduleleaguev2.ScheduleLeagueV2(season=season)
+    schedule_df = _dataframe_for(result, "SeasonGames").copy()
+
+    schedule_df["date_str"] = pd.to_datetime(schedule_df["gameDate"]).dt.strftime("%Y-%m-%d")
+    upcoming = schedule_df[schedule_df["date_str"] == next_date]
+    # "N" = not postponed; anything else means the game shouldn't be previewed
+    # as if it's actually happening that night.
+    upcoming = upcoming[upcoming["postponedStatus"] == "N"]
+
+    games = []
+    for _, game in upcoming.sort_values("gameDateTimeUTC").iterrows():
+        games.append(
+            {
+                "game_id": game["gameId"],
+                "home_team": f"{game['homeTeam_teamCity']} {game['homeTeam_teamName']}",
+                "home_tricode": game["homeTeam_teamTricode"],
+                "away_team": f"{game['awayTeam_teamCity']} {game['awayTeam_teamName']}",
+                "away_tricode": game["awayTeam_teamTricode"],
+                "tipoff_utc": game["gameDateTimeUTC"],
+            }
+        )
+    return games
+
+
 def fetch_for_date(date_str: str) -> dict:
     """
     Fetches all games for a given US Eastern date, their box scores, and current
@@ -448,6 +486,12 @@ def fetch_for_date(date_str: str) -> dict:
         print(f"Warning: could not fetch player power ratings ({e}) - continuing without them.")
         power_ratings = {}
 
+    try:
+        upcoming_games = get_upcoming_games(date_str)
+    except Exception as e:
+        print(f"Warning: could not fetch upcoming games ({e}) - continuing without them.")
+        upcoming_games = []
+
     return {
         "date": date_str,
         "games": games,
@@ -462,6 +506,7 @@ def fetch_for_date(date_str: str) -> dict:
         "play_in_bracket": play_in_bracket,
         "injuries": injuries,
         "player_power_ratings": power_ratings,
+        "upcoming_games": upcoming_games,
     }
 
 
