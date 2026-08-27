@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-27T13:17:04.670048+00:00">
+<meta name="app-version" content="2026-08-27T13:30:38.965236+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -461,6 +461,11 @@
     padding: 2px 0;
   }
   .bracket-team.winner { color: var(--text-heading); font-weight: 700; }
+  /* A series still being played (see _bracket_series_html/_finals_match_html)
+     has no loser yet - the default muted color means "lost this series",
+     which would misread as both teams having already lost. Plain heading
+     color, no bold (bold stays reserved for a real, decided winner). */
+  .bracket-team.pending { color: var(--text-heading); font-weight: 400; }
   .bracket-team-name {
     display: flex;
     flex-direction: column;
