@@ -2692,10 +2692,18 @@ def _build_cup_bracket_html(cup_bracket: list[dict]) -> str:
     for conf in ("West", "East"):
         conf_qf_games = qf_by_conf.get(conf, [])
         padded_qf_games = _pad_series(conf_qf_games, 2)
+        # Wrapped in .bracket-conf-block (the same per-conference spacing
+        # class the playoff bracket uses) purely for its vertical margin -
+        # without it, West's and East's pairs sit directly stacked with
+        # only .bracket-round's own small gap between them, so the whole
+        # tree renders noticeably shorter than the playoff bracket's and
+        # ends up looking like it's floating in half the screen instead of
+        # filling it, even though both show the same 3 rounds.
         qf_pairs.append(
+            '<div class="bracket-conf-block">'
             f'<div class="bracket-pair">'
             f'{"".join(_bracket_match_html(g) for g in padded_qf_games)}'
-            "</div>"
+            "</div></div>"
         )
         qf_winners = [g["winner"] if g else None for g in padded_qf_games]
         if any(qf_winners):
