@@ -226,17 +226,23 @@
     color: var(--text-muted);
     margin-top: 6px;
   }
-  /* Links to the game's own page on nba.com (see _nba_game_url) - opens in
-     a real browser tab/app, out of the installed PWA, so it's styled and
-     labeled (↗) as a clearly external link rather than blending into the
-     row like an in-app action. */
+  /* The game's own page on nba.com (see _nba_game_url) and its highlight
+     video on GAMETIME HIGHLIGHTS, an unofficial third-party channel (see
+     highlights.py) - either or both may be missing (the highlight
+     especially, since it's often not up yet at brief time - see
+     scheduler.py's two-pass design), so .game-links only renders the ones
+     that exist, side by side. Both open in a real browser tab/app, out of
+     the installed PWA. */
+  .game-links {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 6px;
+  }
   .game-link {
-    display: block;
-    text-align: center;
     font-size: 0.6875rem;
     color: var(--accent);
     text-decoration: none;
-    margin-top: 6px;
   }
 
   .conference h3 {
@@ -1106,7 +1112,7 @@
       <details class="tab-section">
         <summary>תוצאת המשחק</summary>
         <div class="details-body">
-          <div class="game-block"><div class="game-row"><span class="team">SAS</span><span class="score">90</span><span class="score">–</span><span class="score winner">94</span><span class="team winner">NYK</span></div><div class="game-sub">Game 5 · NYK wins 4-1</div><a class="game-link" href="https://www.nba.com/game/nyk-vs-sas-0042500405" target="_blank" rel="noopener">דף המשחק</a></div>
+          <div class="game-block"><div class="game-row"><span class="team">SAS</span><span class="score">90</span><span class="score">–</span><span class="score winner">94</span><span class="team winner">NYK</span></div><div class="game-sub">Game 5 · NYK wins 4-1</div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/nyk-vs-sas-0042500405" target="_blank" rel="noopener">דף המשחק</a></div></div>
         </div>
       </details>
 
