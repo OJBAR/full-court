@@ -226,6 +226,18 @@
     color: var(--text-muted);
     margin-top: 6px;
   }
+  /* Links to the game's own page on nba.com (see _nba_game_url) - opens in
+     a real browser tab/app, out of the installed PWA, so it's styled and
+     labeled (↗) as a clearly external link rather than blending into the
+     row like an in-app action. */
+  .game-link {
+    display: block;
+    text-align: center;
+    font-size: 0.6875rem;
+    color: var(--accent);
+    text-decoration: none;
+    margin-top: 6px;
+  }
 
   .conference h3 {
     font-size: 0.8125rem;
@@ -1096,8 +1108,8 @@
       <details class="tab-section">
         <summary>כל תוצאות הלילה</summary>
         <div class="details-body">
-          <div class="game-block"><div class="game-row"><span class="team winner">ORL<span class="team-record">45-37</span></span><span class="score winner">117</span><span class="score">–</span><span class="score">108</span><span class="team">MIA<span class="team-record">43-39</span></span></div><div class="game-sub">NBA Cup · East Quarterfinal</div></div>
-        <div class="game-block"><div class="game-row"><span class="team">TOR<span class="team-record">46-36</span></span><span class="score">101</span><span class="score">–</span><span class="score winner">117</span><span class="team winner">NYK<span class="team-record">53-29</span></span></div><div class="game-sub">NBA Cup · East Quarterfinal</div></div>
+          <div class="game-block"><div class="game-row"><span class="team winner">ORL<span class="team-record">45-37</span></span><span class="score winner">117</span><span class="score">–</span><span class="score">108</span><span class="team">MIA<span class="team-record">43-39</span></span></div><div class="game-sub">NBA Cup · East Quarterfinal</div><a class="game-link" href="https://www.nba.com/game/mia-vs-orl-0022501201" target="_blank" rel="noopener">דף המשחק ↗</a></div>
+        <div class="game-block"><div class="game-row"><span class="team">TOR<span class="team-record">46-36</span></span><span class="score">101</span><span class="score">–</span><span class="score winner">117</span><span class="team winner">NYK<span class="team-record">53-29</span></span></div><div class="game-sub">NBA Cup · East Quarterfinal</div><a class="game-link" href="https://www.nba.com/game/nyk-vs-tor-0022501202" target="_blank" rel="noopener">דף המשחק ↗</a></div>
         </div>
       </details>
 

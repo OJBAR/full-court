@@ -226,6 +226,18 @@
     color: var(--text-muted);
     margin-top: 6px;
   }
+  /* Links to the game's own page on nba.com (see _nba_game_url) - opens in
+     a real browser tab/app, out of the installed PWA, so it's styled and
+     labeled (↗) as a clearly external link rather than blending into the
+     row like an in-app action. */
+  .game-link {
+    display: block;
+    text-align: center;
+    font-size: 0.6875rem;
+    color: var(--accent);
+    text-decoration: none;
+    margin-top: 6px;
+  }
 
   .conference h3 {
     font-size: 0.8125rem;
@@ -1099,11 +1111,11 @@
       <details class="tab-section">
         <summary>כל תוצאות הלילה</summary>
         <div class="details-body">
-          <div class="game-block"><div class="game-row"><span class="team winner">NYK<span class="team-record">21-9</span></span><span class="score winner">126</span><span class="score">–</span><span class="score">124</span><span class="team">CLE<span class="team-record">17-15</span></span></div></div>
-        <div class="game-block"><div class="game-row"><span class="team">OKC<span class="team-record">26-5</span></span><span class="score">102</span><span class="score">–</span><span class="score winner">117</span><span class="team winner">SAS<span class="team-record">23-7</span></span></div></div>
-        <div class="game-block"><div class="game-row"><span class="team winner">GSW<span class="team-record">16-15</span></span><span class="score winner">126</span><span class="score">–</span><span class="score">116</span><span class="team">DAL<span class="team-record">12-20</span></span></div></div>
-        <div class="game-block"><div class="game-row"><span class="team">LAL<span class="team-record">19-10</span></span><span class="score">96</span><span class="score">–</span><span class="score winner">119</span><span class="team winner">HOU<span class="team-record">18-10</span></span></div></div>
-        <div class="game-block"><div class="game-row"><span class="team winner">DEN<span class="team-record">22-8</span></span><span class="score winner">142</span><span class="score">–</span><span class="score">138</span><span class="team">MIN<span class="team-record">20-11</span></span><span class="ot-tag">OT</span></div></div>
+          <div class="game-block"><div class="game-row"><span class="team winner">NYK<span class="team-record">21-9</span></span><span class="score winner">126</span><span class="score">–</span><span class="score">124</span><span class="team">CLE<span class="team-record">17-15</span></span></div><a class="game-link" href="https://www.nba.com/game/cle-vs-nyk-0022500009" target="_blank" rel="noopener">דף המשחק ↗</a></div>
+        <div class="game-block"><div class="game-row"><span class="team">OKC<span class="team-record">26-5</span></span><span class="score">102</span><span class="score">–</span><span class="score winner">117</span><span class="team winner">SAS<span class="team-record">23-7</span></span></div><a class="game-link" href="https://www.nba.com/game/sas-vs-okc-0022500010" target="_blank" rel="noopener">דף המשחק ↗</a></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">GSW<span class="team-record">16-15</span></span><span class="score winner">126</span><span class="score">–</span><span class="score">116</span><span class="team">DAL<span class="team-record">12-20</span></span></div><a class="game-link" href="https://www.nba.com/game/dal-vs-gsw-0022500011" target="_blank" rel="noopener">דף המשחק ↗</a></div>
+        <div class="game-block"><div class="game-row"><span class="team">LAL<span class="team-record">19-10</span></span><span class="score">96</span><span class="score">–</span><span class="score winner">119</span><span class="team winner">HOU<span class="team-record">18-10</span></span></div><a class="game-link" href="https://www.nba.com/game/hou-vs-lal-0022500012" target="_blank" rel="noopener">דף המשחק ↗</a></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">DEN<span class="team-record">22-8</span></span><span class="score winner">142</span><span class="score">–</span><span class="score">138</span><span class="team">MIN<span class="team-record">20-11</span></span><span class="ot-tag">OT</span></div><a class="game-link" href="https://www.nba.com/game/min-vs-den-0022500013" target="_blank" rel="noopener">דף המשחק ↗</a></div>
         </div>
       </details>
 

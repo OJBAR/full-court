@@ -226,6 +226,18 @@
     color: var(--text-muted);
     margin-top: 6px;
   }
+  /* Links to the game's own page on nba.com (see _nba_game_url) - opens in
+     a real browser tab/app, out of the installed PWA, so it's styled and
+     labeled (↗) as a clearly external link rather than blending into the
+     row like an in-app action. */
+  .game-link {
+    display: block;
+    text-align: center;
+    font-size: 0.6875rem;
+    color: var(--accent);
+    text-decoration: none;
+    margin-top: 6px;
+  }
 
   .conference h3 {
     font-size: 0.8125rem;
@@ -1097,15 +1109,15 @@
       <details class="tab-section">
         <summary>כל תוצאות הלילה</summary>
         <div class="details-body">
-          <div class="game-block"><div class="game-row"><span class="team winner">CLE<span class="team-record">11-6</span></span><span class="score winner">120</span><span class="score">–</span><span class="score">109</span><span class="team">IND<span class="team-record">2-14</span></span></div><div class="game-sub">NBA Cup · East Group A</div></div>
-        <div class="game-block"><div class="game-row"><span class="team">BOS<span class="team-record">8-8</span></span><span class="score">105</span><span class="score">–</span><span class="score winner">113</span><span class="team winner">BKN<span class="team-record">3-12</span></span></div><div class="game-sub">NBA Cup · East Group B</div></div>
-        <div class="game-block"><div class="game-row"><span class="team winner">TOR<span class="team-record">11-5</span></span><span class="score winner">140</span><span class="score">–</span><span class="score">110</span><span class="team">WAS<span class="team-record">1-14</span></span></div><div class="game-sub">NBA Cup · East Group A</div></div>
-        <div class="game-block"><div class="game-row"><span class="team">CHI<span class="team-record">8-7</span></span><span class="score">107</span><span class="score">–</span><span class="score winner">143</span><span class="team winner">MIA<span class="team-record">10-6</span></span></div><div class="game-sub">NBA Cup · East Group C</div></div>
-        <div class="game-block"><div class="game-row"><span class="team winner">DAL<span class="team-record">5-12</span></span><span class="score winner">118</span><span class="score">–</span><span class="score">115</span><span class="team">NOP<span class="team-record">2-14</span></span></div><div class="game-sub">NBA Cup · West Group B</div></div>
-        <div class="game-block"><div class="game-row"><span class="team winner">PHX<span class="team-record">10-6</span></span><span class="score winner">114</span><span class="score">–</span><span class="score">113</span><span class="team">MIN<span class="team-record">10-6</span></span></div><div class="game-sub">NBA Cup · West Group A</div></div>
-        <div class="game-block"><div class="game-row"><span class="team">HOU<span class="team-record">10-4</span></span><span class="score">109</span><span class="score">–</span><span class="score winner">112</span><span class="team winner">DEN<span class="team-record">12-3</span></span></div><div class="game-sub">NBA Cup · West Group C</div></div>
-        <div class="game-block"><div class="game-row"><span class="team">UTA<span class="team-record">5-10</span></span><span class="score">112</span><span class="score">–</span><span class="score winner">144</span><span class="team winner">OKC<span class="team-record">16-1</span></span></div><div class="game-sub">NBA Cup · West Group A</div></div>
-        <div class="game-block"><div class="game-row"><span class="team">GSW<span class="team-record">9-9</span></span><span class="score">123</span><span class="score">–</span><span class="score winner">127</span><span class="team winner">POR<span class="team-record">7-9</span></span></div><div class="game-sub">NBA Cup · West Group C</div></div>
+          <div class="game-block"><div class="game-row"><span class="team winner">CLE<span class="team-record">11-6</span></span><span class="score winner">120</span><span class="score">–</span><span class="score">109</span><span class="team">IND<span class="team-record">2-14</span></span></div><div class="game-sub">NBA Cup · East Group A</div><a class="game-link" href="https://www.nba.com/game/ind-vs-cle-0022500048" target="_blank" rel="noopener">דף המשחק ↗</a></div>
+        <div class="game-block"><div class="game-row"><span class="team">BOS<span class="team-record">8-8</span></span><span class="score">105</span><span class="score">–</span><span class="score winner">113</span><span class="team winner">BKN<span class="team-record">3-12</span></span></div><div class="game-sub">NBA Cup · East Group B</div><a class="game-link" href="https://www.nba.com/game/bkn-vs-bos-0022500049" target="_blank" rel="noopener">דף המשחק ↗</a></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">TOR<span class="team-record">11-5</span></span><span class="score winner">140</span><span class="score">–</span><span class="score">110</span><span class="team">WAS<span class="team-record">1-14</span></span></div><div class="game-sub">NBA Cup · East Group A</div><a class="game-link" href="https://www.nba.com/game/was-vs-tor-0022500050" target="_blank" rel="noopener">דף המשחק ↗</a></div>
+        <div class="game-block"><div class="game-row"><span class="team">CHI<span class="team-record">8-7</span></span><span class="score">107</span><span class="score">–</span><span class="score winner">143</span><span class="team winner">MIA<span class="team-record">10-6</span></span></div><div class="game-sub">NBA Cup · East Group C</div><a class="game-link" href="https://www.nba.com/game/mia-vs-chi-0022500051" target="_blank" rel="noopener">דף המשחק ↗</a></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">DAL<span class="team-record">5-12</span></span><span class="score winner">118</span><span class="score">–</span><span class="score">115</span><span class="team">NOP<span class="team-record">2-14</span></span></div><div class="game-sub">NBA Cup · West Group B</div><a class="game-link" href="https://www.nba.com/game/nop-vs-dal-0022500052" target="_blank" rel="noopener">דף המשחק ↗</a></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">PHX<span class="team-record">10-6</span></span><span class="score winner">114</span><span class="score">–</span><span class="score">113</span><span class="team">MIN<span class="team-record">10-6</span></span></div><div class="game-sub">NBA Cup · West Group A</div><a class="game-link" href="https://www.nba.com/game/min-vs-phx-0022500053" target="_blank" rel="noopener">דף המשחק ↗</a></div>
+        <div class="game-block"><div class="game-row"><span class="team">HOU<span class="team-record">10-4</span></span><span class="score">109</span><span class="score">–</span><span class="score winner">112</span><span class="team winner">DEN<span class="team-record">12-3</span></span></div><div class="game-sub">NBA Cup · West Group C</div><a class="game-link" href="https://www.nba.com/game/den-vs-hou-0022500054" target="_blank" rel="noopener">דף המשחק ↗</a></div>
+        <div class="game-block"><div class="game-row"><span class="team">UTA<span class="team-record">5-10</span></span><span class="score">112</span><span class="score">–</span><span class="score winner">144</span><span class="team winner">OKC<span class="team-record">16-1</span></span></div><div class="game-sub">NBA Cup · West Group A</div><a class="game-link" href="https://www.nba.com/game/okc-vs-uta-0022500055" target="_blank" rel="noopener">דף המשחק ↗</a></div>
+        <div class="game-block"><div class="game-row"><span class="team">GSW<span class="team-record">9-9</span></span><span class="score">123</span><span class="score">–</span><span class="score winner">127</span><span class="team winner">POR<span class="team-record">7-9</span></span></div><div class="game-sub">NBA Cup · West Group C</div><a class="game-link" href="https://www.nba.com/game/por-vs-gsw-0022500056" target="_blank" rel="noopener">דף המשחק ↗</a></div>
         </div>
       </details>
 

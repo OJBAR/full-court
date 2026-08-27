@@ -243,6 +243,18 @@ TEMPLATE = """<!DOCTYPE html>
     color: var(--text-muted);
     margin-top: 6px;
   }}
+  /* Links to the game's own page on nba.com (see _nba_game_url) - opens in
+     a real browser tab/app, out of the installed PWA, so it's styled and
+     labeled (↗) as a clearly external link rather than blending into the
+     row like an in-app action. */
+  .game-link {{
+    display: block;
+    text-align: center;
+    font-size: 0.6875rem;
+    color: var(--accent);
+    text-decoration: none;
+    margin-top: 6px;
+  }}
 
   .conference h3 {{
     font-size: 0.8125rem;
@@ -2007,6 +2019,27 @@ def _paragraphs_to_html(summary: str) -> str:
     return "\n      ".join(f"<p>{html.escape(p)}</p>" for p in paragraphs)
 
 
+def _nba_game_url(game: dict) -> str | None:
+    """
+    The official league page for this exact game (box score / play-by-play),
+    e.g. nba.com/game/lac-vs-orl-0022500264 - built entirely from data
+    already being fetched (no extra request, no API key). "matchup" is
+    ScoreboardV3's gameCode field, formatted "YYYYMMDD/AWAYHOME" (confirmed
+    against nba.com's own schedule page); nba.com's routing itself only
+    seems to care about the game_id suffix, but the away-vs-home slug is
+    built properly anyway for a real, correct-looking URL rather than
+    leaning on that leniency.
+    """
+    matchup = game.get("matchup", "")
+    if "/" not in matchup:
+        return None
+    codes = matchup.split("/")[-1]
+    if len(codes) != 6:
+        return None
+    away, home = codes[:3].lower(), codes[3:].lower()
+    return f"https://www.nba.com/game/{away}-vs-{home}-{game['game_id']}"
+
+
 def _build_results_html(games: list[dict], standings: list[dict]) -> str:
     if not games:
         return '<p style="color:var(--text-muted); font-size:0.875rem;">אין משחקים ללילה הזה.</p>'
@@ -2076,6 +2109,12 @@ def _build_results_html(games: list[dict], standings: list[dict]) -> str:
             block += f'<div class="game-sub">NBA Cup · {cup_sub_label}</div>'
         elif game["game_id"].startswith("005") and game.get("series_text"):
             block += f'<div class="game-sub">Play-In · {html.escape(str(game["series_text"]))}</div>'
+        game_url = _nba_game_url(game)
+        if game_url:
+            block += (
+                f'<a class="game-link" href="{game_url}" target="_blank" rel="noopener">'
+                "דף המשחק ↗</a>"
+            )
         rows.append(f'<div class="game-block">{block}</div>')
     return "\n        ".join(rows)
 
@@ -2159,6 +2198,56 @@ def _bracket_series_html(series: dict | None) -> str:
 _ROUND1_BRACKET_HALF_BY_SEED = {1: "A", 8: "A", 4: "A", 5: "A", 2: "B", 7: "B", 3: "B", 6: "B"}
 
 
+def _series_winner(series: dict | None) -> dict | None:
+    """The winning team of a finished series, or None if it's missing/still live."""
+    if not series or not series.get("is_over"):
+        return None
+    max_wins = max(t["wins"] for t in series["teams"])
+    return next((t for t in series["teams"] if t["wins"] == max_wins), None)
+
+
+def _bracket_projected_series_match_html(slots: list[dict | None]) -> str:
+    """
+    One bracket cell built from up to 2 already-known winners instead of a
+    real series object - for the gap between a round finishing and the API
+    actually creating a series for the round after it (that only happens
+    once its games start being played). Shows whichever side(s) are
+    already decided (seed + tricode, no score yet - the series hasn't
+    started) against TBD for whichever side isn't, instead of leaving the
+    whole cell blank until the very first tipoff of the next round.
+    """
+    def _slot(team: dict | None) -> str:
+        if team is None:
+            return '<div class="bracket-team"><span>TBD</span></div>'
+        seed = team.get("seed")
+        seed_html = f'<span class="bracket-seed">{seed}</span>' if seed else ""
+        return (
+            '<div class="bracket-team">'
+            f'<span class="bracket-team-label">{seed_html}<span>{html.escape(team["tricode"])}</span></span>'
+            "</div>"
+        )
+
+    return '<div class="bracket-match bracket-match-tbd">' + "".join(_slot(t) for t in slots) + "</div>"
+
+
+def _bracket_next_round_cell(next_round_series: dict | None, feeders: list[dict | None]) -> str:
+    """
+    One bracket cell for a round that hasn't started yet: the real series
+    if the API has already created one (games are actually being played),
+    otherwise projected from whichever feeder series are already decided -
+    a known winner shows up immediately against TBD (or against the other
+    known winner, if both feeders finished before this round's own games
+    began), rather than the whole cell staying blank TBD-vs-TBD until the
+    next round's first tipoff.
+    """
+    if next_round_series is not None:
+        return _bracket_series_html(next_round_series)
+    winners = [_series_winner(f) for f in feeders]
+    if any(winners):
+        return _bracket_projected_series_match_html(winners)
+    return _bracket_series_html(None)
+
+
 def _bracket_half_for_series(series: dict) -> str | None:
     """
     Which half of the conference bracket a series belongs to, from its
@@ -2207,10 +2296,14 @@ def _conference_bracket_columns(playoff_series: list[dict], conference: str) -> 
         half = _bracket_half_for_series(series)
         if half:
             semis_by_half[half] = series
+    semis_cells = [
+        _bracket_next_round_cell(semis_by_half.get(half), _pad_series(round1_by_half[half], 2))
+        for half in ("A", "B")
+    ]
+    semis_pair = f'<div class="bracket-pair bracket-pair-r2">{"".join(semis_cells)}</div>'
     semis_slots = [semis_by_half.get("A"), semis_by_half.get("B")]
-    semis_pair = f'<div class="bracket-pair bracket-pair-r2">{"".join(_bracket_series_html(s) for s in semis_slots)}</div>'
 
-    final_column = _bracket_series_html(finals[0] if finals else None)
+    final_column = _bracket_next_round_cell(finals[0] if finals else None, semis_slots)
 
     return {
         "1st Round": f'<div class="bracket-round">{"".join(round1_pairs)}</div>',
@@ -2219,7 +2312,7 @@ def _conference_bracket_columns(playoff_series: list[dict], conference: str) -> 
     }
 
 
-def _finals_match_html(series: dict | None, conf_by_team: dict) -> str:
+def _finals_match_html(series: dict | None, conf_by_team: dict, projected: dict | None = None) -> str:
     """
     Finals-specific version of _bracket_series_html: same look as every
     other bracket cell (seed badge, no conference-color badge), but ordered
@@ -2227,8 +2320,31 @@ def _finals_match_html(series: dict | None, conf_by_team: dict) -> str:
     order on the page above it, instead of by seed - seeds aren't
     comparable across conferences, so sorting by them wouldn't reliably put
     the same conference on top from one Finals to the next.
+
+    `projected` (a {"West": team|None, "East": team|None} dict of each
+    conference's already-decided Conf. Finals winner, see _series_winner)
+    fills the gap between a Conf. Finals ending and the API actually
+    creating an NBA Finals series (which only happens once its games start)
+    - a known conference champion shows up immediately instead of the cell
+    staying TBD-vs-TBD until Game 1 tips off.
     """
     if series is None:
+        west = projected.get("West") if projected else None
+        east = projected.get("East") if projected else None
+        if west or east:
+
+            def _slot(team: dict | None) -> str:
+                if team is None:
+                    return '<div class="bracket-team"><span>TBD</span></div>'
+                seed = team.get("seed")
+                seed_html = f'<span class="bracket-seed">{seed}</span>' if seed else ""
+                return (
+                    '<div class="bracket-team">'
+                    f'<span class="bracket-team-label">{seed_html}<span>{html.escape(team["tricode"])}</span></span>'
+                    "</div>"
+                )
+
+            return '<div class="bracket-match bracket-match-tbd">' + _slot(west) + _slot(east) + "</div>"
         return (
             '<div class="bracket-match bracket-match-tbd">'
             '<div class="bracket-team"><span>TBD</span></div>'
@@ -2320,7 +2436,9 @@ def _bracket_strip_html(conf_label: str, columns: dict[str, str]) -> str:
     )
 
 
-def _bracket_nba_finals_track_html(finals_series: dict | None, conf_by_team: dict) -> str:
+def _bracket_nba_finals_track_html(
+    finals_series: dict | None, conf_by_team: dict, projected: dict | None = None
+) -> str:
     """
     The NBA Finals match as its own independent track - not part of either
     conference's strip (the Finals combine both, so there's nothing
@@ -2335,7 +2453,7 @@ def _bracket_nba_finals_track_html(finals_series: dict | None, conf_by_team: dic
     it at the true vertical middle between them, not squeezed into either
     conference's own much shorter row height.
     """
-    match = _finals_match_html(finals_series, conf_by_team)
+    match = _finals_match_html(finals_series, conf_by_team, projected)
     empties = '<div class="bracket-column"></div>' * 3
     track_html = empties + f'<div class="bracket-column"><div class="bracket-round bracket-final">{match}</div></div>'
     return f'<div class="nba-finals-track-wrap"><div class="strip-viewport"><div class="strip-track">{track_html}</div></div></div>'
@@ -2371,11 +2489,17 @@ def _build_combined_playoff_bracket_html(playoff_series: list[dict], games: list
         if s.get("round") != "NBA Finals"
         for t in s["teams"]
     }
+    projected_finalists = {
+        conf: _series_winner(
+            next((s for s in playoff_series if s.get("conference") == conf and s.get("round") == "Conf. Finals"), None)
+        )
+        for conf in ("West", "East")
+    }
 
     round_header = _bracket_round_header_track(_PLAYOFF_ROUNDS)
     west_strip = _bracket_strip_html("מערב", columns_by_conf["West"])
     east_strip = _bracket_strip_html("מזרח", columns_by_conf["East"])
-    finals_track = _bracket_nba_finals_track_html(finals_series, conf_by_team)
+    finals_track = _bracket_nba_finals_track_html(finals_series, conf_by_team, projected_finalists)
     finals_connector = '<div class="nba-finals-connector"></div>'
 
     # The content itself (and everything around it) is forced dir="ltr" (see
@@ -2523,17 +2647,20 @@ def _bracket_match_html(game: dict | None) -> str:
         f'<span class="bracket-score">{loser["score"]}</span></div>'
         "</div>"
     )
-def _bracket_projected_match_html(teams: list[dict]) -> str:
-    """Both participants of a not-yet-played match are already known (e.g.
-    both Quarterfinal winners in a pair) - show the matchup without a score."""
-    return (
-        '<div class="bracket-match bracket-match-projected">'
-        + "".join(
-            f'<div class="bracket-team">{_bracket_team_name_html(team)}</div>'
-            for team in teams
-        )
-        + "</div>"
-    )
+def _bracket_projected_match_html(teams: list[dict | None]) -> str:
+    """
+    One bracket cell for a not-yet-played Cup knockout game, built from
+    whichever feeders are already decided (e.g. a Quarterfinal winner) -
+    shows a known side without a score against TBD for whichever side
+    isn't decided yet, instead of leaving the whole cell TBD until both
+    feeders are done.
+    """
+    def _slot(team: dict | None) -> str:
+        if team is None:
+            return '<div class="bracket-team"><span>TBD</span></div>'
+        return f'<div class="bracket-team">{_bracket_team_name_html(team)}</div>'
+
+    return '<div class="bracket-match bracket-match-projected">' + "".join(_slot(t) for t in teams) + "</div>"
 
 def _build_cup_bracket_html(cup_bracket: list[dict]) -> str:
     """
@@ -2544,9 +2671,10 @@ def _build_cup_bracket_html(cup_bracket: list[dict]) -> str:
     conference the way playoffs is, so no per-conference strips needed).
     Always shows the full shape (4 QF / 2 SF / 1 Final slots) even early in
     the knockout stage. Anything not played yet is either a TBD placeholder
-    (participants still unknown) or a "projected" matchup (both
-    participants known - e.g. both Quarterfinal winners in a pair - but
-    that game hasn't been played yet).
+    (no feeders decided yet) or a "projected" matchup, showing whichever
+    side(s) are already decided (e.g. one or both Quarterfinal winners in a
+    pair) against TBD for whichever side isn't, instead of waiting for
+    every feeder to finish before showing anything.
     """
     quarterfinals = [g for g in cup_bracket if "Quarterfinal" in g.get("round", "")]
     semifinals = [g for g in cup_bracket if "Semifinal" in g.get("round", "")]
@@ -2560,16 +2688,18 @@ def _build_cup_bracket_html(cup_bracket: list[dict]) -> str:
         sf_by_conf.setdefault(_cup_conference_from_round(game["round"]), []).append(game)
 
     qf_pairs = []
-    projected_sf_by_conf: dict[str, list[dict]] = {}
+    projected_sf_by_conf: dict[str, list[dict | None]] = {}
     for conf in ("West", "East"):
         conf_qf_games = qf_by_conf.get(conf, [])
+        padded_qf_games = _pad_series(conf_qf_games, 2)
         qf_pairs.append(
             f'<div class="bracket-pair">'
-            f'{"".join(_bracket_match_html(g) for g in _pad_series(conf_qf_games, 2))}'
+            f'{"".join(_bracket_match_html(g) for g in padded_qf_games)}'
             "</div>"
         )
-        if len(conf_qf_games) == 2:
-            projected_sf_by_conf[conf] = [g["winner"] for g in conf_qf_games]
+        qf_winners = [g["winner"] if g else None for g in padded_qf_games]
+        if any(qf_winners):
+            projected_sf_by_conf[conf] = qf_winners
 
     sf_matches_html = []
     known_sf_winner_by_conf: dict[str, dict | None] = {}
@@ -2589,7 +2719,7 @@ def _build_cup_bracket_html(cup_bracket: list[dict]) -> str:
         final_column = _bracket_match_html(final[0])
     else:
         final_teams = [known_sf_winner_by_conf.get(conf) for conf in ("West", "East")]
-        if all(final_teams):
+        if any(final_teams):
             final_column = _bracket_projected_match_html(final_teams)
         else:
             final_column = _bracket_match_html(None)
