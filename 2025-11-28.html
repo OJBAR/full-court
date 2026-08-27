@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-27T15:25:37.356068+00:00">
+<meta name="app-version" content="2026-08-27T15:32:24.751261+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -670,47 +670,18 @@
     padding: 4px 4px 12px;
     transition: transform 0.35s ease;
   }
-  /* The Cup pager's own viewport (see initCupBracketPager()) used to be
-     scaled down by initFitToWidth()'s CSS zoom, but that turned out both
-     unnecessary (it shares the exact same column width/viewport constraint
-     as the playoff bracket's own pager, which was never scaled and fits
-     fine) and the source of real bugs - translateX() on a zoomed element
-     wasn't reliable on real iOS Safari at all, confirmed directly on a
-     real device, not just theorized. Real native scrolling doesn't have
-     that problem regardless - overflow-x here overrides the shared
-     .strip-viewport rule above (which stays hidden/transform-based for the
-     playoff bracket's own pager). scroll-snap-type (with
-     scroll-snap-align below, on the first two columns only - snapping to
-     the last column would leave dead space past it) handles a free-drag
-     swipe settling on a whole step natively, instead of a hand-rolled JS
-     "wait for scroll events to stop, then compute the nearest step"
-     listener, which turned out to fight the very same scrollTo() calls
-     initCupBracketPager() itself makes (a smooth scrollTo()'s real
-     duration isn't fixed, so guessing when it's "done" to stop reacting to
-     its own scroll events was never reliable - confirmed directly, not
-     assumed). Scrollbar hidden since the prev/next buttons plus the
-     pager-arrow visual language already the established way to show this
-     is scrollable. */
-  .cup-bracket-pager .strip-viewport {
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    scroll-snap-type: x mandatory;
-    /* The shared .strip-viewport rule above sets touch-action:pan-y, which
-       made sense for the playoff bracket's own pager (custom JS captures
-       horizontal drags itself, pan-y just lets vertical page-scroll pass
-       through) - but here it actively blocks the whole point of switching
-       to real native scrolling, since pan-y tells the browser horizontal
-       touch gestures aren't this element's to handle. Overridden back to
-       the default so an actual swipe here works like any other native
-       horizontal scroller. */
-    touch-action: auto;
-  }
-  .cup-bracket-pager .strip-viewport::-webkit-scrollbar { display: none; }
-  .cup-bracket-pager .strip-track { transition: none; }
-  .cup-bracket-pager .bracket-column:nth-child(1),
-  .cup-bracket-pager .bracket-column:nth-child(2) { scroll-snap-align: start; }
+  /* The Cup pager's own viewport used to be scaled down by
+     initFitToWidth()'s CSS zoom, then briefly switched to real native
+     scrolling to dodge a real bug where a CSS transition on transform
+     didn't work at all together with that zoom (confirmed directly on a
+     real device). The zoom turned out to be unnecessary in the first
+     place - this pager shares the exact same column width/viewport
+     constraint as the playoff bracket's own pager, which was never zoomed
+     and fits fine - and removing it removed the actual reason the
+     transition-based approach didn't work here, so initCupBracketPager()
+     is back to the same JS-transformed-track mechanism as the playoff
+     bracket's own pager, no CSS overrides needed here beyond the shared
+     .strip-viewport/.strip-track rules above. */
 
   .a11y-overlay {
     position: fixed;
@@ -1652,27 +1623,28 @@
     })();
 
     (function initCupBracketPager() {
-      // Real native horizontal scrolling instead of a JS-transformed track -
-      // rewritten after confirming directly on a real device that
-      // translateX() on an element inside a CSS-zoomed viewport simply
-      // doesn't work reliably (not just the animated case, the same
-      // zoom/transform interaction wasn't trustworthy full stop), back when
-      // this pager's own viewport was still scaled down by
-      // initFitToWidth(). That scaling turned out to be unnecessary
-      // entirely - this pager uses the exact same column width and
-      // viewport constraint as the playoff bracket's own pager, which was
-      // never scaled and fits fine - and removing it removed the whole
-      // zoom-coordinate-space problem category along with it. The column
-      // width (146) and gap (24, see .strip-track/.bracket-column above)
-      // are still used directly here rather than measured, since they're
-      // fixed, authored CSS values, not something that varies per device -
-      // simpler and no less reliable than measuring them live.
+      // Same custom drag mechanism as the playoff bracket's own pager
+      // (initPlayoffBracketPager, see there for the general shape) -
+      // JS-tracked touchmove following the finger 1:1, one controlled CSS
+      // transition (0.35s ease) to settle at the end. This pager tried
+      // real native scrolling instead for a while, specifically to dodge
+      // bugs from combining a CSS transition on transform with
+      // initFitToWidth()'s CSS zoom (confirmed directly on a real device
+      // that the combination silently didn't work at all) - but that zoom
+      // turned out to be unnecessary in the first place (this pager uses
+      // the exact same column width/viewport constraint as the playoff
+      // bracket's, which was never zoomed and fits fine) and was removed
+      // entirely, which removes the actual reason the transition-based
+      // approach didn't work here. Back to the same mechanism as playoff,
+      // now that the thing that broke it is gone. The column width (146)
+      // and gap (24, see .strip-track/.bracket-column above) are used
+      // directly rather than measured, since they're fixed, authored CSS
+      // values, not something that varies per device.
       var wrap = document.querySelector(".cup-bracket-pager");
       if (!wrap) return;
 
-      var viewports = Array.prototype.slice.call(wrap.querySelectorAll(".strip-viewport"));
-      var track = viewports[0] && viewports[0].querySelector(".strip-track");
-      if (!viewports.length || !track) return;
+      var tracks = Array.prototype.slice.call(wrap.querySelectorAll(".strip-track"));
+      if (!tracks.length) return;
 
       var maxStep = 1;
       var step = parseInt(wrap.getAttribute("data-step"), 10) || 0;
@@ -1683,84 +1655,73 @@
         return 146 + 24; // .bracket-column's width + .strip-track's gap
       }
 
-      var syncing = false;
-      function mirrorScroll(source) {
-        if (syncing) return;
-        syncing = true;
-        viewports.forEach(function(vp) {
-          if (vp !== source) vp.scrollLeft = source.scrollLeft;
+      function setTracks(px, animate) {
+        tracks.forEach(function(track) {
+          track.style.transition = animate ? "transform 0.35s ease" : "none";
+          track.style.transform = "translateX(-" + px + "px)";
         });
-        syncing = false;
       }
-      viewports.forEach(function(vp) {
-        vp.addEventListener("scroll", function() { mirrorScroll(vp); }, { passive: true });
-      });
 
-      function updateButtons() {
+      function render(animate) {
+        setTracks(step * unitShift(), animate);
         prevBtn.disabled = step === 0;
         nextBtn.disabled = step === maxStep;
       }
 
-      // behavior:"smooth" turned out not to be trustworthy together with
-      // scroll-snap-type:mandatory here either - confirmed directly, not
-      // assumed: a smooth scrollTo() back to an earlier step visibly
-      // updated the step/button state but the actual scroll position never
-      // moved at all, while the exact same call with behavior:"auto"
-      // (instant) worked correctly every time. Same trade-off already made
-      // once for this bracket's pan (see the CSS zoom/transition comment
-      // above) - snapping instantly instead of sliding, because a pager
-      // that updates its own state without visibly moving is worse than
-      // one that isn't animated.
       function goTo(newStep) {
         step = Math.max(0, Math.min(newStep, maxStep));
-        var px = step * unitShift();
-        viewports.forEach(function(vp) {
-          vp.scrollTo({ left: px, behavior: "auto" });
-        });
-        updateButtons();
+        render(true);
       }
 
       prevBtn.addEventListener("click", function() { goTo(step - 1); });
       nextBtn.addEventListener("click", function() { goTo(step + 1); });
 
-      // A free-drag swipe already lands on a whole step by itself - CSS
-      // scroll-snap (see .strip-viewport/.bracket-column above) handles
-      // that natively, no JS needed. This only keeps `step` (and the
-      // prev/next buttons' disabled state) in sync with wherever it
-      // settled, once scrolling genuinely stops - it never calls
-      // scrollTo() itself, so there's nothing here for it to fight with
-      // goTo()'s own scrollTo() calls (an earlier version tried to guard
-      // against exactly that fight with a timer-based flag, but a smooth
-      // scrollTo()'s real duration isn't fixed, so guessing when it was
-      // "done" to stop reacting to its own scroll events was never
-      // reliable - confirmed directly, not assumed).
-      var settleTimer = null;
-      viewports[0].addEventListener("scroll", function() {
-        if (settleTimer) clearTimeout(settleTimer);
-        settleTimer = setTimeout(function() {
-          var unit = unitShift();
-          step = unit ? Math.round(viewports[0].scrollLeft / unit) : 0;
-          updateButtons();
-        }, 150);
+      var startX = null;
+      var startY = null;
+      var dragging = false;
+
+      wrap.addEventListener("touchstart", function(e) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        dragging = false;
       }, { passive: true });
 
-      window.addEventListener("resize", function() { goTo(step); });
-      // scrollTo() on a hidden element (this pager's own <details> starts
-      // closed) is a silent no-op - confirmed directly, not assumed: the
-      // very first goTo() below runs before the user has ever opened this
-      // tab, so it has no visible effect at all, and nothing re-runs it once
-      // the tab actually opens. A native "toggle" listener doesn't catch
-      // this in tabs-mode - also checked directly: tabs-mode's own
-      // <details> stays open="true" from the very first render and is
-      // shown/hidden by promoting/repositioning it instead (see
-      // initAppHome()), toggling its class list, not its open state, so
-      // "toggle" never fires. IntersectionObserver would be the more
-      // obvious tool for "did this become visible", but it didn't fire at
-      // all when checked directly against this exact element either - a
-      // plain MutationObserver on the class attribute did fire correctly,
-      // so that's what's used: on any class change, re-run goTo() if the
-      // element now actually has real size (still nothing to do while it's
-      // hidden).
+      wrap.addEventListener("touchmove", function(e) {
+        if (startX === null) return;
+        var dx = e.touches[0].clientX - startX;
+        var dy = e.touches[0].clientY - startY;
+        if (!dragging && Math.abs(dx) < Math.abs(dy)) return;
+        dragging = true;
+        var unit = unitShift();
+        var target = Math.max(0, Math.min(step * unit - dx, maxStep * unit));
+        setTracks(target, false);
+      }, { passive: true });
+
+      wrap.addEventListener("touchend", function(e) {
+        if (!dragging) { startX = null; startY = null; return; }
+        var dx = e.changedTouches[0].clientX - startX;
+        var threshold = 40;
+        if (dx < -threshold) { goTo(step + 1); }
+        else if (dx > threshold) { goTo(step - 1); }
+        else { render(true); }
+        startX = null;
+        startY = null;
+        dragging = false;
+      });
+
+      window.addEventListener("resize", function() { render(false); });
+      // Transform doesn't have the "no-op while hidden" problem scrollTo()
+      // had (it's just a style property, applies regardless of visibility)
+      // - but centerVertically() below still needs a real, settled layout
+      // to measure, so this stays for that. A native "toggle" listener
+      // doesn't catch tabs-mode's own show/hide (its <details> stays
+      // open="true" throughout, promoted via class changes instead - see
+      // initAppHome()); IntersectionObserver didn't fire at all when
+      // checked directly in this environment. A MutationObserver on the
+      // class attribute did fire correctly, so that's what's used: on any
+      // class change, re-run render()/centerVertically() if the element
+      // now actually has real size (still nothing meaningful to measure
+      // while it's hidden).
       // This bracket is short enough that it doesn't fill the tab's full
       // screen height, and .details-body's own flex-grow (which should
       // make justify-content:safe center vertically center it, the same
@@ -1795,7 +1756,7 @@
       if (detailsEl && window.MutationObserver) {
         var classObserver = new MutationObserver(function() {
           if (wrap.getBoundingClientRect().width > 0) {
-            goTo(step);
+            render(false);
             centerVertically();
             // The tab's own reveal (showSection()) isn't instant - height
             // measured at the moment this class change first fires can
@@ -1807,7 +1768,7 @@
         classObserver.observe(detailsEl, { attributes: true, attributeFilter: ["class"] });
       }
       window.addEventListener("resize", centerVertically);
-      goTo(step);
+      render(false);
       centerVertically();
     })();
 
