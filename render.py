@@ -2113,7 +2113,7 @@ def _build_results_html(games: list[dict], standings: list[dict]) -> str:
         if game_url:
             block += (
                 f'<a class="game-link" href="{game_url}" target="_blank" rel="noopener">'
-                "דף המשחק ↗</a>"
+                "דף המשחק</a>"
             )
         rows.append(f'<div class="game-block">{block}</div>')
     return "\n        ".join(rows)
