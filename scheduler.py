@@ -20,7 +20,20 @@ Design (see CLAUDE.md backlog item 7 for the full discussion):
 - If there were no games at all on the target date (offseason, All-Star break,
   a rare true off day), it does NOT run - no brief is generated for a night
   with nothing to report on.
+
+Two-pass highlight links: GAMETIME HIGHLIGHTS (see highlights.py) doesn't
+always have every game's video up yet by the time the brief ships (the
+later games of the night especially) - so once the brief is sent, if any
+game is still missing a link, its fetched data + written summary are
+stashed in pending/{date}.json (untracked, never published - see
+.gitignore) and this same check() re-checks it on later runs. Once at
+least SECOND_PASS_MINUTES has passed since the first pass, it retries the
+lookup for whatever's still missing, re-renders/re-saves/re-pushes the
+same file if anything new turned up, and deletes the pending file either
+way - one retry only, never an unbounded loop. This second pass never
+re-fetches game data or re-calls Claude - only highlight_url values change.
 """
+import json
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
@@ -28,12 +41,16 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 
 from config import last_night_game_date
-from fetch import get_games_for_date, fetch_for_date
+from fetch import get_games_for_date, fetch_for_date, highlight_url_for_game
 from storylines import find_storylines
 from summarize import summarize
 from render import save, OUTPUT_DIR
 
 REPO_DIR = Path(__file__).parent
+# Deliberately outside output/ - _publish_to_github only `git add output`, so
+# this never gets committed/pushed (it's internal bookkeeping between this
+# script's own runs, not part of the site). See .gitignore.
+PENDING_DIR = REPO_DIR / "pending"
 
 ISRAEL = ZoneInfo("Asia/Jerusalem")
 
@@ -41,6 +58,7 @@ FIRST_CHECK_MINUTES = 150       # 2:30 after the last game's scheduled start
 FLOOR_HOUR_IL = 5
 FLOOR_MINUTE_IL = 30
 SAFETY_CEILING_MINUTES = 360    # 6h past the first check - force-send past this
+SECOND_PASS_MINUTES = 120       # how long after the brief ships to retry missing highlight links, once
 
 _POSTPONED_KEYWORDS = ("ppd", "postponed", "cancel", "suspended")
 
@@ -79,6 +97,55 @@ def _publish_to_github(saved_path: Path) -> None:
         print(f"Warning: could not publish to GitHub ({e}) - brief was still saved locally.")
 
 
+def _pending_path(date_str: str) -> Path:
+    return PENDING_DIR / f"{date_str}.json"
+
+
+def _try_second_pass(target_date: str, pending_path: Path, now: datetime) -> bool:
+    """
+    One retry, some time after the brief already shipped, for whichever
+    games didn't have a highlight link yet on the first pass (see
+    highlights.py - often the later games of the night, since GAMETIME
+    HIGHLIGHTS/the game itself may simply not be posted yet at first-pass
+    time). Reuses the exact same fetched data and Claude-written summary
+    from the first pass (persisted to `pending_path`) rather than re-fetching
+    or re-summarizing - this pass only ever adds highlight_url values and
+    re-renders/re-saves/re-pushes the same file, it never touches the text.
+    Whatever's still missing after this one retry stays missing for good -
+    no unbounded retry loop, and the pending file is removed either way so
+    this only ever runs once per date.
+    """
+    state = json.loads(pending_path.read_text(encoding="utf-8"))
+    run1_at = datetime.fromisoformat(state["run1_at"])
+    if now < run1_at + timedelta(minutes=SECOND_PASS_MINUTES):
+        print(f"Second pass for {target_date} not due yet (ran first pass at {run1_at.isoformat()}).")
+        return False
+
+    data = state["data"]
+    changed = False
+    for game in data["games"]:
+        if game.get("highlight_url"):
+            continue
+        try:
+            url = highlight_url_for_game(game["matchup"], game["line_score"], target_date)
+        except Exception as e:
+            print(f"Warning: second-pass highlight lookup failed for {game['game_id']} ({e}).")
+            url = None
+        if url:
+            game["highlight_url"] = url
+            changed = True
+
+    if changed:
+        saved_path = save(data, state["summary"])
+        print(f"Second pass: updated {saved_path} with newly available highlight link(s).")
+        _publish_to_github(saved_path)
+    else:
+        print(f"Second pass for {target_date}: still nothing new.")
+
+    pending_path.unlink()
+    return changed
+
+
 def check(now: datetime | None = None) -> bool:
     """
     Runs the full pipeline for last night's games if it's ready, and returns
@@ -88,7 +155,10 @@ def check(now: datetime | None = None) -> bool:
     target_date = last_night_game_date(now)
 
     output_path = OUTPUT_DIR / f"{target_date}.html"
+    pending_path = _pending_path(target_date)
     if output_path.exists():
+        if pending_path.exists():
+            return _try_second_pass(target_date, pending_path, now)
         print(f"{target_date} already has a brief ({output_path}) - nothing to do.")
         return False
 
@@ -134,6 +204,18 @@ def check(now: datetime | None = None) -> bool:
     saved_path = save(data, summary)
     print(f"Saved to: {saved_path}")
     _publish_to_github(saved_path)
+
+    missing = [g["game_id"] for g in data["games"] if not g.get("highlight_url")]
+    if missing:
+        PENDING_DIR.mkdir(exist_ok=True)
+        pending_path.write_text(
+            json.dumps({"data": data, "summary": summary, "run1_at": now.isoformat()}),
+            encoding="utf-8",
+        )
+        print(
+            f"{len(missing)} game(s) still missing a highlight link - "
+            f"will retry once in ~{SECOND_PASS_MINUTES} min."
+        )
     return True
 
 

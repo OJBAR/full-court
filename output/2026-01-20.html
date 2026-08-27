@@ -226,17 +226,23 @@
     color: var(--text-muted);
     margin-top: 6px;
   }
-  /* Links to the game's own page on nba.com (see _nba_game_url) - opens in
-     a real browser tab/app, out of the installed PWA, so it's styled and
-     labeled (↗) as a clearly external link rather than blending into the
-     row like an in-app action. */
+  /* The game's own page on nba.com (see _nba_game_url) and its highlight
+     video on GAMETIME HIGHLIGHTS, an unofficial third-party channel (see
+     highlights.py) - either or both may be missing (the highlight
+     especially, since it's often not up yet at brief time - see
+     scheduler.py's two-pass design), so .game-links only renders the ones
+     that exist, side by side. Both open in a real browser tab/app, out of
+     the installed PWA. */
+  .game-links {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 6px;
+  }
   .game-link {
-    display: block;
-    text-align: center;
     font-size: 0.6875rem;
     color: var(--accent);
     text-decoration: none;
-    margin-top: 6px;
   }
 
   .conference h3 {
@@ -1112,13 +1118,13 @@
       <details class="tab-section">
         <summary>כל תוצאות הלילה</summary>
         <div class="details-body">
-          <div class="game-block"><div class="game-row"><span class="team">PHI<span class="team-record">23-19</span></span><span class="score">110</span><span class="score">–</span><span class="score winner">116</span><span class="team winner">PHX<span class="team-record">27-17</span></span></div><a class="game-link" href="https://www.nba.com/game/phx-vs-phi-0022500613" target="_blank" rel="noopener">דף המשחק</a></div>
-        <div class="game-block"><div class="game-row"><span class="team winner">CHI<span class="team-record">21-22</span></span><span class="score winner">138</span><span class="score">–</span><span class="score">110</span><span class="team">LAC<span class="team-record">19-24</span></span></div><a class="game-link" href="https://www.nba.com/game/lac-vs-chi-0022500614" target="_blank" rel="noopener">דף המשחק</a></div>
-        <div class="game-block"><div class="game-row"><span class="team winner">HOU<span class="team-record">26-15</span></span><span class="score winner">111</span><span class="score">–</span><span class="score">106</span><span class="team">SAS<span class="team-record">30-14</span></span></div><a class="game-link" href="https://www.nba.com/game/sas-vs-hou-0022500615" target="_blank" rel="noopener">דף המשחק</a></div>
-        <div class="game-block"><div class="game-row"><span class="team winner">UTA<span class="team-record">15-29</span></span><span class="score winner">127</span><span class="score">–</span><span class="score">122</span><span class="team">MIN<span class="team-record">27-17</span></span></div><a class="game-link" href="https://www.nba.com/game/min-vs-uta-0022500616" target="_blank" rel="noopener">דף המשחק</a></div>
-        <div class="game-block"><div class="game-row"><span class="team">DEN<span class="team-record">29-15</span></span><span class="score">107</span><span class="score">–</span><span class="score winner">115</span><span class="team winner">LAL<span class="team-record">26-16</span></span></div><a class="game-link" href="https://www.nba.com/game/lal-vs-den-0022500617" target="_blank" rel="noopener">דף המשחק</a></div>
-        <div class="game-block"><div class="game-row"><span class="team">GSW<span class="team-record">25-20</span></span><span class="score">127</span><span class="score">–</span><span class="score winner">145</span><span class="team winner">TOR<span class="team-record">26-19</span></span></div><a class="game-link" href="https://www.nba.com/game/tor-vs-gsw-0022500618" target="_blank" rel="noopener">דף המשחק</a></div>
-        <div class="game-block"><div class="game-row"><span class="team">SAC<span class="team-record">12-32</span></span><span class="score">117</span><span class="score">–</span><span class="score winner">130</span><span class="team winner">MIA<span class="team-record">23-21</span></span></div><a class="game-link" href="https://www.nba.com/game/mia-vs-sac-0022500619" target="_blank" rel="noopener">דף המשחק</a></div>
+          <div class="game-block"><div class="game-row"><span class="team">PHI<span class="team-record">23-19</span></span><span class="score">110</span><span class="score">–</span><span class="score winner">116</span><span class="team winner">PHX<span class="team-record">27-17</span></span></div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/phx-vs-phi-0022500613" target="_blank" rel="noopener">דף המשחק</a></div></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">CHI<span class="team-record">21-22</span></span><span class="score winner">138</span><span class="score">–</span><span class="score">110</span><span class="team">LAC<span class="team-record">19-24</span></span></div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/lac-vs-chi-0022500614" target="_blank" rel="noopener">דף המשחק</a></div></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">HOU<span class="team-record">26-15</span></span><span class="score winner">111</span><span class="score">–</span><span class="score">106</span><span class="team">SAS<span class="team-record">30-14</span></span></div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/sas-vs-hou-0022500615" target="_blank" rel="noopener">דף המשחק</a></div></div>
+        <div class="game-block"><div class="game-row"><span class="team winner">UTA<span class="team-record">15-29</span></span><span class="score winner">127</span><span class="score">–</span><span class="score">122</span><span class="team">MIN<span class="team-record">27-17</span></span></div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/min-vs-uta-0022500616" target="_blank" rel="noopener">דף המשחק</a></div></div>
+        <div class="game-block"><div class="game-row"><span class="team">DEN<span class="team-record">29-15</span></span><span class="score">107</span><span class="score">–</span><span class="score winner">115</span><span class="team winner">LAL<span class="team-record">26-16</span></span></div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/lal-vs-den-0022500617" target="_blank" rel="noopener">דף המשחק</a></div></div>
+        <div class="game-block"><div class="game-row"><span class="team">GSW<span class="team-record">25-20</span></span><span class="score">127</span><span class="score">–</span><span class="score winner">145</span><span class="team winner">TOR<span class="team-record">26-19</span></span></div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/tor-vs-gsw-0022500618" target="_blank" rel="noopener">דף המשחק</a></div></div>
+        <div class="game-block"><div class="game-row"><span class="team">SAC<span class="team-record">12-32</span></span><span class="score">117</span><span class="score">–</span><span class="score winner">130</span><span class="team winner">MIA<span class="team-record">23-21</span></span></div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/mia-vs-sac-0022500619" target="_blank" rel="noopener">דף המשחק</a></div></div>
         </div>
       </details>
 

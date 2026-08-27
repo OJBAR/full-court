@@ -243,17 +243,23 @@ TEMPLATE = """<!DOCTYPE html>
     color: var(--text-muted);
     margin-top: 6px;
   }}
-  /* Links to the game's own page on nba.com (see _nba_game_url) - opens in
-     a real browser tab/app, out of the installed PWA, so it's styled and
-     labeled (↗) as a clearly external link rather than blending into the
-     row like an in-app action. */
+  /* The game's own page on nba.com (see _nba_game_url) and its highlight
+     video on GAMETIME HIGHLIGHTS, an unofficial third-party channel (see
+     highlights.py) - either or both may be missing (the highlight
+     especially, since it's often not up yet at brief time - see
+     scheduler.py's two-pass design), so .game-links only renders the ones
+     that exist, side by side. Both open in a real browser tab/app, out of
+     the installed PWA. */
+  .game-links {{
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 6px;
+  }}
   .game-link {{
-    display: block;
-    text-align: center;
     font-size: 0.6875rem;
     color: var(--accent);
     text-decoration: none;
-    margin-top: 6px;
   }}
 
   .conference h3 {{
@@ -2110,11 +2116,17 @@ def _build_results_html(games: list[dict], standings: list[dict]) -> str:
         elif game["game_id"].startswith("005") and game.get("series_text"):
             block += f'<div class="game-sub">Play-In · {html.escape(str(game["series_text"]))}</div>'
         game_url = _nba_game_url(game)
-        if game_url:
-            block += (
-                f'<a class="game-link" href="{game_url}" target="_blank" rel="noopener">'
-                "דף המשחק</a>"
+        highlight_url = game.get("highlight_url")
+        links_html = "".join(
+            f'<a class="game-link" href="{url}" target="_blank" rel="noopener">{label}</a>'
+            for url, label in (
+                (game_url, "דף המשחק"),
+                (highlight_url, "תקציר"),
             )
+            if url
+        )
+        if links_html:
+            block += f'<div class="game-links">{links_html}</div>'
         rows.append(f'<div class="game-block">{block}</div>')
     return "\n        ".join(rows)
 

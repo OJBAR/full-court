@@ -3,6 +3,9 @@ venv/
 __pycache__/
 *.pyc
 _test_*
+# scheduler.py's own bookkeeping between its first and second pass
+# (highlight links) - internal state, not part of the published site.
+pending/
 # output/*.html WAS gitignored under the old "GitHub Actions runs the whole
 # pipeline" plan (CI would generate them fresh at runtime). That plan doesn't
 # work - stats.nba.com blocks requests from cloud IPs - so the pipeline runs

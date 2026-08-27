@@ -13,6 +13,7 @@ from nba_api.stats.endpoints import (
 )
 
 from config import last_night_game_date, season_string_for
+from highlights import find_highlight_url
 
 # Being polite to stats.nba.com's unofficial API: small delay between calls.
 REQUEST_DELAY_SECONDS = 1.0
@@ -349,6 +350,29 @@ def get_player_power_ratings(season: str) -> dict[str, dict]:
     }
 
 
+def highlight_url_for_game(game_code: str, line_score_rows: list[dict], date_str: str) -> str | None:
+    """
+    Derives the two teams' full names from this game's own line_score rows
+    (already fetched, no extra request) and the away/home order from
+    game_code (ScoreboardV3's "YYYYMMDD/AWAYHOME" gameCode field) to look up
+    this exact game's highlight video (see highlights.py). Public (not
+    fetch.py-internal) since scheduler.py's second pass needs to redo this
+    same lookup later for whichever games missed it on the first pass,
+    without re-fetching anything else from nba_api.
+    """
+    codes = game_code.split("/")[-1] if "/" in game_code else ""
+    if len(codes) != 6:
+        return None
+    away_tricode, home_tricode = codes[:3], codes[3:]
+    by_tricode = {row["teamTricode"]: row for row in line_score_rows}
+    home_row, away_row = by_tricode.get(home_tricode), by_tricode.get(away_tricode)
+    if not home_row or not away_row:
+        return None
+    home_name = f"{home_row['teamCity']} {home_row['teamName']}"
+    away_name = f"{away_row['teamCity']} {away_row['teamName']}"
+    return find_highlight_url(home_name, away_name, date_str)
+
+
 def fetch_for_date(date_str: str) -> dict:
     """
     Fetches all games for a given US Eastern date, their box scores, and current
@@ -362,15 +386,25 @@ def fetch_for_date(date_str: str) -> dict:
         box_score = get_box_score(game_id)
         time.sleep(REQUEST_DELAY_SECONDS)
 
+        game_line_score = line_score[line_score["gameId"] == game_id].to_dict(orient="records")
+
+        # Unofficial, best-effort (see highlights.py) - a game whose highlight
+        # isn't up yet just gets None here, not an error; scheduler.py's
+        # second pass retries whatever's still missing a couple hours later.
+        try:
+            highlight_url = highlight_url_for_game(game["gameCode"], game_line_score, date_str)
+        except Exception as e:
+            print(f"Warning: highlight lookup failed for {game_id} ({e}) - continuing without it.")
+            highlight_url = None
+        time.sleep(REQUEST_DELAY_SECONDS)
+
         games.append(
             {
                 "game_id": game_id,
                 "matchup": game["gameCode"],
                 "status": game["gameStatusText"],
                 "period": int(game["period"]),
-                "line_score": line_score[line_score["gameId"] == game_id].to_dict(
-                    orient="records"
-                ),
+                "line_score": game_line_score,
                 "box_score": box_score.to_dict(orient="records"),
                 "po_round": game["poRoundDesc"],
                 "series_conference": game["seriesConference"],
@@ -378,6 +412,7 @@ def fetch_for_date(date_str: str) -> dict:
                 "series_game_number": game["seriesGameNumber"],
                 "cup_subtype": game["gameSubtype"],
                 "cup_sub_label": game["gameSubLabel"],
+                "highlight_url": highlight_url,
             }
         )
 
