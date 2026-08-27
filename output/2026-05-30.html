@@ -1472,12 +1472,25 @@
       var prevBtn = wrap.querySelector(".pager-prev");
       var nextBtn = wrap.querySelector(".pager-next");
 
+      // getBoundingClientRect() reports the real on-screen (post-zoom) size,
+      // but this track lives inside a .strip-viewport that initFitToWidth()
+      // may have scaled down with CSS zoom - and a transform on an element
+      // inside a zoomed ancestor is ITSELF rendered at that same scale (a
+      // translateX(100px) inside a 0.63 zoom actually moves 63px on screen).
+      // Mixing a zoomed width measurement into an unzoomed transform value
+      // undershoots every step by the zoom factor - not obvious until you
+      // measure it, but very visible on a real device (a sliver of the
+      // previous column stays on screen, a gap opens up on the other side).
+      // Dividing back out by the current zoom keeps unitShift() in the same
+      // (unzoomed) space the translateX below actually operates in.
       function unitShift() {
         var track = tracks[0];
         var firstCol = track && track.children[0];
         if (!firstCol) return 0;
         var gap = parseFloat(getComputedStyle(track).gap || "0") || 0;
-        return firstCol.getBoundingClientRect().width + gap;
+        var viewport = track.parentElement;
+        var zoom = (viewport && parseFloat(viewport.style.zoom)) || 1;
+        return (firstCol.getBoundingClientRect().width / zoom) + gap;
       }
 
       function setTracks(px, animate) {
