@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-27T13:32:37.846316+00:00">
+<meta name="app-version" content="2026-08-27T13:39:18.667385+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -461,11 +461,16 @@
     padding: 2px 0;
   }
   .bracket-team.winner { color: var(--text-heading); font-weight: 700; }
-  /* A series still being played (see _bracket_series_html/_finals_match_html)
-     has no loser yet - the default muted color means "lost this series",
-     which would misread as both teams having already lost. Plain heading
-     color, no bold (bold stays reserved for a real, decided winner). */
-  .bracket-team.pending { color: var(--text-heading); font-weight: 400; }
+  /* Shared "not decided yet, but not TBD either" look - used both for a
+     series still being played (see _bracket_series_html/_finals_match_html)
+     and for a known team waiting on a TBD opponent (see
+     _bracket_projected_series_match_html and Cup's own
+     _bracket_projected_match_html). Neither case means "lost" (the default
+     muted color) or "decided winner" (bold) - plain heading color, no bold.
+     font-style is reset explicitly since the TBD-projected cells wrap this
+     in .bracket-match-tbd, whose italic would otherwise inherit down onto
+     a team that's actually known. */
+  .bracket-team.pending { color: var(--text-heading); font-weight: 400; font-style: normal; }
   .bracket-team-name {
     display: flex;
     flex-direction: column;

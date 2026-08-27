@@ -478,11 +478,16 @@ TEMPLATE = """<!DOCTYPE html>
     padding: 2px 0;
   }}
   .bracket-team.winner {{ color: var(--text-heading); font-weight: 700; }}
-  /* A series still being played (see _bracket_series_html/_finals_match_html)
-     has no loser yet - the default muted color means "lost this series",
-     which would misread as both teams having already lost. Plain heading
-     color, no bold (bold stays reserved for a real, decided winner). */
-  .bracket-team.pending {{ color: var(--text-heading); font-weight: 400; }}
+  /* Shared "not decided yet, but not TBD either" look - used both for a
+     series still being played (see _bracket_series_html/_finals_match_html)
+     and for a known team waiting on a TBD opponent (see
+     _bracket_projected_series_match_html and Cup's own
+     _bracket_projected_match_html). Neither case means "lost" (the default
+     muted color) or "decided winner" (bold) - plain heading color, no bold.
+     font-style is reset explicitly since the TBD-projected cells wrap this
+     in .bracket-match-tbd, whose italic would otherwise inherit down onto
+     a team that's actually known. */
+  .bracket-team.pending {{ color: var(--text-heading); font-weight: 400; font-style: normal; }}
   .bracket-team-name {{
     display: flex;
     flex-direction: column;
@@ -2307,8 +2312,13 @@ def _bracket_projected_series_match_html(slots: list[dict | None]) -> str:
             return '<div class="bracket-team"><span>TBD</span></div>'
         seed = team.get("seed")
         seed_html = f'<span class="bracket-seed">{seed}</span>' if seed else ""
+        # Same "pending" look as a series still being played (see
+        # _bracket_series_html) - a known team waiting on a TBD opponent
+        # hasn't lost anything either, so it gets the plain look, not muted
+        # gray, and not the italic this whole cell's TBD styling would
+        # otherwise inherit down onto it.
         return (
-            '<div class="bracket-team">'
+            '<div class="bracket-team pending">'
             f'<span class="bracket-team-label">{seed_html}<span>{html.escape(team["tricode"])}</span></span>'
             "</div>"
         )
@@ -2425,7 +2435,7 @@ def _finals_match_html(series: dict | None, conf_by_team: dict, projected: dict 
                 seed = team.get("seed")
                 seed_html = f'<span class="bracket-seed">{seed}</span>' if seed else ""
                 return (
-                    '<div class="bracket-team">'
+                    '<div class="bracket-team pending">'
                     f'<span class="bracket-team-label">{seed_html}<span>{html.escape(team["tricode"])}</span></span>'
                     "</div>"
                 )
@@ -2752,7 +2762,7 @@ def _bracket_projected_match_html(teams: list[dict | None]) -> str:
     def _slot(team: dict | None) -> str:
         if team is None:
             return '<div class="bracket-team"><span>TBD</span></div>'
-        return f'<div class="bracket-team">{_bracket_team_name_html(team)}</div>'
+        return f'<div class="bracket-team pending">{_bracket_team_name_html(team)}</div>'
 
     return '<div class="bracket-match bracket-match-projected">' + "".join(_slot(t) for t in teams) + "</div>"
 
