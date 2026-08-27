@@ -1707,12 +1707,21 @@ TEMPLATE = """<!DOCTYPE html>
       // down by half the difference.
       function centerVertically() {{
         if (!detailsEl) return;
+        var content = wrap.querySelector(":scope > .cup-bracket-content");
+        if (!content) return;
         var summary = detailsEl.querySelector(":scope > summary");
         var summaryHeight = summary ? summary.getBoundingClientRect().height : 0;
-        var available = detailsEl.getBoundingClientRect().height - summaryHeight;
-        var contentHeight = wrap.getBoundingClientRect().height;
+        // The round-name header (Quarterfinals/Semifinals/Championship) is
+        // content's previous sibling - kept out of the centering entirely
+        // (see _build_cup_bracket_html) so it stays locked directly under
+        // the tab title at every step, rather than drifting up/down with
+        // however tall the bracket happens to be at that step.
+        var header = content.previousElementSibling;
+        var headerHeight = header ? header.getBoundingClientRect().height : 0;
+        var available = detailsEl.getBoundingClientRect().height - summaryHeight - headerHeight;
+        var contentHeight = content.getBoundingClientRect().height;
         var offset = Math.max(0, (available - contentHeight) / 2);
-        wrap.style.marginTop = offset + "px";
+        content.style.marginTop = offset + "px";
       }}
 
       var detailsEl = wrap.closest("details");
@@ -2982,11 +2991,18 @@ def _build_cup_bracket_html(cup_bracket: list[dict]) -> str:
     return (
         f'<div class="cup-bracket-pager" data-step="{start_step}">'
         f"{round_header}"
+        # Everything below the round-name header - the actual bracket plus
+        # its nav arrows - is wrapped separately so it (not the header) is
+        # what gets vertically centered (see centerVertically() in
+        # initCupBracketPager()): the header stays locked to a fixed
+        # position right under the tab title regardless of step, only the
+        # shorter-than-the-screen content below it shifts.
+        '<div class="cup-bracket-content">'
         f'<div class="strip-viewport"><div class="strip-track">{"".join(columns)}</div></div>'
         '<div class="pager-nav">'
         '<button type="button" class="pager-arrow pager-prev" aria-label="הקודם">‹</button>'
         '<button type="button" class="pager-arrow pager-next" aria-label="הבא">›</button>'
-        "</div></div>"
+        "</div></div></div>"
     )
 
 
