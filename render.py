@@ -260,6 +260,9 @@ TEMPLATE = """<!DOCTYPE html>
     font-size: 0.6875rem;
     color: var(--accent);
     text-decoration: none;
+    padding: 3px 10px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
   }}
 
   .conference h3 {{
