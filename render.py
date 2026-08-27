@@ -478,6 +478,11 @@ TEMPLATE = """<!DOCTYPE html>
     padding: 2px 0;
   }}
   .bracket-team.winner {{ color: var(--text-heading); font-weight: 700; }}
+  /* A series still being played (see _bracket_series_html/_finals_match_html)
+     has no loser yet - the default muted color means "lost this series",
+     which would misread as both teams having already lost. Plain heading
+     color, no bold (bold stays reserved for a real, decided winner). */
+  .bracket-team.pending {{ color: var(--text-heading); font-weight: 400; }}
   .bracket-team-name {{
     display: flex;
     flex-direction: column;
@@ -2252,8 +2257,19 @@ def _bracket_series_html(series: dict | None) -> str:
     max_wins = max(t["wins"] for t in teams)
 
     def _team(team: dict) -> str:
-        is_winner = series["is_over"] and team["wins"] == max_wins
-        cls = " winner" if is_winner else ""
+        # A series still being played has no loser yet - dimming both teams
+        # muted-gray (the "lost" look) reads as if the whole series were
+        # already decided against both of them. Only once is_over is true
+        # does the muted color mean anything (this team actually lost);
+        # until then both sides get the plain "pending" look instead - no
+        # bold (that's still reserved for the real, decided winner), but not
+        # grayed out either.
+        if not series["is_over"]:
+            cls = " pending"
+        elif team["wins"] == max_wins:
+            cls = " winner"
+        else:
+            cls = ""
         seed = team.get("seed")
         seed_html = f'<span class="bracket-seed">{seed}</span>' if seed else ""
         return (
@@ -2429,7 +2445,15 @@ def _finals_match_html(series: dict | None, conf_by_team: dict, projected: dict 
     max_wins = max(t["wins"] for t in teams)
 
     def _team(team: dict) -> str:
-        cls = " winner" if series["is_over"] and team["wins"] == max_wins else ""
+        # See _bracket_series_html's identical reasoning: a series still in
+        # progress has no loser yet, so neither side gets the muted "lost"
+        # look until is_over actually says one of them did.
+        if not series["is_over"]:
+            cls = " pending"
+        elif team["wins"] == max_wins:
+            cls = " winner"
+        else:
+            cls = ""
         seed = team.get("seed")
         seed_html = f'<span class="bracket-seed">{seed}</span>' if seed else ""
         return (
