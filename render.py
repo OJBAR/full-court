@@ -1,6 +1,6 @@
 import html
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 OUTPUT_DIR = Path(__file__).parent / "output"
@@ -29,6 +29,7 @@ TEMPLATE = """<!DOCTYPE html>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
+<meta name="app-version" content="{app_version}">
 <style>
   :root {{
     --bg: #EFEAD8;
@@ -1117,6 +1118,36 @@ TEMPLATE = """<!DOCTYPE html>
       if (standalone) {{
         document.getElementById("splash-screen").classList.add("visible");
       }}
+    }})();
+  </script>
+  <script>
+    // GitHub Pages serves every page with Cache-Control: max-age=600, so a
+    // page opened again within 10 minutes of a new deploy can silently show
+    // stale content - no error, just the old version, easy to mistake for a
+    // broken push. This checks the CURRENT page's own URL again, bypassing
+    // any cache (cache: "no-store" plus a cache-busting query param, belt
+    // and suspenders), and compares its app-version meta tag against the
+    // one already loaded - each dated brief page carries its own version
+    // (set at render time), not one shared across the whole site, so a demo
+    // page built yesterday is never considered "stale" just because some
+    // other page was rebuilt today. A real mismatch means a newer build of
+    // THIS exact page exists, so it reloads once, cache-busted - the
+    // reloaded page runs this same check again and finds no mismatch (it
+    // just fetched the true latest version), so this can't loop. Fails
+    // completely silently (offline, blocked request, whatever) - never
+    // blocks or breaks the page that's already showing.
+    (function checkForNewVersion() {{
+      var current = document.querySelector('meta[name="app-version"]');
+      if (!current) return;
+      fetch(location.pathname + "?_v=" + Date.now(), {{ cache: "no-store" }})
+        .then(function(res) {{ return res.text(); }})
+        .then(function(text) {{
+          var match = text.match(/<meta name="app-version" content="([^"]*)"/);
+          if (match && match[1] && match[1] !== current.content) {{
+            location.href = location.pathname + "?_r=" + Date.now();
+          }}
+        }})
+        .catch(function() {{}});
     }})();
   </script>
   <div class="wrapper">
@@ -2931,6 +2962,7 @@ def render(data: dict, summary: str) -> str:
     return TEMPLATE.format(
         display_date=display_date,
         page_date_label=f"{display_date}, {night_label}",
+        app_version=datetime.now(timezone.utc).isoformat(),
         summary_html=_paragraphs_to_html(summary),
         results_title=results_title,
         results_html=_build_results_html(data["games"], data["standings"]),
