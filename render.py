@@ -3062,9 +3062,12 @@ def _details_block(title: str, inner_html: str) -> str:
 
 def _build_secondary_section(data: dict) -> str:
     """
-    Playoffs: one tab, a single paged bracket covering both conferences and
-    the Finals together (see _build_combined_playoff_bracket_html) - there's
-    no regular-season standings concept during playoffs. NBA Cup days
+    Playoffs: the bracket tab (a single paged bracket covering both
+    conferences and the Finals together - see
+    _build_combined_playoff_bracket_html), plus the league standings tab
+    last, for reference (seeding is already locked in by playoff time, but
+    the final regular-season table is still worth being able to check).
+    NBA Cup days
     (group stage or knockout): the
     regular league standings always show first, since every Cup game except
     the Championship counts toward the regular season - plus a group-standings
@@ -3073,7 +3076,10 @@ def _build_secondary_section(data: dict) -> str:
     """
     if data.get("is_playoffs"):
         playoff_series = data.get("playoff_series", [])
-        sections = [("בראקט הפלייאוף", _build_combined_playoff_bracket_html(playoff_series, data["games"]))]
+        sections = [
+            ("בראקט הפלייאוף", _build_combined_playoff_bracket_html(playoff_series, data["games"])),
+            ("טבלת הליגה", _build_standings_html(data["standings"])),
+        ]
     else:
         standings_section = ("טבלת הליגה", _build_standings_html(data["standings"]))
         sections = []
