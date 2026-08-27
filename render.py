@@ -508,7 +508,7 @@ TEMPLATE = """<!DOCTYPE html>
     color: var(--text-muted);
   }}
   .bracket-score {{ font-variant-numeric: tabular-nums; }}
-  .bracket-match-tbd {{ opacity: 0.55; border-style: dashed; font-style: italic; }}
+  .bracket-match-tbd {{ opacity: 0.55; font-style: italic; }}
   .bracket-match-wrap {{ width: 128px; flex-shrink: 0; }}
   .bracket-caption {{
     margin-top: 4px;
