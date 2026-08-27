@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-27T13:39:20.102825+00:00">
+<meta name="app-version" content="2026-08-27T13:46:58.163341+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -1532,22 +1532,35 @@
         return (firstCol.getBoundingClientRect().width / zoom) + gap;
       }
 
-      function setTracks(px, animate) {
+      // A CSS transition on transform silently never applies here - verified
+      // directly (not guessed): with transition set, the computed transform
+      // stays at the identity matrix indefinitely no matter how long you
+      // wait, even though the exact same transform value applies instantly
+      // and correctly with transition:none. Reproduced with a raw style
+      // change outside any of this pager's own logic, so it isn't a bug in
+      // goTo()/setTracks() - it's transform-transitions genuinely not
+      // composing with an ancestor's CSS zoom (the .strip-viewport
+      // initFitToWidth() scales) in this engine. The playoff bracket's
+      // pager doesn't use zoom at all, which is exactly why its own
+      // animated transition (still present there) has never shown this.
+      // Snapping instantly instead of sliding is a real trade-off, but a
+      // pager that silently doesn't move at all is worse.
+      function setTracks(px) {
         tracks.forEach(function(track) {
-          track.style.transition = animate ? "transform 0.35s ease" : "none";
+          track.style.transition = "none";
           track.style.transform = "translateX(-" + px + "px)";
         });
       }
 
-      function render(animate) {
-        setTracks(step * unitShift(), animate);
+      function render() {
+        setTracks(step * unitShift());
         prevBtn.disabled = step === 0;
         nextBtn.disabled = step === maxStep;
       }
 
       function goTo(newStep) {
         step = Math.max(0, Math.min(newStep, maxStep));
-        render(true);
+        render();
       }
 
       prevBtn.addEventListener("click", function() { goTo(step - 1); });
@@ -1571,7 +1584,7 @@
         dragging = true;
         var unit = unitShift();
         var target = Math.max(0, Math.min(step * unit - dx, maxStep * unit));
-        setTracks(target, false);
+        setTracks(target);
       }, { passive: true });
 
       wrap.addEventListener("touchend", function(e) {
@@ -1580,14 +1593,14 @@
         var threshold = 40;
         if (dx < -threshold) { goTo(step + 1); }
         else if (dx > threshold) { goTo(step - 1); }
-        else { render(true); }
+        else { render(); }
         startX = null;
         startY = null;
         dragging = false;
       });
 
-      window.addEventListener("resize", function() { render(false); });
-      render(false);
+      window.addEventListener("resize", function() { render(); });
+      render();
     })();
 
     // Shared by the settings panel and the app-home tab list: an
