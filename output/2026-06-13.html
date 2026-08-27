@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-27T15:07:27.420398+00:00">
+<meta name="app-version" content="2026-08-27T15:14:32.144729+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -410,6 +410,22 @@
      Coupled to bracket-match's real rendered height (56px) and the two gaps
      above - update this if any of those three ever change. */
   .bracket-pair-r2 { gap: 78px; }
+  /* Cup-specific: the Quarterfinal round's own pairs get the same 78px
+     internal gap the Semifinal pair already uses, purely for visual
+     breathing room (so tapping/swiping the Cup bracket isn't confined to a
+     cramped block) - which then means the Semifinal gap has to be
+     recalculated the same way .bracket-pair-r2's own comment above derives
+     78 in the first place, just with this bracket's real numbers: a
+     Quarterfinal pair's own height is now matchHeight(56) + this new
+     78px gap = 134px, and the two conferences' Quarterfinal pairs are
+     stacked 134 + .bracket-conf-block's own 18px margin + 134 apart -
+     so the Semifinal pair's two slots need gap = 56 + 78 + 18 = 152 to
+     land on those same two centers. Estimated the same way the original
+     78/78 pairing was (not visually re-verified against a live connector
+     line render), same caveat as everywhere else this project derives
+     bracket geometry by formula. */
+  .cup-bracket-pager .bracket-pair:not(.bracket-pair-r2) { gap: 78px; }
+  .cup-bracket-pager .bracket-pair-r2 { gap: 152px; }
   /* .bracket-pair::after's 25px stub is calibrated to reach the next
      round's box when that box is itself a .bracket-pair (which occupies a
      column's full 146px width, so the stub only needs to bridge the 24px
