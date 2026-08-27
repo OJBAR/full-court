@@ -51,6 +51,16 @@
      broken rather than just "bigger text". Fixed-size UI chrome (circular
      icon buttons, badges/pills, the bracket diagram - see its own comment
      below) stays in px on purpose so it doesn't distort at large sizes. */
+  /* Android Chrome auto-boosts font size on narrow columns of text (its
+     "font inflation" readability feature) independently of any CSS here -
+     it was never caught in testing since this project was only ever
+     checked on iOS Safari, which doesn't do this. That extra, uncontrolled
+     boost stacks on top of our own deliberate --a11y-text-scale sizing,
+     making text render bigger than any of our rem values actually say -
+     exactly the "text too big, tables need scrolling, things get cut off"
+     symptom. Disabling it makes our own sizing the only source of scale,
+     on every browser. */
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   html { font-size: calc(16px * var(--a11y-text-scale, 1)); }
   * { box-sizing: border-box; }
   a:focus-visible,
