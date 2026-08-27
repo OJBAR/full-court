@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-27T13:46:56.741709+00:00">
+<meta name="app-version" content="2026-08-27T14:48:53.102097+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -643,6 +643,37 @@
     padding: 4px 4px 12px;
     transition: transform 0.35s ease;
   }
+  /* The Cup pager's own viewport (see initCupBracketPager()) is scaled down
+     by initFitToWidth()'s CSS zoom, and translateX() on a zoomed element
+     turned out not to be reliable on real iOS Safari at all - confirmed
+     directly on a real device, not just theorized: the transform simply
+     never took effect, panel stuck in place no matter how long you waited.
+     Real native scrolling doesn't have that problem - overflow-x here
+     overrides the shared .strip-viewport rule above (which stays
+     hidden/transform-based for the playoff bracket's own pager, unaffected
+     since it never used zoom to begin with). scroll-snap-type (with
+     scroll-snap-align below, on the first two columns only - snapping to
+     the last column would leave dead space past it) handles a free-drag
+     swipe settling on a whole step natively, instead of a hand-rolled JS
+     "wait for scroll events to stop, then compute the nearest step"
+     listener, which turned out to fight the very same scrollTo() calls
+     initCupBracketPager() itself makes (a smooth scrollTo()'s real
+     duration isn't fixed, so guessing when it's "done" to stop reacting to
+     its own scroll events was never reliable - confirmed directly, not
+     assumed). Scrollbar hidden since the prev/next buttons plus the
+     pager-arrow visual language already the established way to show this
+     is scrollable. */
+  .cup-bracket-pager .strip-viewport {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+  }
+  .cup-bracket-pager .strip-viewport::-webkit-scrollbar { display: none; }
+  .cup-bracket-pager .strip-track { transition: none; }
+  .cup-bracket-pager .bracket-column:nth-child(1),
+  .cup-bracket-pager .bracket-column:nth-child(2) { scroll-snap-align: start; }
 
   .a11y-overlay {
     position: fixed;
@@ -1538,109 +1569,127 @@
     })();
 
     (function initCupBracketPager() {
-      // Same idea as the playoff bracket's pager, but simpler - the Cup
-      // knockout bracket is a single unified tree (not split by
-      // conference), so there's just one strip plus the shared round-name
-      // header, both panned together, no separate Finals page needed.
+      // Real native horizontal scrolling instead of a JS-transformed track -
+      // rewritten after confirming directly on a real device that
+      // translateX() on an element inside this pager's CSS-zoomed viewport
+      // (initFitToWidth()) simply doesn't work reliably: not just the
+      // animated case (a transition on transform silently never applied),
+      // the same zoom/transform interaction turned out not to be trustworthy
+      // full stop. scrollLeft doesn't have that problem - but it does have a
+      // different one, also confirmed directly rather than assumed:
+      // scrollLeft/clientWidth/scrollWidth are measured in the zoomed
+      // element's own PRE-zoom ("local") pixels, while getBoundingClientRect()
+      // on the exact same element's children reports real POST-zoom screen
+      // pixels - two different coordinate spaces on the same zoomed
+      // subtree. Measuring a column's rect and feeding that straight into
+      // scrollTo() mixes the two and undershoots, the same class of bug as
+      // the old translateX one just mentioned. Since the column width (146)
+      // and gap (24, see .strip-track/.bracket-column above) are fixed,
+      // authored CSS values, not something that varies per device, using
+      // them directly here sidesteps the whole zoom-coordinate-space
+      // question rather than trying to measure through it.
       var wrap = document.querySelector(".cup-bracket-pager");
       if (!wrap) return;
 
-      var step = parseInt(wrap.getAttribute("data-step"), 10) || 0;
+      var viewports = Array.prototype.slice.call(wrap.querySelectorAll(".strip-viewport"));
+      var track = viewports[0] && viewports[0].querySelector(".strip-track");
+      if (!viewports.length || !track) return;
+
       var maxStep = 1;
-      var tracks = Array.prototype.slice.call(wrap.querySelectorAll(".strip-track"));
+      var step = parseInt(wrap.getAttribute("data-step"), 10) || 0;
       var prevBtn = wrap.querySelector(".pager-prev");
       var nextBtn = wrap.querySelector(".pager-next");
 
-      // getBoundingClientRect() reports the real on-screen (post-zoom) size,
-      // but this track lives inside a .strip-viewport that initFitToWidth()
-      // may have scaled down with CSS zoom - and a transform on an element
-      // inside a zoomed ancestor is ITSELF rendered at that same scale (a
-      // translateX(100px) inside a 0.63 zoom actually moves 63px on screen).
-      // Mixing a zoomed width measurement into an unzoomed transform value
-      // undershoots every step by the zoom factor - not obvious until you
-      // measure it, but very visible on a real device (a sliver of the
-      // previous column stays on screen, a gap opens up on the other side).
-      // Dividing back out by the current zoom keeps unitShift() in the same
-      // (unzoomed) space the translateX below actually operates in.
       function unitShift() {
-        var track = tracks[0];
-        var firstCol = track && track.children[0];
-        if (!firstCol) return 0;
-        var gap = parseFloat(getComputedStyle(track).gap || "0") || 0;
-        var viewport = track.parentElement;
-        var zoom = (viewport && parseFloat(viewport.style.zoom)) || 1;
-        return (firstCol.getBoundingClientRect().width / zoom) + gap;
+        return 146 + 24; // .bracket-column's width + .strip-track's gap
       }
 
-      // A CSS transition on transform silently never applies here - verified
-      // directly (not guessed): with transition set, the computed transform
-      // stays at the identity matrix indefinitely no matter how long you
-      // wait, even though the exact same transform value applies instantly
-      // and correctly with transition:none. Reproduced with a raw style
-      // change outside any of this pager's own logic, so it isn't a bug in
-      // goTo()/setTracks() - it's transform-transitions genuinely not
-      // composing with an ancestor's CSS zoom (the .strip-viewport
-      // initFitToWidth() scales) in this engine. The playoff bracket's
-      // pager doesn't use zoom at all, which is exactly why its own
-      // animated transition (still present there) has never shown this.
-      // Snapping instantly instead of sliding is a real trade-off, but a
-      // pager that silently doesn't move at all is worse.
-      function setTracks(px) {
-        tracks.forEach(function(track) {
-          track.style.transition = "none";
-          track.style.transform = "translateX(-" + px + "px)";
+      var syncing = false;
+      function mirrorScroll(source) {
+        if (syncing) return;
+        syncing = true;
+        viewports.forEach(function(vp) {
+          if (vp !== source) vp.scrollLeft = source.scrollLeft;
         });
+        syncing = false;
       }
+      viewports.forEach(function(vp) {
+        vp.addEventListener("scroll", function() { mirrorScroll(vp); }, { passive: true });
+      });
 
-      function render() {
-        setTracks(step * unitShift());
+      function updateButtons() {
         prevBtn.disabled = step === 0;
         nextBtn.disabled = step === maxStep;
       }
 
+      // behavior:"smooth" turned out not to be trustworthy together with
+      // scroll-snap-type:mandatory here either - confirmed directly, not
+      // assumed: a smooth scrollTo() back to an earlier step visibly
+      // updated the step/button state but the actual scroll position never
+      // moved at all, while the exact same call with behavior:"auto"
+      // (instant) worked correctly every time. Same trade-off already made
+      // once for this bracket's pan (see the CSS zoom/transition comment
+      // above) - snapping instantly instead of sliding, because a pager
+      // that updates its own state without visibly moving is worse than
+      // one that isn't animated.
       function goTo(newStep) {
         step = Math.max(0, Math.min(newStep, maxStep));
-        render();
+        var px = step * unitShift();
+        viewports.forEach(function(vp) {
+          vp.scrollTo({ left: px, behavior: "auto" });
+        });
+        updateButtons();
       }
 
       prevBtn.addEventListener("click", function() { goTo(step - 1); });
       nextBtn.addEventListener("click", function() { goTo(step + 1); });
 
-      var startX = null;
-      var startY = null;
-      var dragging = false;
-
-      wrap.addEventListener("touchstart", function(e) {
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        dragging = false;
+      // A free-drag swipe already lands on a whole step by itself - CSS
+      // scroll-snap (see .strip-viewport/.bracket-column above) handles
+      // that natively, no JS needed. This only keeps `step` (and the
+      // prev/next buttons' disabled state) in sync with wherever it
+      // settled, once scrolling genuinely stops - it never calls
+      // scrollTo() itself, so there's nothing here for it to fight with
+      // goTo()'s own scrollTo() calls (an earlier version tried to guard
+      // against exactly that fight with a timer-based flag, but a smooth
+      // scrollTo()'s real duration isn't fixed, so guessing when it was
+      // "done" to stop reacting to its own scroll events was never
+      // reliable - confirmed directly, not assumed).
+      var settleTimer = null;
+      viewports[0].addEventListener("scroll", function() {
+        if (settleTimer) clearTimeout(settleTimer);
+        settleTimer = setTimeout(function() {
+          var unit = unitShift();
+          step = unit ? Math.round(viewports[0].scrollLeft / unit) : 0;
+          updateButtons();
+        }, 150);
       }, { passive: true });
 
-      wrap.addEventListener("touchmove", function(e) {
-        if (startX === null) return;
-        var dx = e.touches[0].clientX - startX;
-        var dy = e.touches[0].clientY - startY;
-        if (!dragging && Math.abs(dx) < Math.abs(dy)) return;
-        dragging = true;
-        var unit = unitShift();
-        var target = Math.max(0, Math.min(step * unit - dx, maxStep * unit));
-        setTracks(target);
-      }, { passive: true });
-
-      wrap.addEventListener("touchend", function(e) {
-        if (!dragging) { startX = null; startY = null; return; }
-        var dx = e.changedTouches[0].clientX - startX;
-        var threshold = 40;
-        if (dx < -threshold) { goTo(step + 1); }
-        else if (dx > threshold) { goTo(step - 1); }
-        else { render(); }
-        startX = null;
-        startY = null;
-        dragging = false;
-      });
-
-      window.addEventListener("resize", function() { render(); });
-      render();
+      window.addEventListener("resize", function() { goTo(step); });
+      // scrollTo() on a hidden element (this pager's own <details> starts
+      // closed) is a silent no-op - confirmed directly, not assumed: the
+      // very first goTo() below runs before the user has ever opened this
+      // tab, so it has no visible effect at all, and nothing re-runs it once
+      // the tab actually opens. A native "toggle" listener doesn't catch
+      // this in tabs-mode - also checked directly: tabs-mode's own
+      // <details> stays open="true" from the very first render and is
+      // shown/hidden by promoting/repositioning it instead (see
+      // initAppHome()), toggling its class list, not its open state, so
+      // "toggle" never fires. IntersectionObserver would be the more
+      // obvious tool for "did this become visible", but it didn't fire at
+      // all when checked directly against this exact element either - a
+      // plain MutationObserver on the class attribute did fire correctly,
+      // so that's what's used: on any class change, re-run goTo() if the
+      // element now actually has real size (still nothing to do while it's
+      // hidden).
+      var detailsEl = wrap.closest("details");
+      if (detailsEl && window.MutationObserver) {
+        var classObserver = new MutationObserver(function() {
+          if (wrap.getBoundingClientRect().width > 0) goTo(step);
+        });
+        classObserver.observe(detailsEl, { attributes: true, attributeFilter: ["class"] });
+      }
+      goTo(step);
     })();
 
     // Shared by the settings panel and the app-home tab list: an
