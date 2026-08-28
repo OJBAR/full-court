@@ -1218,35 +1218,7 @@
   }
   .cd-nav button:disabled { opacity: 0.35; cursor: default; }
   .cd-nav .cd-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; padding: 0 4px; }
-/* cd-nav-css-start */
-  .cd-nav {
-    position: sticky; top: 0; z-index: 200;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 6px 8px; background: var(--card-bg); border-bottom: 1px solid var(--border);
-    direction: rtl; flex-wrap: nowrap;
-    /* In tabs-mode (see render.py) .wrapper is itself a fixed-height
-       (100dvh) flex column, and .cd-nav sits in that flow as a sibling of
-       .header/main - without this it's eligible to shrink like any other
-       flex child (same class of bug already hit and fixed for the schedule
-       tab's own sticky summary - see render.py's flex-shrink:0 on
-       details.tab-section.app-screen-active > summary). Reported as
-       invisible specifically in the installed PWA (tabs-mode's real
-       target), consistent with that. */
-    flex-shrink: 0;
-  }
-  .cd-nav button {
-    border: 1px solid var(--border); background: var(--bg); color: var(--text-heading);
-    border-radius: 999px; font-size: 13px; cursor: pointer; flex-shrink: 0;
-    padding: 5px 9px; font-family: inherit;
-  }
-  .cd-nav button:disabled { opacity: 0.35; cursor: default; }
-  .cd-nav .cd-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; padding: 0 4px; }
-  .cd-nav .cd-home {
-    text-decoration: none; font-size: 15px; flex-shrink: 0;
-    border: 1px solid var(--border); background: var(--bg); border-radius: 999px;
-    width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-  }
-/* cd-nav-css-end */</style>
+</style>
 </head>
 <body>
   <div id="splash-screen" class="splash-screen">
@@ -1291,51 +1263,7 @@
         .catch(function() {});
     })();
   </script>
-  <div class="wrapper"><!-- cd-nav-start -->
-<div class="cd-nav" dir="rtl">
-  <a class="cd-home" href="../demos.html" title="כל הדמואים">🏠</a>
-  <button type="button" id="cdBack10" title="10 אחורה">«« 10</button>
-  <button type="button" id="cdPrev" title="יום קודם">‹</button>
-  <span class="cd-label" id="cdLabel"></span>
-  <button type="button" id="cdNext" title="יום הבא">›</button>
-  <button type="button" id="cdFwd10" title="10 קדימה">10 »»</button>
-</div>
-<script type="application/json" id="cdDates">["2025-10-21", "2025-10-22", "2025-10-23", "2025-10-24", "2025-10-25", "2025-10-26", "2025-10-27", "2025-10-28", "2025-10-29", "2025-10-30", "2025-10-31", "2025-11-01", "2025-11-02", "2025-11-03", "2025-11-04", "2025-11-05", "2025-11-06", "2025-11-07", "2025-11-08", "2025-11-09", "2025-11-10", "2025-11-11", "2025-11-12", "2025-11-13", "2025-11-14", "2025-11-15", "2025-11-16", "2025-11-17", "2025-11-18", "2025-11-19", "2025-11-20", "2025-11-21", "2025-11-22", "2025-11-23", "2025-11-24", "2025-11-25", "2025-11-26", "2025-11-28", "2025-11-29", "2025-11-30", "2025-12-01", "2025-12-02", "2025-12-03", "2025-12-04", "2025-12-05", "2025-12-06", "2025-12-07", "2025-12-08", "2025-12-09", "2025-12-10", "2025-12-11", "2025-12-12", "2025-12-13", "2025-12-14", "2025-12-15", "2025-12-16", "2025-12-17", "2025-12-18", "2025-12-19", "2025-12-20", "2025-12-21", "2025-12-22", "2025-12-23", "2025-12-25", "2025-12-26", "2025-12-27", "2025-12-28", "2025-12-29", "2025-12-30", "2025-12-31", "2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09", "2026-01-10", "2026-01-11", "2026-01-12", "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16", "2026-01-17", "2026-01-18", "2026-01-19", "2026-01-20", "2026-01-21", "2026-01-22", "2026-01-23", "2026-01-24", "2026-01-25", "2026-01-26", "2026-01-27", "2026-01-28", "2026-01-29", "2026-01-30", "2026-01-31", "2026-02-01", "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-05", "2026-02-06", "2026-02-07", "2026-02-08", "2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-19", "2026-02-20", "2026-02-21", "2026-02-22", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-02-28", "2026-03-01", "2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-07", "2026-03-08", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-14", "2026-03-15", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-21", "2026-03-22", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-28", "2026-03-29", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-04", "2026-04-05", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-12", "2026-04-14", "2026-04-15", "2026-04-17", "2026-04-18", "2026-04-19", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-25", "2026-04-26", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-01", "2026-05-02", "2026-05-03", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-09", "2026-05-10", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-15", "2026-05-17", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-23", "2026-05-24", "2026-05-25", "2026-05-26", "2026-05-28", "2026-05-30", "2026-06-03", "2026-06-05", "2026-06-08", "2026-06-10", "2026-06-13"]</script>
-<script>
-(function() {
-  var dates = JSON.parse(document.getElementById("cdDates").textContent);
-  var here = "2026-06-05";
-  var idx = dates.indexOf(here);
-  var label = document.getElementById("cdLabel");
-  var back10 = document.getElementById("cdBack10");
-  var prev = document.getElementById("cdPrev");
-  var next = document.getElementById("cdNext");
-  var fwd10 = document.getElementById("cdFwd10");
-
-  function fmt(d) {
-    var p = d.split("-");
-    return p[2] + "." + p[1] + "." + p[0];
-  }
-  function go(newIdx) {
-    newIdx = Math.max(0, Math.min(newIdx, dates.length - 1));
-    if (newIdx === idx) return;
-    location.href = dates[newIdx] + ".html";
-  }
-  if (idx === -1) { if (label) label.textContent = here; }
-  else {
-    label.textContent = fmt(dates[idx]) + " (" + (idx + 1) + "/" + dates.length + ")";
-    prev.disabled = idx === 0;
-    next.disabled = idx === dates.length - 1;
-    back10.disabled = idx === 0;
-    fwd10.disabled = idx === dates.length - 1;
-    prev.addEventListener("click", function() { go(idx - 1); });
-    next.addEventListener("click", function() { go(idx + 1); });
-    back10.addEventListener("click", function() { go(idx - 10); });
-    fwd10.addEventListener("click", function() { go(idx + 10); });
-  }
-})();
-</script>
-<!-- cd-nav-end -->
+  <div class="wrapper">
 <div class="cd-nav" dir="rtl">
   <button type="button" id="cdBack10" title="10 אחורה">«« 10</button>
   <button type="button" id="cdPrev" title="יום קודם">‹</button>
@@ -1480,7 +1408,7 @@
           <p class="settings-about-text">יש הערה, באג, או הצעה לשיפור? אשמח לשמוע.</p>
           <a class="a11y-link-btn" href="https://github.com/OJBAR/full-court/issues/new" target="_blank" rel="noopener">GitHub Issues</a>
           <div class="email-row">
-            <a class="a11y-link-btn" href="mailto:ojbar30@gmail.com?subject=%D7%A4%D7%A0%D7%99%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT:+%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%99%D7%94">ojbar30@gmail.com</a>
+            <a class="a11y-link-btn" href="mailto:ojbar30@gmail.com?subject=%D7%A4%D7%A0%D7%99%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT:+%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%99%D7%94&body=%D7%AA%D7%95%D7%9B%D7%9F%20%D7%94%D7%A4%D7%A0%D7%99%D7%94%3A%0A%0A%D7%A6%D7%99%D7%9C%D7%95%D7%9E%D7%99%20%D7%9E%D7%A1%D7%9A%3A%0A">ojbar30@gmail.com</a>
             <button type="button" class="copy-email-btn" onclick="copyEmailAddress(this)" aria-label="העתק את כתובת המייל">📋</button>
           </div>
         </div>
@@ -2617,5 +2545,78 @@
       document.getElementById("settings-theme-btn").textContent = isDark ? "☀" : "🌙";
     }
   </script>
+
+<!-- cd-nav-start -->
+<script type="application/json" id="cdDates">["2025-10-21", "2025-10-22", "2025-10-23", "2025-10-24", "2025-10-25", "2025-10-26", "2025-10-27", "2025-10-28", "2025-10-29", "2025-10-30", "2025-10-31", "2025-11-01", "2025-11-02", "2025-11-03", "2025-11-04", "2025-11-05", "2025-11-06", "2025-11-07", "2025-11-08", "2025-11-09", "2025-11-10", "2025-11-11", "2025-11-12", "2025-11-13", "2025-11-14", "2025-11-15", "2025-11-16", "2025-11-17", "2025-11-18", "2025-11-19", "2025-11-20", "2025-11-21", "2025-11-22", "2025-11-23", "2025-11-24", "2025-11-25", "2025-11-26", "2025-11-28", "2025-11-29", "2025-11-30", "2025-12-01", "2025-12-02", "2025-12-03", "2025-12-04", "2025-12-05", "2025-12-06", "2025-12-07", "2025-12-08", "2025-12-09", "2025-12-10", "2025-12-11", "2025-12-12", "2025-12-13", "2025-12-14", "2025-12-15", "2025-12-16", "2025-12-17", "2025-12-18", "2025-12-19", "2025-12-20", "2025-12-21", "2025-12-22", "2025-12-23", "2025-12-25", "2025-12-26", "2025-12-27", "2025-12-28", "2025-12-29", "2025-12-30", "2025-12-31", "2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09", "2026-01-10", "2026-01-11", "2026-01-12", "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16", "2026-01-17", "2026-01-18", "2026-01-19", "2026-01-20", "2026-01-21", "2026-01-22", "2026-01-23", "2026-01-24", "2026-01-25", "2026-01-26", "2026-01-27", "2026-01-28", "2026-01-29", "2026-01-30", "2026-01-31", "2026-02-01", "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-05", "2026-02-06", "2026-02-07", "2026-02-08", "2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-19", "2026-02-20", "2026-02-21", "2026-02-22", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-02-28", "2026-03-01", "2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-07", "2026-03-08", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-14", "2026-03-15", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-21", "2026-03-22", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-28", "2026-03-29", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-04", "2026-04-05", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-12", "2026-04-14", "2026-04-15", "2026-04-17", "2026-04-18", "2026-04-19", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-25", "2026-04-26", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-01", "2026-05-02", "2026-05-03", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-09", "2026-05-10", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-15", "2026-05-17", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-23", "2026-05-24", "2026-05-25", "2026-05-26", "2026-05-28", "2026-05-30", "2026-06-03", "2026-06-05", "2026-06-08", "2026-06-10", "2026-06-13"]</script>
+<script>
+(function() {
+  // Appended straight to document.body (the codebase's own proven pattern
+  // for an always-visible overlay control - see the old install banner)
+  // and position:fixed, deliberately NOT placed in the normal document
+  // flow inside .wrapper. Two earlier attempts (sticky, top of the page,
+  // living inside .wrapper) came up invisible specifically in the
+  // installed PWA - tabs-mode makes .wrapper a fixed-height 100dvh flex
+  // column, and every position/sizing trick tried there still depended on
+  // that flow one way or another. Fixed-at-the-viewport sidesteps all of
+  // it - and moved to the bottom, by request.
+  var css = document.createElement("style");
+  css.textContent = [
+    ".cd-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 999;",
+    "  display: flex; align-items: center; justify-content: center; gap: 6px;",
+    "  padding: 8px; padding-bottom: calc(8px + env(safe-area-inset-bottom));",
+    "  background: var(--card-bg); border-top: 1px solid var(--border);",
+    "  direction: rtl; flex-wrap: nowrap; }",
+    ".cd-nav button { border: 1px solid var(--border); background: var(--bg); color: var(--text-heading);",
+    "  border-radius: 999px; font-size: 13px; cursor: pointer; flex-shrink: 0;",
+    "  padding: 5px 9px; font-family: inherit; }",
+    ".cd-nav button:disabled { opacity: 0.35; cursor: default; }",
+    ".cd-nav .cd-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; padding: 0 4px; }"
+  ].join("\n");
+  document.head.appendChild(css);
+
+  var bar = document.createElement("div");
+  bar.className = "cd-nav";
+  bar.dir = "rtl";
+  bar.innerHTML =
+    '<button type="button" id="cdBack10" title="10 אחורה">«« 10</button>' +
+    '<button type="button" id="cdPrev" title="יום קודם">‹</button>' +
+    '<span class="cd-label" id="cdLabel"></span>' +
+    '<button type="button" id="cdNext" title="יום הבא">›</button>' +
+    '<button type="button" id="cdFwd10" title="10 קדימה">10 »»</button>';
+  document.body.appendChild(bar);
+
+  var dates = JSON.parse(document.getElementById("cdDates").textContent);
+  var here = "2026-06-05";
+  var idx = dates.indexOf(here);
+  var label = document.getElementById("cdLabel");
+  var back10 = document.getElementById("cdBack10");
+  var prev = document.getElementById("cdPrev");
+  var next = document.getElementById("cdNext");
+  var fwd10 = document.getElementById("cdFwd10");
+
+  function fmt(d) {
+    var p = d.split("-");
+    return p[2] + "." + p[1] + "." + p[0];
+  }
+  function go(newIdx) {
+    newIdx = Math.max(0, Math.min(newIdx, dates.length - 1));
+    if (newIdx === idx) return;
+    location.href = dates[newIdx] + ".html";
+  }
+  if (idx === -1) { if (label) label.textContent = here; }
+  else {
+    label.textContent = fmt(dates[idx]) + " (" + (idx + 1) + "/" + dates.length + ")";
+    prev.disabled = idx === 0;
+    next.disabled = idx === dates.length - 1;
+    back10.disabled = idx === 0;
+    fwd10.disabled = idx === dates.length - 1;
+    prev.addEventListener("click", function() { go(idx - 1); });
+    next.addEventListener("click", function() { go(idx + 1); });
+    back10.addEventListener("click", function() { go(idx - 10); });
+    fwd10.addEventListener("click", function() { go(idx + 10); });
+  }
+})();
+</script>
+<!-- cd-nav-end -->
 </body>
 </html>

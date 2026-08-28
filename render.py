@@ -1322,7 +1322,7 @@ TEMPLATE = """<!DOCTYPE html>
           <p class="settings-about-text">יש הערה, באג, או הצעה לשיפור? אשמח לשמוע.</p>
           <a class="a11y-link-btn" href="https://github.com/OJBAR/full-court/issues/new" target="_blank" rel="noopener">GitHub Issues</a>
           <div class="email-row">
-            <a class="a11y-link-btn" href="mailto:ojbar30@gmail.com?subject=%D7%A4%D7%A0%D7%99%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT:+%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%99%D7%94">ojbar30@gmail.com</a>
+            <a class="a11y-link-btn" href="mailto:ojbar30@gmail.com?subject=%D7%A4%D7%A0%D7%99%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT:+%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%99%D7%94&body=%D7%AA%D7%95%D7%9B%D7%9F%20%D7%94%D7%A4%D7%A0%D7%99%D7%94%3A%0A%0A%D7%A6%D7%99%D7%9C%D7%95%D7%9E%D7%99%20%D7%9E%D7%A1%D7%9A%3A%0A">ojbar30@gmail.com</a>
             <button type="button" class="copy-email-btn" onclick="copyEmailAddress(this)" aria-label="העתק את כתובת המייל">📋</button>
           </div>
         </div>

@@ -32,50 +32,54 @@ _PATH_FIXES = [
     ('href="manifest.json"', 'href="../manifest.json"'),
     ('href="demos.html"', 'href="../demos.html"'),
     ('"assets/icon-192.png"', '"../assets/icon-192.png"'),
+    # Prefilled mailto body ("תוכן הפניה:" / "צילומי מסך:") - added to
+    # render.py's TEMPLATE after these 212 pages were already built; these
+    # don't need re-fetching for a plain string swap like this one.
+    (
+        'subject=%D7%A4%D7%A0%D7%99%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT:+%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%99%D7%94"',
+        'subject=%D7%A4%D7%A0%D7%99%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT:+%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%99%D7%94&body=%D7%AA%D7%95%D7%9B%D7%9F%20%D7%94%D7%A4%D7%A0%D7%99%D7%94%3A%0A%0A%D7%A6%D7%99%D7%9C%D7%95%D7%9E%D7%99%20%D7%9E%D7%A1%D7%9A%3A%0A"',
+    ),
 ]
 
-_NAV_CSS = """/* cd-nav-css-start */
-  .cd-nav {
-    position: sticky; top: 0; z-index: 200;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 6px 8px; background: var(--card-bg); border-bottom: 1px solid var(--border);
-    direction: rtl; flex-wrap: nowrap;
-    /* In tabs-mode (see render.py) .wrapper is itself a fixed-height
-       (100dvh) flex column, and .cd-nav sits in that flow as a sibling of
-       .header/main - without this it's eligible to shrink like any other
-       flex child (same class of bug already hit and fixed for the schedule
-       tab's own sticky summary - see render.py's flex-shrink:0 on
-       details.tab-section.app-screen-active > summary). Reported as
-       invisible specifically in the installed PWA (tabs-mode's real
-       target), consistent with that. */
-    flex-shrink: 0;
-  }
-  .cd-nav button {
-    border: 1px solid var(--border); background: var(--bg); color: var(--text-heading);
-    border-radius: 999px; font-size: 13px; cursor: pointer; flex-shrink: 0;
-    padding: 5px 9px; font-family: inherit;
-  }
-  .cd-nav button:disabled { opacity: 0.35; cursor: default; }
-  .cd-nav .cd-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; padding: 0 4px; }
-  .cd-nav .cd-home {
-    text-decoration: none; font-size: 15px; flex-shrink: 0;
-    border: 1px solid var(--border); background: var(--bg); border-radius: 999px;
-    width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-  }
-/* cd-nav-css-end */"""
-
-_NAV_HTML_TEMPLATE = """<!-- cd-nav-start -->
-<div class="cd-nav" dir="rtl">
-  <a class="cd-home" href="../demos.html" title="כל הדמואים">🏠</a>
-  <button type="button" id="cdBack10" title="10 אחורה">«« 10</button>
-  <button type="button" id="cdPrev" title="יום קודם">‹</button>
-  <span class="cd-label" id="cdLabel"></span>
-  <button type="button" id="cdNext" title="יום הבא">›</button>
-  <button type="button" id="cdFwd10" title="10 קדימה">10 »»</button>
-</div>
+_NAV_BLOCK = """<!-- cd-nav-start -->
 <script type="application/json" id="cdDates">__DATES_JSON__</script>
 <script>
 (function() {
+  // Appended straight to document.body (the codebase's own proven pattern
+  // for an always-visible overlay control - see the old install banner)
+  // and position:fixed, deliberately NOT placed in the normal document
+  // flow inside .wrapper. Two earlier attempts (sticky, top of the page,
+  // living inside .wrapper) came up invisible specifically in the
+  // installed PWA - tabs-mode makes .wrapper a fixed-height 100dvh flex
+  // column, and every position/sizing trick tried there still depended on
+  // that flow one way or another. Fixed-at-the-viewport sidesteps all of
+  // it - and moved to the bottom, by request.
+  var css = document.createElement("style");
+  css.textContent = [
+    ".cd-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 999;",
+    "  display: flex; align-items: center; justify-content: center; gap: 6px;",
+    "  padding: 8px; padding-bottom: calc(8px + env(safe-area-inset-bottom));",
+    "  background: var(--card-bg); border-top: 1px solid var(--border);",
+    "  direction: rtl; flex-wrap: nowrap; }",
+    ".cd-nav button { border: 1px solid var(--border); background: var(--bg); color: var(--text-heading);",
+    "  border-radius: 999px; font-size: 13px; cursor: pointer; flex-shrink: 0;",
+    "  padding: 5px 9px; font-family: inherit; }",
+    ".cd-nav button:disabled { opacity: 0.35; cursor: default; }",
+    ".cd-nav .cd-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; padding: 0 4px; }"
+  ].join("\\n");
+  document.head.appendChild(css);
+
+  var bar = document.createElement("div");
+  bar.className = "cd-nav";
+  bar.dir = "rtl";
+  bar.innerHTML =
+    '<button type="button" id="cdBack10" title="10 אחורה">«« 10</button>' +
+    '<button type="button" id="cdPrev" title="יום קודם">‹</button>' +
+    '<span class="cd-label" id="cdLabel"></span>' +
+    '<button type="button" id="cdNext" title="יום הבא">›</button>' +
+    '<button type="button" id="cdFwd10" title="10 קדימה">10 »»</button>';
+  document.body.appendChild(bar);
+
   var dates = JSON.parse(document.getElementById("cdDates").textContent);
   var here = "__DATE__";
   var idx = dates.indexOf(here);
@@ -137,19 +141,20 @@ def fix_file(path: Path, date_str: str, dates_json: str) -> None:
         1,
     )
 
-    # Idempotent: strips any previously-injected block (by its HTML/CSS
-    # comment markers) before adding the current one, so re-running this
-    # script after editing the nav bar's own template actually updates
-    # already-fixed pages instead of leaving their old copy in place.
+    # Idempotent: strips any previously-injected block (by its HTML comment
+    # markers) before adding the current one, so re-running this script
+    # after editing the nav bar's own template actually updates already-
+    # fixed pages instead of leaving their old copy in place.
     html = re.sub(r"<!-- cd-nav-start -->.*?<!-- cd-nav-end -->", "", html, flags=re.S)
+    # Leftover from the first (sticky-top, static <style> block) version of
+    # this bar - no longer produced, but strip it from pages fixed by that
+    # earlier run so it doesn't linger as dead/conflicting CSS.
     html = re.sub(r"/\* cd-nav-css-start \*/.*?/\* cd-nav-css-end \*/", "", html, flags=re.S)
 
-    nav_html = _NAV_HTML_TEMPLATE.replace("__DATES_JSON__", dates_json).replace("__DATE__", date_str)
-    # Right after <div class="wrapper"> - top of the visible page, above
-    # the header, so it's always the first thing on screen regardless of
-    # scroll position (position:sticky handles staying there after).
-    html = html.replace('<div class="wrapper">', '<div class="wrapper">' + nav_html, 1)
-    html = html.replace("</style>", _NAV_CSS + "</style>", 1)
+    nav_block = _NAV_BLOCK.replace("__DATES_JSON__", dates_json).replace("__DATE__", date_str)
+    # Right before </body> - the script builds and appends its own bar to
+    # document.body at runtime (see _NAV_BLOCK's own comment for why).
+    html = html.replace("</body>", nav_block + "\n</body>", 1)
 
     path.write_text(html, encoding="utf-8")
 
