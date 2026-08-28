@@ -693,7 +693,7 @@ TEMPLATE = """<!DOCTYPE html>
   /* pan-y (not none): a day with many games still has to scroll vertically
      normally - only horizontal panning is taken over by initScheduleTab()'s
      own touch handling (swipe between days). */
-  .schedule-games {{ touch-action: pan-y; }}
+  .schedule-tab {{ touch-action: pan-y; }}
 
   /* The playoff bracket's own pager (see initPlayoffBracketPager()) - a
      continuous per-conference strip panned by a JS-measured column width
@@ -887,8 +887,27 @@ TEMPLATE = """<!DOCTYPE html>
     margin-top: 8px;
     font-size: 0.6875rem;
     color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
   }}
   .beta-note a {{ color: var(--accent); text-decoration: none; }}
+  .manual-refresh-btn {{
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-heading);
+    border-radius: 999px;
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }}
 
   /* App-like extras. Most of this section (splash screen, pull-to-refresh)
      is genuinely standalone-only - things a real installed app needs that a
@@ -1108,26 +1127,6 @@ TEMPLATE = """<!DOCTYPE html>
     text-align: center;
   }}
   :root.tabs-mode .app-home-tabs-group summary::after {{ display: none; }}
-  .pull-refresh-indicator {{
-    position: fixed;
-    top: 16px;
-    left: 50%;
-    width: 36px;
-    height: 36px;
-    border-radius: 999px;
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    color: var(--accent);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transform: translateX(-50%) translateY(0);
-    opacity: 0;
-    z-index: 150;
-    pointer-events: none;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  }}
-  .pull-refresh-indicator svg {{ width: 18px; height: 18px; }}
 
   .install-banner {{
     display: none;
@@ -1293,7 +1292,10 @@ TEMPLATE = """<!DOCTYPE html>
         </div>
       </details>
 
-      <div class="beta-note">גרסת בטא · <a href="demos.html">מעבר בין דמואים</a></div>
+      <div class="beta-note">
+        <span>גרסת בטא · <a href="demos.html">מעבר בין דמואים</a></span>
+        <button type="button" class="manual-refresh-btn" onclick="manualRefresh()" aria-label="רענן את הדף">🔄</button>
+      </div>
     </div>
   </div>
 
@@ -2019,71 +2021,6 @@ TEMPLATE = """<!DOCTYPE html>
       document.body.appendChild(banner);
     }})();
 
-    (function initPullToRefresh() {{
-      // Regular browser tabs already have a native pull-to-refresh gesture -
-      // this is only needed because iOS disables that gesture once the PWA
-      // runs in standalone mode (the same platform limitation the old
-      // visible refresh button worked around).
-      var standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-      if (!standalone) return;
-
-      var startY = null;
-      var currentPull = 0;
-      var threshold = 70;
-
-      var indicator = document.createElement("div");
-      indicator.className = "pull-refresh-indicator";
-      indicator.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M12 19l-6-6M12 19l6-6"/></svg>';
-      document.body.appendChild(indicator);
-
-      function setPull(px) {{
-        indicator.style.opacity = Math.min(px / threshold, 1);
-        indicator.style.transform = "translateX(-50%) translateY(" + px + "px) rotate(" + (px * 3) + "deg)";
-      }}
-
-      function atTop() {{
-        // In tabs-mode the page shell itself no longer scrolls (see the CSS)
-        // - <main> is the actual scrollable region there - so "at the top"
-        // has to be checked against main.scrollTop, not window.scrollY.
-        var main = document.querySelector("main");
-        if (document.documentElement.classList.contains("tabs-mode") && main) {{
-          return main.scrollTop === 0;
-        }}
-        return window.scrollY === 0;
-      }}
-
-      document.addEventListener("touchstart", function(e) {{
-        startY = atTop() ? e.touches[0].clientY : null;
-        currentPull = 0;
-        indicator.style.transition = "none";
-      }}, {{ passive: true }});
-
-      document.addEventListener("touchmove", function(e) {{
-        if (startY === null) return;
-        var delta = e.touches[0].clientY - startY;
-        currentPull = Math.max(0, Math.min(delta, threshold * 1.5));
-        setPull(currentPull);
-      }}, {{ passive: true }});
-
-      document.addEventListener("touchend", function() {{
-        indicator.style.transition = "transform 0.25s ease, opacity 0.25s ease";
-        if (currentPull >= threshold) {{
-          // A plain location.reload() still respects GitHub Pages' HTTP
-          // cache - iOS in standalone mode can keep serving a cached
-          // response for several minutes without even asking the server.
-          // A cache-busting query param makes this a URL the cache has
-          // never seen, forcing a genuine fetch every time.
-          var url = location.pathname + "?_r=" + Date.now();
-          location.href = url;
-        }} else {{
-          indicator.style.opacity = 0;
-          indicator.style.transform = "translateX(-50%) translateY(0)";
-        }}
-        startY = null;
-        currentPull = 0;
-      }}, {{ passive: true }});
-    }})();
-
     (function initAppHome() {{
       // Deliberately NOT gated on standalone (display-mode) - a first-time
       // visitor in a regular mobile browser tab is exactly who needs to see
@@ -2194,7 +2131,8 @@ TEMPLATE = """<!DOCTYPE html>
       var prevBtn = wrap.querySelector(".schedule-prev");
       var nextBtn = wrap.querySelector(".schedule-next");
       var IL_TZ = "Asia/Jerusalem";
-      var WEEKDAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+      // "שבת" stands alone (not "יום שבת") - standard Hebrew usage.
+      var WEEKDAYS = ["יום ראשון", "יום שני", "יום שלישי", "יום רביעי", "יום חמישי", "יום שישי", "שבת"];
 
       function ilDateKey(isoUtc) {{
         return new Date(isoUtc).toLocaleDateString("en-CA", {{ timeZone: IL_TZ }});
@@ -2340,17 +2278,24 @@ TEMPLATE = """<!DOCTYPE html>
       // current day's card slides out, the new day's content gets built,
       // and it slides in from the matching side. Same felt gesture, applied
       // to swapped content instead of a shared track.
+      // Listens on the whole tab (nav + label + list), not just the games
+      // list, so a swipe anywhere in the tab works - only the list itself
+      // visually slides, the nav bar stays put.
+      // Right-to-left date order: swiping right (finger moves right, dx>0)
+      // goes to the next day, swiping left goes to the previous - matching
+      // how the day label itself reads (today on the right, moving right
+      // steps forward), the opposite of a plain LTR carousel.
       var startX = null;
       var startY = null;
       var dragging = false;
 
-      gamesEl.addEventListener("touchstart", function(e) {{
+      wrap.addEventListener("touchstart", function(e) {{
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         dragging = false;
       }}, {{ passive: true }});
 
-      gamesEl.addEventListener("touchmove", function(e) {{
+      wrap.addEventListener("touchmove", function(e) {{
         if (startX === null) return;
         var dx = e.touches[0].clientX - startX;
         var dy = e.touches[0].clientY - startY;
@@ -2360,7 +2305,7 @@ TEMPLATE = """<!DOCTYPE html>
         gamesEl.style.transform = "translateX(" + dx + "px)";
       }}, {{ passive: true }});
 
-      gamesEl.addEventListener("touchend", function(e) {{
+      wrap.addEventListener("touchend", function(e) {{
         if (!dragging) {{ startX = null; startY = null; return; }}
         var dx = e.changedTouches[0].clientX - startX;
         var threshold = 40;
@@ -2368,24 +2313,27 @@ TEMPLATE = """<!DOCTYPE html>
         startY = null;
         dragging = false;
 
-        if (dx <= -threshold) {{ swipeTo(1); }}
-        else if (dx >= threshold) {{ swipeTo(-1); }}
+        if (dx >= threshold) {{ swipeTo(1); }}
+        else if (dx <= -threshold) {{ swipeTo(-1); }}
         else {{
           gamesEl.style.transition = "transform 0.2s ease";
           gamesEl.style.transform = "translateX(0)";
         }}
       }});
 
-      // direction 1 = swiped toward the next day, -1 = toward the previous.
+      // direction 1 = swiped right, toward the next day; -1 = swiped left,
+      // toward the previous. The exit continues further the same way the
+      // finger just dragged it (matching the live drag-follow above), and
+      // the new content enters from the opposite side.
       function swipeTo(direction) {{
         currentKey = addDays(currentKey, direction);
         gamesEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
-        gamesEl.style.transform = "translateX(" + (direction * -60) + "px)";
+        gamesEl.style.transform = "translateX(" + (direction * 60) + "px)";
         gamesEl.style.opacity = "0";
         window.setTimeout(function() {{
           render();
           gamesEl.style.transition = "none";
-          gamesEl.style.transform = "translateX(" + (direction * 60) + "px)";
+          gamesEl.style.transform = "translateX(" + (direction * -60) + "px)";
           gamesEl.style.opacity = "0";
           void gamesEl.offsetWidth; // force reflow so the next line animates
           gamesEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
@@ -2396,6 +2344,15 @@ TEMPLATE = """<!DOCTYPE html>
 
       render();
     }})();
+
+    function manualRefresh() {{
+      // A plain location.reload() still respects GitHub Pages' HTTP cache -
+      // iOS in standalone mode especially can keep serving a cached response
+      // for several minutes without even asking the server. A cache-busting
+      // query param makes this a URL the cache has never seen, forcing a
+      // genuine fetch every time.
+      location.href = location.pathname + "?_r=" + Date.now();
+    }}
 
     function toggleTheme() {{
       var current = document.documentElement.getAttribute("data-theme");
