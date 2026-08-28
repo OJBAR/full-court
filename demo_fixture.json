@@ -9966,6 +9966,31 @@
         "home_score": null,
         "away_score": null,
         "is_final": false
+      },
+      {
+        "game_id": "0022500613",
+        "tipoff_utc": "2026-01-20T00:00:00Z",
+        "home_team": "Philadelphia 76ers",
+        "home_tricode": "PHI",
+        "away_team": "Phoenix Suns",
+        "away_tricode": "PHX",
+        "home_score": 110,
+        "away_score": 116,
+        "is_final": true,
+        "rich": {
+          "period": 4,
+          "highlight_url": "https://www.youtube.com/watch?v=bJooVVfYjMk",
+          "po_round": null,
+          "series_text": "",
+          "series_game_number": "",
+          "cup_subtype": null,
+          "cup_sub_label": "",
+          "is_play_in": false,
+          "away_wins": 27,
+          "away_losses": 17,
+          "home_wins": 23,
+          "home_losses": 19
+        }
       }
     ],
     "demo_today": "2026-01-20"

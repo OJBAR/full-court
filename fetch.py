@@ -416,6 +416,65 @@ def get_season_schedule(date_str: str) -> list[dict]:
     return sorted(games, key=lambda g: g["tipoff_utc"])
 
 
+def _enrich_schedule_with_rich_data(season_schedule: list[dict], games: list[dict], standings: pd.DataFrame) -> None:
+    """
+    Attaches a "rich" sub-dict (OT count, highlight/series/cup context, real
+    season win-loss records) to whichever season_schedule entries correspond
+    to games this brief actually fetched full box scores for - mutates
+    season_schedule in place. Every other entry (the vast majority of the
+    season - this level of detail is only ever fetched for the one night the
+    brief covers) is left as-is; render.py's initScheduleTab()/renderRichRow()
+    falls back to the plain score/tip-off row for those. This is what lets
+    the schedule tab absorb what used to be a separate "results" tab: the
+    night this brief is about just happens to render richly wherever the
+    viewer's browsing lands there.
+
+    Mirrors the win/loss lookup the old results tab used to do: a Cup
+    knockout game's own wins/losses (from line_score) are scoped to the
+    knockout stage itself (e.g. 1-0 for a Championship-game team), not the
+    season, so those look the real record up from standings instead.
+    """
+    standings_by_team_id = {s["TeamID"]: s for s in standings.to_dict(orient="records")}
+    games_by_id = {g["game_id"]: g for g in games}
+
+    for entry in season_schedule:
+        game = games_by_id.get(entry["game_id"])
+        if not game:
+            continue
+        line_score = game.get("line_score", [])
+        away_line = next((t for t in line_score if t["teamTricode"] == entry["away_tricode"]), None)
+        home_line = next((t for t in line_score if t["teamTricode"] == entry["home_tricode"]), None)
+        is_play_in_game = entry["game_id"].startswith("005")
+        is_knockout = game.get("cup_subtype") == "in-season-knockout"
+        show_record = not game.get("po_round") and not is_play_in_game
+
+        def _record(line):
+            if not show_record or line is None:
+                return None, None
+            if is_knockout:
+                standing = standings_by_team_id.get(line["teamId"])
+                return (standing["WINS"], standing["LOSSES"]) if standing else (None, None)
+            return line.get("wins"), line.get("losses")
+
+        away_wins, away_losses = _record(away_line)
+        home_wins, home_losses = _record(home_line)
+
+        entry["rich"] = {
+            "period": game.get("period"),
+            "highlight_url": game.get("highlight_url"),
+            "po_round": game.get("po_round"),
+            "series_text": game.get("series_text"),
+            "series_game_number": game.get("series_game_number"),
+            "cup_subtype": game.get("cup_subtype"),
+            "cup_sub_label": game.get("cup_sub_label"),
+            "is_play_in": is_play_in_game,
+            "away_wins": away_wins,
+            "away_losses": away_losses,
+            "home_wins": home_wins,
+            "home_losses": home_losses,
+        }
+
+
 def fetch_for_date(date_str: str) -> dict:
     """
     Fetches all games for a given US Eastern date, their box scores, and current
@@ -493,6 +552,7 @@ def fetch_for_date(date_str: str) -> dict:
 
     try:
         season_schedule = get_season_schedule(date_str)
+        _enrich_schedule_with_rich_data(season_schedule, games, standings)
     except Exception as e:
         print(f"Warning: could not fetch season schedule ({e}) - continuing without it.")
         season_schedule = []

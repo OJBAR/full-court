@@ -252,13 +252,15 @@ TEMPLATE = """<!DOCTYPE html>
     color: var(--text-muted);
     margin-top: 6px;
   }}
-  /* The game's own page on nba.com (see _nba_game_url) and its highlight
-     video on GAMETIME HIGHLIGHTS, an unofficial third-party channel (see
-     highlights.py) - either or both may be missing (the highlight
-     especially, since it's often not up yet at brief time - see
-     scheduler.py's two-pass design), so .game-links only renders the ones
-     that exist, side by side. Both open in a real browser tab/app, out of
-     the installed PWA. */
+  /* The game's own page on nba.com and its highlight video on GAMETIME
+     HIGHLIGHTS, an unofficial third-party channel (see highlights.py) -
+     either or both may be missing (the highlight especially, since it's
+     often not up yet at brief time - see scheduler.py's two-pass design),
+     so .game-links only renders the ones that exist, side by side. Both
+     open in a real browser tab/app, out of the installed PWA. See
+     initScheduleTab()'s gameUrl()/renderRichRow() - the schedule tab (see
+     _build_schedule_html) is what builds these now, results are no longer
+     a separate tab. */
   .game-links {{
     display: flex;
     justify-content: center;
@@ -1238,13 +1240,6 @@ TEMPLATE = """<!DOCTYPE html>
         <div class="summary-date">{page_date_label}</div>
         {summary_html}
       </div>
-
-      <details class="tab-section">
-        <summary>{results_title}</summary>
-        <div class="details-body">
-          {results_html}
-        </div>
-      </details>
 
       {secondary_section_html}
     </main>
@@ -2235,6 +2230,51 @@ TEMPLATE = """<!DOCTYPE html>
         return "https://www.nba.com/game/" + g.away_tricode.toLowerCase() + "-vs-" + g.home_tricode.toLowerCase() + "-" + g.game_id;
       }}
 
+      // The "rich" row - same look as the old, now-removed results tab
+      // (.team-record/.ot-tag/.game-sub/.game-links) - for a game this
+      // brief actually fetched box scores/highlights for (see g.rich, set
+      // by fetch.fetch_for_date's schedule-enrichment step). Mirrors that
+      // Python code's logic exactly, just in JS since this renders client-
+      // side on demand.
+      function renderRichRow(g) {{
+        var r = g.rich;
+        var awayWon = g.is_final && g.away_score > g.home_score;
+        var homeWon = g.is_final && g.home_score > g.away_score;
+        // Season record next to the team code - not during Playoffs/Play-In,
+        // where the series score / seed context (the caption below) is the
+        // relevant number instead.
+        var showRecord = !r.po_round && !r.is_play_in;
+        function teamSpan(tricode, wins, losses, isWinner) {{
+          var record = (showRecord && wins != null && losses != null)
+            ? '<span class="team-record">' + wins + '-' + losses + '</span>' : '';
+          return '<span class="team' + (isWinner ? " winner" : "") + '">' + tricode + record + '</span>';
+        }}
+        var otCount = (r.period || 4) - 4;
+        var otHtml = otCount > 0
+          ? '<span class="ot-tag">' + (otCount === 1 ? "OT" : otCount + "OT") + '</span>' : '';
+        var block = '<div class="game-row">' +
+          teamSpan(g.away_tricode, r.away_wins, r.away_losses, awayWon) +
+          '<span class="score' + (awayWon ? " winner" : "") + '">' + g.away_score + '</span>' +
+          '<span class="score">–</span>' +
+          '<span class="score' + (homeWon ? " winner" : "") + '">' + g.home_score + '</span>' +
+          teamSpan(g.home_tricode, r.home_wins, r.home_losses, homeWon) +
+          otHtml +
+          '</div>';
+        if (r.po_round) {{
+          block += '<div class="game-sub">' + (r.series_game_number || "") + " · " + (r.series_text || "") + '</div>';
+        }} else if (r.cup_subtype) {{
+          block += '<div class="game-sub">NBA Cup · ' + (r.cup_sub_label || "") + '</div>';
+        }} else if (r.is_play_in && r.series_text) {{
+          block += '<div class="game-sub">Play-In · ' + r.series_text + '</div>';
+        }}
+        var links = '<a class="game-link" href="' + gameUrl(g) + '" target="_blank" rel="noopener">דף המשחק</a>';
+        if (r.highlight_url) {{
+          links += '<a class="game-link" href="' + r.highlight_url + '" target="_blank" rel="noopener">תקציר</a>';
+        }}
+        block += '<div class="game-links">' + links + '</div>';
+        return '<div class="game-block">' + block + '</div>';
+      }}
+
       var byDate = {{}};
       games.forEach(function(g) {{
         var key = ilDateKey(g.tipoff_utc);
@@ -2272,6 +2312,7 @@ TEMPLATE = """<!DOCTYPE html>
           return;
         }}
         gamesEl.innerHTML = dayGames.map(function(g) {{
+          if (g.rich) return renderRichRow(g);
           var awayWon = g.is_final && g.away_score > g.home_score;
           var homeWon = g.is_final && g.home_score > g.away_score;
           var mid = g.is_final
@@ -2398,112 +2439,6 @@ def _paragraphs_to_html(summary: str) -> str:
     return "\n      ".join(f"<p>{html.escape(p)}</p>" for p in paragraphs)
 
 
-def _nba_game_url(game: dict) -> str | None:
-    """
-    The official league page for this exact game (box score / play-by-play),
-    e.g. nba.com/game/lac-vs-orl-0022500264 - built entirely from data
-    already being fetched (no extra request, no API key). "matchup" is
-    ScoreboardV3's gameCode field, formatted "YYYYMMDD/AWAYHOME" (confirmed
-    against nba.com's own schedule page); nba.com's routing itself only
-    seems to care about the game_id suffix, but the away-vs-home slug is
-    built properly anyway for a real, correct-looking URL rather than
-    leaning on that leniency.
-    """
-    matchup = game.get("matchup", "")
-    if "/" not in matchup:
-        return None
-    codes = matchup.split("/")[-1]
-    if len(codes) != 6:
-        return None
-    away, home = codes[:3].lower(), codes[3:].lower()
-    return f"https://www.nba.com/game/{away}-vs-{home}-{game['game_id']}"
-
-
-def _build_results_html(games: list[dict], standings: list[dict]) -> str:
-    if not games:
-        return '<p style="color:var(--text-muted); font-size:0.875rem;">אין משחקים ללילה הזה.</p>'
-
-    standings_by_team_id = {s["TeamID"]: s for s in standings}
-    rows = []
-    for game in games:
-        line_score = game["line_score"]
-        if len(line_score) != 2:
-            continue
-        team_a, team_b = line_score
-        a_wins = team_a["score"] > team_b["score"]
-        is_play_in_game = game["game_id"].startswith("005")
-        is_cup_knockout_game = game.get("cup_subtype") == "in-season-knockout"
-        # Season record next to the team code - not during playoffs or Play-In,
-        # where the series score / seed context (shown in the caption below) is
-        # the relevant number instead, not the season record.
-        show_record = not game.get("po_round") and not is_play_in_game
-
-        def _team_span(team: dict, is_winner: bool) -> str:
-            if show_record and is_cup_knockout_game:
-                # Cup knockout games report "wins"/"losses" scoped to the
-                # knockout stage itself (e.g. 1-0 for a Championship-game
-                # team), not the real season record - look the real record up
-                # from standings instead.
-                standing = standings_by_team_id.get(team["teamId"])
-                wins = standing["WINS"] if standing else None
-                losses = standing["LOSSES"] if standing else None
-            elif show_record:
-                wins = team.get("wins")
-                losses = team.get("losses")
-            else:
-                wins = losses = None
-            record = (
-                f'<span class="team-record">{wins}-{losses}</span>'
-                if wins is not None and losses is not None
-                else ""
-            )
-            return (
-                f'<span class="team{" winner" if is_winner else ""}">'
-                f'{html.escape(team["teamTricode"])}{record}</span>'
-            )
-
-        period = game.get("period", 4)
-        ot_count = period - 4
-        ot_html = (
-            f'<span class="ot-tag">{"OT" if ot_count == 1 else f"{ot_count}OT"}</span>'
-            if ot_count > 0
-            else ""
-        )
-        block = (
-            '<div class="game-row">'
-            f'{_team_span(team_a, a_wins)}'
-            f'<span class="score{" winner" if a_wins else ""}">{team_a["score"]}</span>'
-            f'<span class="score">–</span>'
-            f'<span class="score{"" if a_wins else " winner"}">{team_b["score"]}</span>'
-            f'{_team_span(team_b, not a_wins)}'
-            f'{ot_html}'
-            "</div>"
-        )
-        if game.get("po_round"):
-            game_number = html.escape(str(game.get("series_game_number", "")))
-            series_text = html.escape(str(game.get("series_text", "")))
-            block += f'<div class="game-sub">{game_number} · {series_text}</div>'
-        elif game.get("cup_subtype"):
-            cup_sub_label = html.escape(str(game.get("cup_sub_label", "")))
-            block += f'<div class="game-sub">NBA Cup · {cup_sub_label}</div>'
-        elif game["game_id"].startswith("005") and game.get("series_text"):
-            block += f'<div class="game-sub">Play-In · {html.escape(str(game["series_text"]))}</div>'
-        game_url = _nba_game_url(game)
-        highlight_url = game.get("highlight_url")
-        links_html = "".join(
-            f'<a class="game-link" href="{url}" target="_blank" rel="noopener">{label}</a>'
-            for url, label in (
-                (game_url, "דף המשחק"),
-                (highlight_url, "תקציר"),
-            )
-            if url
-        )
-        if links_html:
-            block += f'<div class="game-links">{links_html}</div>'
-        rows.append(f'<div class="game-block">{block}</div>')
-    return "\n        ".join(rows)
-
-
 def _build_standings_html(standings: list[dict]) -> str:
     if not standings:
         return '<p style="color:var(--text-muted); font-size:0.875rem;">אין נתוני טבלה זמינים.</p>'
@@ -2552,8 +2487,14 @@ def _build_schedule_html(season_schedule: list[dict], simulated_today: str | Non
     done in Israel time in JS too (Intl's timeZone support), not US Eastern,
     so a westward-tipping game after local midnight correctly lands on the
     next Israel day instead of staying lumped in with the earlier one.
-    Reuses the exact same .game-block/.game-row/.team/.score markup as the
-    results tab so a schedule day looks like part of the same list.
+    A game this brief actually fetched box scores/highlights for (see
+    fetch.fetch_for_date's schedule-enrichment step) carries a "rich"
+    sub-object (OT count, highlight/series/cup info, real season records) -
+    initScheduleTab()'s renderRichRow() renders those the same way the old,
+    now-removed results tab did (.team-record/.ot-tag/.game-sub/.game-links).
+    Every other day's games - the vast majority, since that level of detail
+    is only ever fetched for the one night the brief covers - don't carry
+    "rich" and fall back to the plain score-or-tip-off-time row.
 
     simulated_today (YYYY-MM-DD) is demo-only: real briefs never set it, so
     initScheduleTab() falls through to the viewer's real live date exactly
@@ -3307,30 +3248,40 @@ def _details_block(title: str, inner_html: str) -> str:
 
 def _build_secondary_section(data: dict) -> str:
     """
-    Playoffs: the bracket tab (a single paged bracket covering both
+    First, always: the season schedule browser (see _build_schedule_html) -
+    this used to be a separate "results" tab plus a schedule tab at the end,
+    but the schedule tab already shows results for any past day including
+    the one this brief is about (it just resolves there by default, being
+    the viewer's real "today" - see initScheduleTab()), so the two were
+    merged into one. A day this brief actually fetched box scores/highlights
+    for renders "rich" (OT tag, highlight link, series/cup caption - see
+    renderRichRow() in JS); every other day in the schedule - which this
+    brief never fetched that level of detail for - renders the plain
+    score-or-tip-off-time version, same as before.
+    Then, playoffs: the bracket tab (a single paged bracket covering both
     conferences and the Finals together - see
     _build_combined_playoff_bracket_html), plus the league standings tab
     last, for reference (seeding is already locked in by playoff time, but
     the final regular-season table is still worth being able to check).
-    NBA Cup days
-    (group stage or knockout): the
-    regular league standings always show first, since every Cup game except
-    the Championship counts toward the regular season - plus a group-standings
-    tab on group-stage days and a connected bracket tab on knockout days.
+    NBA Cup days (group stage or knockout): the regular league standings
+    always show, since every Cup game except the Championship counts toward
+    the regular season - plus a group-standings tab on group-stage days and
+    a connected bracket tab on knockout days.
     Otherwise: standings only.
-    Last, in every case: the season schedule browser (see
-    _build_schedule_html) - always the final tab, after everything else
-    including the results tab itself.
     """
+    sections = [(
+        "לוח המשחקים",
+        _build_schedule_html(data.get("season_schedule", []), data.get("demo_today")),
+    )]
+
     if data.get("is_playoffs"):
         playoff_series = data.get("playoff_series", [])
-        sections = [
+        sections += [
             ("בראקט הפלייאוף", _build_combined_playoff_bracket_html(playoff_series, data["games"])),
             ("טבלת הליגה", _build_standings_html(data["standings"])),
         ]
     else:
         standings_section = ("טבלת הליגה", _build_standings_html(data["standings"]))
-        sections = []
         if data.get("is_cup_groups"):
             sections.append(
                 ("בתי הגביע", _build_cup_group_standings_html(data.get("cup_group_standings", [])))
@@ -3346,11 +3297,6 @@ def _build_secondary_section(data: dict) -> str:
             sections.append(("פלייאין", f'<div class="play-in-bracket">{play_in_blocks}</div>'))
         sections.append(standings_section)
 
-    sections.append((
-        "לוח המשחקים",
-        _build_schedule_html(data.get("season_schedule", []), data.get("demo_today")),
-    ))
-
     return "\n\n    ".join(_details_block(title, body_html) for title, body_html in sections)
 
 
@@ -3361,14 +3307,11 @@ def render(data: dict, summary: str) -> str:
     display_date = date_obj.strftime("%d/%m/%Y")
     next_day = date_obj + timedelta(days=1)
     night_label = f"הלילה בין {_HEBREW_WEEKDAYS[date_obj.weekday()]} ל{_HEBREW_WEEKDAYS[next_day.weekday()]}"
-    results_title = "תוצאת המשחק" if len(data["games"]) == 1 else "כל תוצאות הלילה"
     return TEMPLATE.format(
         display_date=display_date,
         page_date_label=f"{display_date}, {night_label}",
         app_version=datetime.now(timezone.utc).isoformat(),
         summary_html=_paragraphs_to_html(summary),
-        results_title=results_title,
-        results_html=_build_results_html(data["games"], data["standings"]),
         secondary_section_html=_build_secondary_section(data),
     )
 

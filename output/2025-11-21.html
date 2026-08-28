@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-28T07:58:11.966233+00:00">
+<meta name="app-version" content="2026-08-28T08:07:19.345632+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -234,13 +234,15 @@
     color: var(--text-muted);
     margin-top: 6px;
   }
-  /* The game's own page on nba.com (see _nba_game_url) and its highlight
-     video on GAMETIME HIGHLIGHTS, an unofficial third-party channel (see
-     highlights.py) - either or both may be missing (the highlight
-     especially, since it's often not up yet at brief time - see
-     scheduler.py's two-pass design), so .game-links only renders the ones
-     that exist, side by side. Both open in a real browser tab/app, out of
-     the installed PWA. */
+  /* The game's own page on nba.com and its highlight video on GAMETIME
+     HIGHLIGHTS, an unofficial third-party channel (see highlights.py) -
+     either or both may be missing (the highlight especially, since it's
+     often not up yet at brief time - see scheduler.py's two-pass design),
+     so .game-links only renders the ones that exist, side by side. Both
+     open in a real browser tab/app, out of the installed PWA. See
+     initScheduleTab()'s gameUrl()/renderRichRow() - the schedule tab (see
+     _build_schedule_html) is what builds these now, results are no longer
+     a separate tab. */
   .game-links {
     display: flex;
     justify-content: center;
@@ -1225,21 +1227,13 @@
       </div>
 
       <details class="tab-section">
-        <summary>כל תוצאות הלילה</summary>
-        <div class="details-body">
-          <div class="game-block"><div class="game-row"><span class="team winner">CLE<span class="team-record">11-6</span></span><span class="score winner">120</span><span class="score">–</span><span class="score">109</span><span class="team">IND<span class="team-record">2-14</span></span></div><div class="game-sub">NBA Cup · East Group A</div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/ind-vs-cle-0022500048" target="_blank" rel="noopener">דף המשחק</a></div></div>
-        <div class="game-block"><div class="game-row"><span class="team">BOS<span class="team-record">8-8</span></span><span class="score">105</span><span class="score">–</span><span class="score winner">113</span><span class="team winner">BKN<span class="team-record">3-12</span></span></div><div class="game-sub">NBA Cup · East Group B</div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/bkn-vs-bos-0022500049" target="_blank" rel="noopener">דף המשחק</a></div></div>
-        <div class="game-block"><div class="game-row"><span class="team winner">TOR<span class="team-record">11-5</span></span><span class="score winner">140</span><span class="score">–</span><span class="score">110</span><span class="team">WAS<span class="team-record">1-14</span></span></div><div class="game-sub">NBA Cup · East Group A</div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/was-vs-tor-0022500050" target="_blank" rel="noopener">דף המשחק</a></div></div>
-        <div class="game-block"><div class="game-row"><span class="team">CHI<span class="team-record">8-7</span></span><span class="score">107</span><span class="score">–</span><span class="score winner">143</span><span class="team winner">MIA<span class="team-record">10-6</span></span></div><div class="game-sub">NBA Cup · East Group C</div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/mia-vs-chi-0022500051" target="_blank" rel="noopener">דף המשחק</a></div></div>
-        <div class="game-block"><div class="game-row"><span class="team winner">DAL<span class="team-record">5-12</span></span><span class="score winner">118</span><span class="score">–</span><span class="score">115</span><span class="team">NOP<span class="team-record">2-14</span></span></div><div class="game-sub">NBA Cup · West Group B</div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/nop-vs-dal-0022500052" target="_blank" rel="noopener">דף המשחק</a></div></div>
-        <div class="game-block"><div class="game-row"><span class="team winner">PHX<span class="team-record">10-6</span></span><span class="score winner">114</span><span class="score">–</span><span class="score">113</span><span class="team">MIN<span class="team-record">10-6</span></span></div><div class="game-sub">NBA Cup · West Group A</div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/min-vs-phx-0022500053" target="_blank" rel="noopener">דף המשחק</a></div></div>
-        <div class="game-block"><div class="game-row"><span class="team">HOU<span class="team-record">10-4</span></span><span class="score">109</span><span class="score">–</span><span class="score winner">112</span><span class="team winner">DEN<span class="team-record">12-3</span></span></div><div class="game-sub">NBA Cup · West Group C</div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/den-vs-hou-0022500054" target="_blank" rel="noopener">דף המשחק</a></div></div>
-        <div class="game-block"><div class="game-row"><span class="team">UTA<span class="team-record">5-10</span></span><span class="score">112</span><span class="score">–</span><span class="score winner">144</span><span class="team winner">OKC<span class="team-record">16-1</span></span></div><div class="game-sub">NBA Cup · West Group A</div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/okc-vs-uta-0022500055" target="_blank" rel="noopener">דף המשחק</a></div></div>
-        <div class="game-block"><div class="game-row"><span class="team">GSW<span class="team-record">9-9</span></span><span class="score">123</span><span class="score">–</span><span class="score winner">127</span><span class="team winner">POR<span class="team-record">7-9</span></span></div><div class="game-sub">NBA Cup · West Group C</div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/por-vs-gsw-0022500056" target="_blank" rel="noopener">דף המשחק</a></div></div>
-        </div>
-      </details>
+      <summary>לוח המשחקים</summary>
+      <div class="details-body" dir="ltr">
+        <div class="schedule-tab" data-simulated-today="2025-11-21"><div class="pager-nav schedule-nav"><button type="button" class="pager-arrow schedule-prev" aria-label="יום קודם">‹</button><div class="schedule-date-label"></div><button type="button" class="pager-arrow schedule-next" aria-label="יום הבא">›</button></div><div class="schedule-games"></div><script type="application/json" class="schedule-data">[{"game_id": "0022500801", "tipoff_utc": "2025-11-20T00:30:00Z", "home_team": "New York Knicks", "home_tricode": "NYK", "away_team": "Philadelphia 76ers", "away_tricode": "PHI", "home_score": 115, "away_score": 108, "is_final": true}, {"game_id": "0022500802", "tipoff_utc": "2025-11-21T03:00:00Z", "home_team": "Denver Nuggets", "home_tricode": "DEN", "away_team": "Los Angeles Lakers", "away_tricode": "LAL", "home_score": 112, "away_score": 101, "is_final": true}, {"game_id": "0022500803", "tipoff_utc": "2025-11-26T00:00:00Z", "home_team": "Boston Celtics", "home_tricode": "BOS", "away_team": "Miami Heat", "away_tricode": "MIA", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022500804", "tipoff_utc": "2025-11-26T03:30:00Z", "home_team": "Phoenix Suns", "home_tricode": "PHX", "away_team": "Oklahoma City Thunder", "away_tricode": "OKC", "home_score": null, "away_score": null, "is_final": false}]</script></div>
+      </div>
+    </details>
 
-      <details class="tab-section">
+    <details class="tab-section">
       <summary>בתי הגביע</summary>
       <div class="details-body" dir="ltr">
         <div class="pager" data-page="0"><div class="pager-viewport"><div class="pager-track"><div class="pager-page"><div class="conference standings-block"><h3>מערב</h3><div class="cup-group"><h4>Group A</h4><div class="standing-row boundary"><span class="standing-team">Oklahoma City Thunder</span><span class="standing-record">2-0</span><span class="standing-diff">+63</span></div>
@@ -1307,13 +1301,6 @@
           <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Brooklyn Nets</span><span class="standing-record">20-62</span><span class="standing-streak loss">L 3</span></div>
           <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Indiana Pacers</span><span class="standing-record">19-63</span><span class="standing-streak loss">L 2</span></div>
           <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Washington Wizards</span><span class="standing-record">17-65</span><span class="standing-streak loss">L 10</span></div></div></div></div></div><div class="pager-nav"><button type="button" class="pager-arrow pager-prev" aria-label="הקודם">‹</button><button type="button" class="pager-arrow pager-next" aria-label="הבא">›</button></div></div>
-      </div>
-    </details>
-
-    <details class="tab-section">
-      <summary>לוח המשחקים</summary>
-      <div class="details-body" dir="ltr">
-        <div class="schedule-tab" data-simulated-today="2025-11-21"><div class="pager-nav schedule-nav"><button type="button" class="pager-arrow schedule-prev" aria-label="יום קודם">‹</button><div class="schedule-date-label"></div><button type="button" class="pager-arrow schedule-next" aria-label="יום הבא">›</button></div><div class="schedule-games"></div><script type="application/json" class="schedule-data">[{"game_id": "0022500801", "tipoff_utc": "2025-11-20T00:30:00Z", "home_team": "New York Knicks", "home_tricode": "NYK", "away_team": "Philadelphia 76ers", "away_tricode": "PHI", "home_score": 115, "away_score": 108, "is_final": true}, {"game_id": "0022500802", "tipoff_utc": "2025-11-21T03:00:00Z", "home_team": "Denver Nuggets", "home_tricode": "DEN", "away_team": "Los Angeles Lakers", "away_tricode": "LAL", "home_score": 112, "away_score": 101, "is_final": true}, {"game_id": "0022500803", "tipoff_utc": "2025-11-26T00:00:00Z", "home_team": "Boston Celtics", "home_tricode": "BOS", "away_team": "Miami Heat", "away_tricode": "MIA", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022500804", "tipoff_utc": "2025-11-26T03:30:00Z", "home_team": "Phoenix Suns", "home_tricode": "PHX", "away_team": "Oklahoma City Thunder", "away_tricode": "OKC", "home_score": null, "away_score": null, "is_final": false}]</script></div>
       </div>
     </details>
     </main>
@@ -2304,6 +2291,51 @@
         return "https://www.nba.com/game/" + g.away_tricode.toLowerCase() + "-vs-" + g.home_tricode.toLowerCase() + "-" + g.game_id;
       }
 
+      // The "rich" row - same look as the old, now-removed results tab
+      // (.team-record/.ot-tag/.game-sub/.game-links) - for a game this
+      // brief actually fetched box scores/highlights for (see g.rich, set
+      // by fetch.fetch_for_date's schedule-enrichment step). Mirrors that
+      // Python code's logic exactly, just in JS since this renders client-
+      // side on demand.
+      function renderRichRow(g) {
+        var r = g.rich;
+        var awayWon = g.is_final && g.away_score > g.home_score;
+        var homeWon = g.is_final && g.home_score > g.away_score;
+        // Season record next to the team code - not during Playoffs/Play-In,
+        // where the series score / seed context (the caption below) is the
+        // relevant number instead.
+        var showRecord = !r.po_round && !r.is_play_in;
+        function teamSpan(tricode, wins, losses, isWinner) {
+          var record = (showRecord && wins != null && losses != null)
+            ? '<span class="team-record">' + wins + '-' + losses + '</span>' : '';
+          return '<span class="team' + (isWinner ? " winner" : "") + '">' + tricode + record + '</span>';
+        }
+        var otCount = (r.period || 4) - 4;
+        var otHtml = otCount > 0
+          ? '<span class="ot-tag">' + (otCount === 1 ? "OT" : otCount + "OT") + '</span>' : '';
+        var block = '<div class="game-row">' +
+          teamSpan(g.away_tricode, r.away_wins, r.away_losses, awayWon) +
+          '<span class="score' + (awayWon ? " winner" : "") + '">' + g.away_score + '</span>' +
+          '<span class="score">–</span>' +
+          '<span class="score' + (homeWon ? " winner" : "") + '">' + g.home_score + '</span>' +
+          teamSpan(g.home_tricode, r.home_wins, r.home_losses, homeWon) +
+          otHtml +
+          '</div>';
+        if (r.po_round) {
+          block += '<div class="game-sub">' + (r.series_game_number || "") + " · " + (r.series_text || "") + '</div>';
+        } else if (r.cup_subtype) {
+          block += '<div class="game-sub">NBA Cup · ' + (r.cup_sub_label || "") + '</div>';
+        } else if (r.is_play_in && r.series_text) {
+          block += '<div class="game-sub">Play-In · ' + r.series_text + '</div>';
+        }
+        var links = '<a class="game-link" href="' + gameUrl(g) + '" target="_blank" rel="noopener">דף המשחק</a>';
+        if (r.highlight_url) {
+          links += '<a class="game-link" href="' + r.highlight_url + '" target="_blank" rel="noopener">תקציר</a>';
+        }
+        block += '<div class="game-links">' + links + '</div>';
+        return '<div class="game-block">' + block + '</div>';
+      }
+
       var byDate = {};
       games.forEach(function(g) {
         var key = ilDateKey(g.tipoff_utc);
@@ -2341,6 +2373,7 @@
           return;
         }
         gamesEl.innerHTML = dayGames.map(function(g) {
+          if (g.rich) return renderRichRow(g);
           var awayWon = g.is_final && g.away_score > g.home_score;
           var homeWon = g.is_final && g.home_score > g.away_score;
           var mid = g.is_final
