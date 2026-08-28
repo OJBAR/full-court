@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-28T13:14:21.462110+00:00">
+<meta name="app-version" content="2026-08-28T18:51:12.996403+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -670,7 +670,11 @@
   /* The season schedule tab's day nav (see initScheduleTab()) - reuses
      .pager-nav/.pager-arrow above for the arrows themselves, just needs its
      own label in between and a bit more breathing room above the list. */
-  .schedule-nav { margin-bottom: 8px; }
+  /* position:relative so .schedule-cal-toggle can sit off to the side via
+     position:absolute, out of the flex flow entirely - otherwise it's a
+     4th flex item alongside the arrows/label, pushing that centered trio
+     visibly off-center instead of leaving it centered on its own. */
+  .schedule-nav { margin-bottom: 8px; position: relative; }
   .schedule-date-label {
     min-width: 9em;
     text-align: center;
@@ -679,6 +683,10 @@
     color: var(--text-heading);
   }
   .schedule-cal-toggle {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
     width: 32px;
     height: 32px;
     flex-shrink: 0;
@@ -694,23 +702,10 @@
   /* Month-at-a-glance jump-to-date view (backlog item 7) - a plain grid,
      one cell per day of the currently-shown month, days outside that month
      left blank (not "bleeding" into neighboring months' numbers, to keep
-     it uncluttered). Replaces .schedule-games while open; the day nav row
-     above it stays visible throughout (its own arrows step by single day,
-     independent of which month the calendar happens to be showing). */
-  .schedule-calendar-head {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-  .schedule-calendar-month {
-    min-width: 7em;
-    text-align: center;
-    font-size: 0.875rem;
-    font-weight: 700;
-    color: var(--text-heading);
-  }
+     it uncluttered). Replaces .schedule-games while open; the day-nav row
+     above it is reused as-is (same arrows, same label spot) rather than a
+     second row of its own - see initScheduleTab()'s openCalendar()/
+     changeMonth(). */
   .schedule-calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -1352,35 +1347,35 @@
     <details class="tab-section">
       <summary>טבלת הליגה</summary>
       <div class="details-body" dir="ltr">
-        <div class="pager" data-page="0"><div class="pager-viewport"><div class="pager-track"><div class="pager-page"><div class="conference standings-block"><h3>מערב</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Oklahoma City Thunder</span><span class="standing-record">64-18</span><span class="standing-streak loss">L 2</span></div>
-          <div class="standing-row"><span class="standing-rank">2</span><span class="standing-team">San Antonio Spurs</span><span class="standing-record">62-20</span><span class="standing-streak loss">L 1</span></div>
-          <div class="standing-row"><span class="standing-rank">3</span><span class="standing-team">Denver Nuggets</span><span class="standing-record">54-28</span><span class="standing-streak win">W 12</span></div>
-          <div class="standing-row"><span class="standing-rank">4</span><span class="standing-team">Los Angeles Lakers</span><span class="standing-record">53-29</span><span class="standing-streak win">W 3</span></div>
-          <div class="standing-row"><span class="standing-rank">5</span><span class="standing-team">Houston Rockets</span><span class="standing-record">52-30</span><span class="standing-streak win">W 1</span></div>
-          <div class="standing-row boundary"><span class="standing-rank">6</span><span class="standing-team">Minnesota Timberwolves</span><span class="standing-record">49-33</span><span class="standing-streak win">W 2</span></div>
-          <div class="standing-row"><span class="standing-rank">7</span><span class="standing-team">Phoenix Suns</span><span class="standing-record">45-37</span><span class="standing-streak win">W 1</span></div>
-          <div class="standing-row"><span class="standing-rank">8</span><span class="standing-team">Portland Trail Blazers</span><span class="standing-record">42-40</span><span class="standing-streak win">W 2</span></div>
-          <div class="standing-row"><span class="standing-rank">9</span><span class="standing-team">LA Clippers</span><span class="standing-record">42-40</span><span class="standing-streak win">W 1</span></div>
-          <div class="standing-row boundary"><span class="standing-rank">10</span><span class="standing-team">Golden State Warriors</span><span class="standing-record">37-45</span><span class="standing-streak loss">L 3</span></div>
-          <div class="standing-row"><span class="standing-rank">11</span><span class="standing-team">New Orleans Pelicans</span><span class="standing-record">26-56</span><span class="standing-streak loss">L 2</span></div>
-          <div class="standing-row"><span class="standing-rank">12</span><span class="standing-team">Dallas Mavericks</span><span class="standing-record">26-56</span><span class="standing-streak win">W 1</span></div>
-          <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Memphis Grizzlies</span><span class="standing-record">25-57</span><span class="standing-streak loss">L 8</span></div>
-          <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Sacramento Kings</span><span class="standing-record">22-60</span><span class="standing-streak loss">L 1</span></div>
-          <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Utah Jazz</span><span class="standing-record">22-60</span><span class="standing-streak loss">L 1</span></div></div></div><div class="pager-page"><div class="conference standings-block"><h3>מזרח</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Detroit Pistons</span><span class="standing-record">60-22</span><span class="standing-streak win">W 3</span></div>
-          <div class="standing-row"><span class="standing-rank">2</span><span class="standing-team">Boston Celtics</span><span class="standing-record">56-26</span><span class="standing-streak win">W 2</span></div>
-          <div class="standing-row"><span class="standing-rank">3</span><span class="standing-team">New York Knicks</span><span class="standing-record">53-29</span><span class="standing-streak loss">L 1</span></div>
-          <div class="standing-row"><span class="standing-rank">4</span><span class="standing-team">Cleveland Cavaliers</span><span class="standing-record">52-30</span><span class="standing-streak win">W 1</span></div>
-          <div class="standing-row"><span class="standing-rank">5</span><span class="standing-team">Toronto Raptors</span><span class="standing-record">46-36</span><span class="standing-streak win">W 1</span></div>
-          <div class="standing-row boundary"><span class="standing-rank">6</span><span class="standing-team">Atlanta Hawks</span><span class="standing-record">46-36</span><span class="standing-streak loss">L 1</span></div>
-          <div class="standing-row"><span class="standing-rank">7</span><span class="standing-team">Philadelphia 76ers</span><span class="standing-record">45-37</span><span class="standing-streak win">W 2</span></div>
-          <div class="standing-row"><span class="standing-rank">8</span><span class="standing-team">Orlando Magic</span><span class="standing-record">45-37</span><span class="standing-streak loss">L 1</span></div>
-          <div class="standing-row"><span class="standing-rank">9</span><span class="standing-team">Charlotte Hornets</span><span class="standing-record">44-38</span><span class="standing-streak win">W 1</span></div>
-          <div class="standing-row boundary"><span class="standing-rank">10</span><span class="standing-team">Miami Heat</span><span class="standing-record">43-39</span><span class="standing-streak win">W 2</span></div>
-          <div class="standing-row"><span class="standing-rank">11</span><span class="standing-team">Milwaukee Bucks</span><span class="standing-record">32-50</span><span class="standing-streak loss">L 1</span></div>
-          <div class="standing-row"><span class="standing-rank">12</span><span class="standing-team">Chicago Bulls</span><span class="standing-record">31-51</span><span class="standing-streak loss">L 2</span></div>
-          <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Brooklyn Nets</span><span class="standing-record">20-62</span><span class="standing-streak loss">L 3</span></div>
-          <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Indiana Pacers</span><span class="standing-record">19-63</span><span class="standing-streak loss">L 2</span></div>
-          <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Washington Wizards</span><span class="standing-record">17-65</span><span class="standing-streak loss">L 10</span></div></div></div></div></div><div class="pager-nav"><button type="button" class="pager-arrow pager-prev" aria-label="הקודם">‹</button><button type="button" class="pager-arrow pager-next" aria-label="הבא">›</button></div></div>
+        <div class="pager" data-page="0"><div class="pager-viewport"><div class="pager-track"><div class="pager-page"><div class="conference standings-block"><h3>מערב</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Oklahoma City Thunder</span><span class="standing-record">1-0</span><span class="standing-streak win">W1</span></div>
+          <div class="standing-row"><span class="standing-rank">2</span><span class="standing-team">Golden State Warriors</span><span class="standing-record">1-0</span><span class="standing-streak win">W1</span></div>
+          <div class="standing-row"><span class="standing-rank">3</span><span class="standing-team">San Antonio Spurs</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">4</span><span class="standing-team">Denver Nuggets</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">5</span><span class="standing-team">Los Angeles Lakers</span><span class="standing-record">0-1</span><span class="standing-streak loss">L1</span></div>
+          <div class="standing-row boundary"><span class="standing-rank">6</span><span class="standing-team">Houston Rockets</span><span class="standing-record">0-1</span><span class="standing-streak loss">L1</span></div>
+          <div class="standing-row"><span class="standing-rank">7</span><span class="standing-team">Minnesota Timberwolves</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">8</span><span class="standing-team">Phoenix Suns</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">9</span><span class="standing-team">Portland Trail Blazers</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row boundary"><span class="standing-rank">10</span><span class="standing-team">LA Clippers</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">11</span><span class="standing-team">New Orleans Pelicans</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">12</span><span class="standing-team">Dallas Mavericks</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Memphis Grizzlies</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Sacramento Kings</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Utah Jazz</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div></div></div><div class="pager-page"><div class="conference standings-block"><h3>מזרח</h3><div class="standing-row"><span class="standing-rank">1</span><span class="standing-team">Detroit Pistons</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">2</span><span class="standing-team">Boston Celtics</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">3</span><span class="standing-team">New York Knicks</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">4</span><span class="standing-team">Cleveland Cavaliers</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">5</span><span class="standing-team">Toronto Raptors</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row boundary"><span class="standing-rank">6</span><span class="standing-team">Atlanta Hawks</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">7</span><span class="standing-team">Philadelphia 76ers</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">8</span><span class="standing-team">Orlando Magic</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">9</span><span class="standing-team">Charlotte Hornets</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row boundary"><span class="standing-rank">10</span><span class="standing-team">Miami Heat</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">11</span><span class="standing-team">Milwaukee Bucks</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">12</span><span class="standing-team">Chicago Bulls</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Brooklyn Nets</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Indiana Pacers</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div>
+          <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Washington Wizards</span><span class="standing-record">0-0</span><span class="standing-streak "></span></div></div></div></div></div><div class="pager-nav"><button type="button" class="pager-arrow pager-prev" aria-label="הקודם">‹</button><button type="button" class="pager-arrow pager-next" aria-label="הבא">›</button></div></div>
       </div>
     </details>
     </main>
@@ -2423,8 +2418,12 @@
       // already set by the time either of these can actually fire from a
       // real click) - the day arrows have no reason to do anything while
       // the calendar is showing, by request.
-      rightBtn.addEventListener("click", function() { if (!calOpen) swipeTo(-1); }); // yesterday
-      leftBtn.addEventListener("click", function() { if (!calOpen) swipeTo(1); }); // tomorrow
+      // Same two buttons, repurposed while the calendar is open (see
+      // openCalendar()) - a month step instead of a day, same right=back/
+      // left=forward convention, same animated feel (monthSwipeTo() mirrors
+      // swipeTo()) so it reads as the same control either way.
+      rightBtn.addEventListener("click", function() { if (calOpen) monthSwipeTo(-1); else swipeTo(-1); });
+      leftBtn.addEventListener("click", function() { if (calOpen) monthSwipeTo(1); else swipeTo(1); });
 
       // Month-at-a-glance jump-to-date view (backlog item 7) - a plain grid
       // for whichever month currentKey is in when opened, days with games
@@ -2451,6 +2450,11 @@
         return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
       }
 
+      // No separate arrow row of its own (there was one at first - by
+      // request, the calendar reuses the exact same nav-row arrows/label
+      // instead of a second, redundant set): while open, leftBtn/rightBtn
+      // step a month and the label shows "MONTH YEAR" - see changeMonth()/
+      // openCalendar() below.
       function renderCalendar() {
         var parts = calMonthKey.split("-").map(Number);
         var year = parts[0], month = parts[1]; // 1-indexed month
@@ -2462,14 +2466,9 @@
         var leadingBlanks = first.getDay();
         var today = todayKey();
 
-        var monthLo = monthKeyOf(minKey), monthHi = monthKeyOf(maxKey);
-        var head = '<div class="schedule-calendar-head">' +
-          '<button type="button" class="pager-arrow" id="calPrevMonth"' +
-          (calMonthKey <= monthLo ? " disabled" : "") + '>‹</button>' +
-          '<span class="schedule-calendar-month">' + MONTHS[month - 1] + " " + year + '</span>' +
-          '<button type="button" class="pager-arrow" id="calNextMonth"' +
-          (calMonthKey >= monthHi ? " disabled" : "") + '>›</button>' +
-          '</div>';
+        label.textContent = MONTHS[month - 1] + " " + year;
+        rightBtn.disabled = calMonthKey <= monthKeyOf(minKey);
+        leftBtn.disabled = calMonthKey >= monthKeyOf(maxKey);
 
         var dow = DOW_SHORT.map(function(d) { return '<div class="schedule-calendar-dow">' + d + '</div>'; }).join("");
 
@@ -2486,16 +2485,8 @@
             (count ? "" : " disabled") + '>' + day + badge + '</button>');
         }
 
-        calEl.innerHTML = head + '<div class="schedule-calendar-grid">' + dow + cells.join("") + '</div>';
+        calEl.innerHTML = '<div class="schedule-calendar-grid">' + dow + cells.join("") + '</div>';
 
-        calEl.querySelector("#calPrevMonth").addEventListener("click", function() {
-          calMonthKey = clampMonthKey(shiftMonthKey(calMonthKey, -1));
-          renderCalendar();
-        });
-        calEl.querySelector("#calNextMonth").addEventListener("click", function() {
-          calMonthKey = clampMonthKey(shiftMonthKey(calMonthKey, 1));
-          renderCalendar();
-        });
         Array.prototype.forEach.call(calEl.querySelectorAll(".has-games"), function(cell) {
           cell.addEventListener("click", function() {
             currentKey = cell.dataset.dayKey;
@@ -2505,21 +2496,28 @@
         });
       }
 
+      // Single-step month change, shared by the top arrows and
+      // monthSwipeTo() below (which just wraps this with the slide
+      // animation) - direction 1 = next month, -1 = previous.
+      function changeMonth(direction) {
+        var next = clampMonthKey(shiftMonthKey(calMonthKey, direction));
+        if (next === calMonthKey) return false;
+        calMonthKey = next;
+        return true;
+      }
+
       function openCalendar() {
         calMonthKey = clampMonthKey(monthKeyOf(currentKey));
         calOpen = true;
         gamesEl.hidden = true;
         calEl.hidden = false;
-        leftBtn.hidden = true;
-        rightBtn.hidden = true;
         renderCalendar();
       }
       function closeCalendar() {
         calOpen = false;
         calEl.hidden = true;
         gamesEl.hidden = false;
-        leftBtn.hidden = false;
-        rightBtn.hidden = false;
+        render();
       }
       calToggle.addEventListener("click", function() {
         if (calOpen) closeCalendar(); else openCalendar();
@@ -2615,13 +2613,12 @@
       }, { passive: true });
 
       // Same shape as swipeTo() (see below) but for a month step instead of
-      // a day - direction 1 = swiped right (next month), -1 = swiped left
-      // (previous month). Clamped/no-op past the real min/max month, same
-      // as the calendar's own prev/next-month arrows.
+      // a day - direction 1 = next month, -1 = previous. Used for both the
+      // swipe gesture and the (same, reused) top arrows while the calendar
+      // is open, so a tap and a swipe feel identical - same visual language
+      // as the day view.
       function monthSwipeTo(direction) {
-        var next = clampMonthKey(shiftMonthKey(calMonthKey, direction));
-        if (next === calMonthKey) return;
-        calMonthKey = next;
+        if (!changeMonth(direction)) return;
         calEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
         calEl.style.transform = "translateX(" + (direction * 60) + "px)";
         calEl.style.opacity = "0";
