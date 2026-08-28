@@ -40,6 +40,15 @@ _NAV_CSS = """/* cd-nav-css-start */
     display: flex; align-items: center; justify-content: center; gap: 6px;
     padding: 6px 8px; background: var(--card-bg); border-bottom: 1px solid var(--border);
     direction: rtl; flex-wrap: nowrap;
+    /* In tabs-mode (see render.py) .wrapper is itself a fixed-height
+       (100dvh) flex column, and .cd-nav sits in that flow as a sibling of
+       .header/main - without this it's eligible to shrink like any other
+       flex child (same class of bug already hit and fixed for the schedule
+       tab's own sticky summary - see render.py's flex-shrink:0 on
+       details.tab-section.app-screen-active > summary). Reported as
+       invisible specifically in the installed PWA (tabs-mode's real
+       target), consistent with that. */
+    flex-shrink: 0;
   }
   .cd-nav button {
     border: 1px solid var(--border); background: var(--bg); color: var(--text-heading);
