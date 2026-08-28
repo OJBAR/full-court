@@ -30,6 +30,17 @@ exist) to fix two things reported after the first version shipped:
    user has to navigate back to. Uses the exact list of dates this demo
    actually built (order matters - "10 game nights" skips through games
    actually played, not 10 calendar days).
+
+3. Footer label/link: render.py's TEMPLATE writes "גרסת בטא · מעבר בין
+   דמואים" (linking demos.html) on every page it renders - correct for the
+   real curated demos (the obscurity-only "beta" surface meant for friends),
+   but this demo is the OTHER, dev-only surface (see CLAUDE.md's dev/beta
+   split) - it already has its own in-page date nav, so a link back to the
+   demo-picker screen is pointless here, and calling it "beta" alongside the
+   real beta demos is misleading. Rewritten to a plain "גרסת מפתח" with no
+   link, same reasoning as everything else in this file: render.py's own
+   text is correct for every other caller, this rewrite is specific to this
+   one subdirectory.
 """
 import re
 from pathlib import Path
@@ -54,6 +65,15 @@ _PATH_FIXES = [
     (
         'subject=%D7%A4%D7%A0%D7%99%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT:+%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%99%D7%94"',
         'subject=%D7%A4%D7%A0%D7%99%D7%99%D7%94+%D7%9C%D7%90%D7%AA%D7%A8+FULL+COURT:+%D7%A0%D7%95%D7%A9%D7%90+%D7%94%D7%A4%D7%A0%D7%99%D7%99%D7%94&body=%D7%AA%D7%95%D7%9B%D7%9F%20%D7%94%D7%A4%D7%A0%D7%99%D7%94%3A%0A%0A%D7%A6%D7%99%D7%9C%D7%95%D7%9E%D7%99%20%D7%9E%D7%A1%D7%9A%3A%0A"',
+    ),
+    # See the module docstring's point 3 - this demo is the dev-only
+    # surface, not the real "beta" one demos.html actually belongs to; the
+    # link there is dead weight since this page already has its own nav.
+    # Matched AFTER the demos.html rewrite above runs (list order), since by
+    # then the href is already "../demos.html".
+    (
+        '<span>גרסת בטא · <a href="../demos.html">מעבר בין דמואים</a></span>',
+        '<span>גרסת מפתח</span>',
     ),
 ]
 

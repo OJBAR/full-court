@@ -717,6 +717,14 @@ TEMPLATE = """<!DOCTYPE html>
     align-items: center;
     justify-content: center;
   }}
+  /* The global button:active {{ transform: scale(0.96) }} (see the a11y/tap-
+     feedback rules below) would otherwise REPLACE this button's own resting
+     transform (translateY(-50%), needed since it's position:absolute and
+     vertically centered) instead of combining with it - losing the -50%
+     mid-press made the icon visibly jump down by half its own height on
+     every tap. Re-stated together here, at higher specificity (class +
+     :active beats the plain button:active), so both apply at once. */
+  .schedule-cal-toggle:active {{ transform: translateY(-50%) scale(0.96); }}
   /* Month-at-a-glance jump-to-date view (backlog item 7) - a plain grid,
      one cell per day of the currently-shown month, days outside that month
      left blank (not "bleeding" into neighboring months' numbers, to keep
