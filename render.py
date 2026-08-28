@@ -2364,14 +2364,19 @@ TEMPLATE = """<!DOCTYPE html>
         dragging = false;
       }}, {{ passive: true }});
 
+      // No live 1:1 finger-follow during the drag itself (that's the one
+      // remaining difference from a plain arrow-button tap, which never
+      // jumps - narrowing it down after touch-area scope, touch-action, and
+      // preventDefault all turned out not to be it). touchmove here only
+      // tracks direction, exactly like the swipe detection already used for
+      // the arrows; the actual animation is the same swipeTo() a button
+      // click already triggers, fired once on touchend.
       touchArea.addEventListener("touchmove", function(e) {{
         if (startX === null) return;
         var dx = e.touches[0].clientX - startX;
         var dy = e.touches[0].clientY - startY;
         if (!dragging && Math.abs(dx) < Math.abs(dy)) return;
         dragging = true;
-        gamesEl.style.transition = "none";
-        gamesEl.style.transform = "translateX(" + dx + "px)";
       }}, {{ passive: true }});
 
       touchArea.addEventListener("touchend", function(e) {{
@@ -2384,10 +2389,6 @@ TEMPLATE = """<!DOCTYPE html>
 
         if (dx >= threshold) {{ swipeTo(1); }}
         else if (dx <= -threshold) {{ swipeTo(-1); }}
-        else {{
-          gamesEl.style.transition = "transform 0.2s ease";
-          gamesEl.style.transform = "translateX(0)";
-        }}
       }}, {{ passive: true }});
 
       // direction 1 = swiped right, toward the next day; -1 = swiped left,
