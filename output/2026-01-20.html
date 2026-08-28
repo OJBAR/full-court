@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-28T09:04:24.740211+00:00">
+<meta name="app-version" content="2026-08-28T09:13:37.323693+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -1080,6 +1080,17 @@
     display: flex;
     flex-direction: column;
     justify-content: safe center;
+  }
+  /* The schedule tab opts out of the centering above: its own
+     .details-body gets an explicit min-height in JS (see
+     initScheduleTab()'s fitToScreen()) specifically so a swipe can reach
+     the empty space below a short/empty day's list - but that same empty
+     space then made "safe center" visibly float the content at a
+     different vertical position depending on how many games that day
+     has, instead of staying anchored right under the tab title like every
+     other tab already does with its own naturally-short content. */
+  :root.tabs-mode details.tab-section.app-screen-active > .details-body:has(> .schedule-tab) {
+    justify-content: flex-start;
   }
   .app-home { display: none; }
   /* Positioned like a vertical ruler from 0 (bottom of the home screen) to
