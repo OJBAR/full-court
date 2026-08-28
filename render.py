@@ -2319,18 +2319,26 @@ TEMPLATE = """<!DOCTYPE html>
       // current day's card slides out, the new day's content gets built,
       // and it slides in from the matching side. Same felt gesture, applied
       // to swapped content instead of a shared track.
-      // Listens on .details-body, NOT the whole <details> - the <details>
-      // also contains the sticky summary/title bar, which has its own
-      // click-to-go-home handler (see initAppHome()); binding the swipe
-      // there too risked that handler firing off a swipe (even with
-      // preventDefault - not reliably suppressed for this on iOS), which
-      // looks exactly like a stray jump/flash toward the home screen. Kept
-      // scoped to .details-body instead, and separately fixed THAT not
-      // reliably stretching to fill the screen (confirmed directly - same
-      // <details>-as-flex-child quirk as the Cup bracket) via fitToScreen()
-      // below, an explicit JS-measured min-height, rather than trusting its
-      // own CSS flex:1. Only the games list itself visually slides during
-      // the drag, the nav bar stays put.
+      // Deliberately no preventDefault() here, and both touchmove/touchend
+      // are {{ passive: true }} - matching the bracket pagers exactly (they
+      // never had one either, and never had this problem). An earlier
+      // version called preventDefault() on drag to suppress a theoretical
+      // ghost-click on whatever the swipe started over; turned out to be
+      // the actual cause of a real, repeatedly-confirmed bug instead (the
+      // sticky tab title visibly jumping mid-swipe on iOS) - isolated by
+      // finding the arrow buttons (same swipeTo() animation, no touch
+      // events, no preventDefault) never jump, while every touch-based
+      // variant did regardless of which element the listener was bound to.
+      // touch-action:pan-y (see the .schedule-tab CSS) is what actually
+      // blocks native horizontal panning; preventDefault was redundant
+      // belt-and-suspenders that cost more than it protected against.
+      // .details-body (not just .schedule-tab, and not the whole <details>
+      // - that also contains the sticky summary, which has its own click-
+      // to-go-home handler) is used so a swipe still reaches the empty
+      // space below a short day's list; that needs its own real min-height
+      // via fitToScreen() below since .details-body doesn't reliably
+      // stretch to fill the screen here (same <details>-as-flex-child quirk
+      // as the Cup bracket) despite its own CSS flex:1.
       // Right-to-left date order: swiping right (finger moves right, dx>0)
       // goes to the next day, swiping left goes to the previous - matching
       // how the day label itself reads (today on the right, moving right
@@ -2362,19 +2370,12 @@ TEMPLATE = """<!DOCTYPE html>
         var dy = e.touches[0].clientY - startY;
         if (!dragging && Math.abs(dx) < Math.abs(dy)) return;
         dragging = true;
-        // Suppresses the browser's own synthetic click on whatever element
-        // the drag started over (e.g. the prev/next buttons) once this is
-        // confirmed to be a swipe, not a tap - without this, a swipe that
-        // starts on a button could also fire that button's own click right
-        // after, snapping the nav an extra, uncommanded step.
-        e.preventDefault();
         gamesEl.style.transition = "none";
         gamesEl.style.transform = "translateX(" + dx + "px)";
-      }}, {{ passive: false }});
+      }}, {{ passive: true }});
 
       touchArea.addEventListener("touchend", function(e) {{
         if (!dragging) {{ startX = null; startY = null; return; }}
-        e.preventDefault();
         var dx = e.changedTouches[0].clientX - startX;
         var threshold = 40;
         startX = null;
@@ -2387,7 +2388,7 @@ TEMPLATE = """<!DOCTYPE html>
           gamesEl.style.transition = "transform 0.2s ease";
           gamesEl.style.transform = "translateX(0)";
         }}
-      }}, {{ passive: false }});
+      }}, {{ passive: true }});
 
       // direction 1 = swiped right, toward the next day; -1 = swiped left,
       // toward the previous. The exit continues further the same way the
