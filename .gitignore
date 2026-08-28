@@ -6,6 +6,11 @@ _test_*
 # scheduler.py's own bookkeeping between its first and second pass
 # (highlight links) - internal state, not part of the published site.
 pending/
+# _generate_comprehensive_demo.py's local cache of each real date's raw
+# fetched data - lets a render.py template change be picked up with a cheap
+# re-render pass instead of re-fetching ~212 real dates every time. Local
+# dev speedup only, not meant to be published.
+_comprehensive_cache/
 # output/*.html WAS gitignored under the old "GitHub Actions runs the whole
 # pipeline" plan (CI would generate them fresh at runtime). That plan doesn't
 # work - stats.nba.com blocks requests from cloud IPs - so the pipeline runs

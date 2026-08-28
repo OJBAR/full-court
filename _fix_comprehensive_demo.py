@@ -81,7 +81,13 @@ _NAV_BLOCK = """<!-- cd-nav-start -->
     "  border-radius: 999px; font-size: 13px; cursor: pointer; flex-shrink: 0;",
     "  padding: 5px 9px; font-family: inherit; }",
     ".cd-nav button:disabled { opacity: 0.35; cursor: default; }",
-    ".cd-nav .cd-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; padding: 0 4px; }"
+    ".cd-nav .cd-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; padding: 0 4px; }",
+    // The splash-logo-animation only ever shows in standalone mode (see
+    // render.py) - which this demo's own manifest.json now makes it run
+    // in too. Skipped here specifically (by request) since it just slows
+    // down repeatedly reopening this dev-only demo while testing; the real
+    // product and the curated demos (neither gets this override) keep it.
+    "#splash-screen { display: none !important; }"
   ].join("\\n");
   document.head.appendChild(css);
 

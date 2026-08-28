@@ -688,7 +688,11 @@ TEMPLATE = """<!DOCTYPE html>
   /* The season schedule tab's day nav (see initScheduleTab()) - reuses
      .pager-nav/.pager-arrow above for the arrows themselves, just needs its
      own label in between and a bit more breathing room above the list. */
-  .schedule-nav {{ margin-bottom: 8px; }}
+  /* position:relative so .schedule-cal-toggle can sit off to the side via
+     position:absolute, out of the flex flow entirely - otherwise it's a
+     4th flex item alongside the arrows/label, pushing that centered trio
+     visibly off-center instead of leaving it centered on its own. */
+  .schedule-nav {{ margin-bottom: 8px; position: relative; }}
   .schedule-date-label {{
     min-width: 9em;
     text-align: center;
@@ -697,6 +701,10 @@ TEMPLATE = """<!DOCTYPE html>
     color: var(--text-heading);
   }}
   .schedule-cal-toggle {{
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
     width: 32px;
     height: 32px;
     flex-shrink: 0;
@@ -712,23 +720,10 @@ TEMPLATE = """<!DOCTYPE html>
   /* Month-at-a-glance jump-to-date view (backlog item 7) - a plain grid,
      one cell per day of the currently-shown month, days outside that month
      left blank (not "bleeding" into neighboring months' numbers, to keep
-     it uncluttered). Replaces .schedule-games while open; the day nav row
-     above it stays visible throughout (its own arrows step by single day,
-     independent of which month the calendar happens to be showing). */
-  .schedule-calendar-head {{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 8px;
-  }}
-  .schedule-calendar-month {{
-    min-width: 7em;
-    text-align: center;
-    font-size: 0.875rem;
-    font-weight: 700;
-    color: var(--text-heading);
-  }}
+     it uncluttered). Replaces .schedule-games while open; the day-nav row
+     above it is reused as-is (same arrows, same label spot) rather than a
+     second row of its own - see initScheduleTab()'s openCalendar()/
+     changeMonth(). */
   .schedule-calendar-grid {{
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -2401,8 +2396,12 @@ TEMPLATE = """<!DOCTYPE html>
       // already set by the time either of these can actually fire from a
       // real click) - the day arrows have no reason to do anything while
       // the calendar is showing, by request.
-      rightBtn.addEventListener("click", function() {{ if (!calOpen) swipeTo(-1); }}); // yesterday
-      leftBtn.addEventListener("click", function() {{ if (!calOpen) swipeTo(1); }}); // tomorrow
+      // Same two buttons, repurposed while the calendar is open (see
+      // openCalendar()) - a month step instead of a day, same right=back/
+      // left=forward convention, same animated feel (monthSwipeTo() mirrors
+      // swipeTo()) so it reads as the same control either way.
+      rightBtn.addEventListener("click", function() {{ if (calOpen) monthSwipeTo(-1); else swipeTo(-1); }});
+      leftBtn.addEventListener("click", function() {{ if (calOpen) monthSwipeTo(1); else swipeTo(1); }});
 
       // Month-at-a-glance jump-to-date view (backlog item 7) - a plain grid
       // for whichever month currentKey is in when opened, days with games
@@ -2429,6 +2428,11 @@ TEMPLATE = """<!DOCTYPE html>
         return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
       }}
 
+      // No separate arrow row of its own (there was one at first - by
+      // request, the calendar reuses the exact same nav-row arrows/label
+      // instead of a second, redundant set): while open, leftBtn/rightBtn
+      // step a month and the label shows "MONTH YEAR" - see changeMonth()/
+      // openCalendar() below.
       function renderCalendar() {{
         var parts = calMonthKey.split("-").map(Number);
         var year = parts[0], month = parts[1]; // 1-indexed month
@@ -2440,14 +2444,9 @@ TEMPLATE = """<!DOCTYPE html>
         var leadingBlanks = first.getDay();
         var today = todayKey();
 
-        var monthLo = monthKeyOf(minKey), monthHi = monthKeyOf(maxKey);
-        var head = '<div class="schedule-calendar-head">' +
-          '<button type="button" class="pager-arrow" id="calPrevMonth"' +
-          (calMonthKey <= monthLo ? " disabled" : "") + '>‹</button>' +
-          '<span class="schedule-calendar-month">' + MONTHS[month - 1] + " " + year + '</span>' +
-          '<button type="button" class="pager-arrow" id="calNextMonth"' +
-          (calMonthKey >= monthHi ? " disabled" : "") + '>›</button>' +
-          '</div>';
+        label.textContent = MONTHS[month - 1] + " " + year;
+        rightBtn.disabled = calMonthKey <= monthKeyOf(minKey);
+        leftBtn.disabled = calMonthKey >= monthKeyOf(maxKey);
 
         var dow = DOW_SHORT.map(function(d) {{ return '<div class="schedule-calendar-dow">' + d + '</div>'; }}).join("");
 
@@ -2464,16 +2463,8 @@ TEMPLATE = """<!DOCTYPE html>
             (count ? "" : " disabled") + '>' + day + badge + '</button>');
         }}
 
-        calEl.innerHTML = head + '<div class="schedule-calendar-grid">' + dow + cells.join("") + '</div>';
+        calEl.innerHTML = '<div class="schedule-calendar-grid">' + dow + cells.join("") + '</div>';
 
-        calEl.querySelector("#calPrevMonth").addEventListener("click", function() {{
-          calMonthKey = clampMonthKey(shiftMonthKey(calMonthKey, -1));
-          renderCalendar();
-        }});
-        calEl.querySelector("#calNextMonth").addEventListener("click", function() {{
-          calMonthKey = clampMonthKey(shiftMonthKey(calMonthKey, 1));
-          renderCalendar();
-        }});
         Array.prototype.forEach.call(calEl.querySelectorAll(".has-games"), function(cell) {{
           cell.addEventListener("click", function() {{
             currentKey = cell.dataset.dayKey;
@@ -2483,21 +2474,28 @@ TEMPLATE = """<!DOCTYPE html>
         }});
       }}
 
+      // Single-step month change, shared by the top arrows and
+      // monthSwipeTo() below (which just wraps this with the slide
+      // animation) - direction 1 = next month, -1 = previous.
+      function changeMonth(direction) {{
+        var next = clampMonthKey(shiftMonthKey(calMonthKey, direction));
+        if (next === calMonthKey) return false;
+        calMonthKey = next;
+        return true;
+      }}
+
       function openCalendar() {{
         calMonthKey = clampMonthKey(monthKeyOf(currentKey));
         calOpen = true;
         gamesEl.hidden = true;
         calEl.hidden = false;
-        leftBtn.hidden = true;
-        rightBtn.hidden = true;
         renderCalendar();
       }}
       function closeCalendar() {{
         calOpen = false;
         calEl.hidden = true;
         gamesEl.hidden = false;
-        leftBtn.hidden = false;
-        rightBtn.hidden = false;
+        render();
       }}
       calToggle.addEventListener("click", function() {{
         if (calOpen) closeCalendar(); else openCalendar();
@@ -2593,13 +2591,12 @@ TEMPLATE = """<!DOCTYPE html>
       }}, {{ passive: true }});
 
       // Same shape as swipeTo() (see below) but for a month step instead of
-      // a day - direction 1 = swiped right (next month), -1 = swiped left
-      // (previous month). Clamped/no-op past the real min/max month, same
-      // as the calendar's own prev/next-month arrows.
+      // a day - direction 1 = next month, -1 = previous. Used for both the
+      // swipe gesture and the (same, reused) top arrows while the calendar
+      // is open, so a tap and a swipe feel identical - same visual language
+      // as the day view.
       function monthSwipeTo(direction) {{
-        var next = clampMonthKey(shiftMonthKey(calMonthKey, direction));
-        if (next === calMonthKey) return;
-        calMonthKey = next;
+        if (!changeMonth(direction)) return;
         calEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
         calEl.style.transform = "translateX(" + (direction * 60) + "px)";
         calEl.style.opacity = "0";

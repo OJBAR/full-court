@@ -1,5 +1,6 @@
 import json
 import time
+from datetime import datetime
 
 import pandas as pd
 import requests
@@ -12,7 +13,7 @@ from nba_api.stats.endpoints import (
     leaguedashplayerstats,
 )
 
-from config import last_night_game_date, season_string_for
+from config import last_night_game_date, season_string_for, US_EASTERN
 from highlights import find_highlight_url
 
 # Being polite to stats.nba.com's unofficial API: small delay between calls.
@@ -50,6 +51,106 @@ def get_standings(season: str) -> pd.DataFrame:
     """Returns current league standings (rank, record, streak) for a season, e.g. '2025-26'."""
     result = leaguestandingsv3.LeagueStandingsV3(season=season)
     return _dataframe_for(result, "Standings")
+
+
+def compute_standings_as_of(date_str: str, season_schedule: list[dict], standings_meta: pd.DataFrame) -> list[dict]:
+    """
+    Recomputes real win/loss records + streak + rank as of date_str from
+    season_schedule's own real final scores - get_standings() has NO as-of-
+    date support (LeagueStandingsV3 only ever returns the CURRENT table,
+    regardless of the season string) so it's unusable for "what did the
+    table look like on this historical date" (unlike get_playoff_series()/
+    get_cup_bracket(), which already are correctly as_of_date-filtered by
+    design). standings_meta is any real get_standings() call (any date -
+    only its stable per-team fields are used: TeamID/Conference/TeamCity/
+    TeamName, which don't change mid-season); everything win/loss-derived
+    is computed fresh here instead and overrides it.
+
+    Only gameId prefix "002" games count (regular season, and every Cup
+    game except the Championship - see CLAUDE.md - which is also "002"
+    under the hood; Play-In "005"/Playoffs "004"/Cup Final "006" never
+    count toward the standings table itself, matching the real NBA rules).
+
+    PlayoffRank here is a plain win-percentage sort (ties broken by win
+    count) - not the NBA's real multi-step tiebreakers (head-to-head,
+    division/conference record, etc.), so it can occasionally disagree
+    with the real seeding when several teams are closely tied. Good enough
+    for a demo browsing a specific date's context, not represented as
+    authoritative for anything else.
+    """
+    et_date_cache: dict[str, str] = {}
+
+    def et_date(tipoff_utc: str) -> str:
+        if tipoff_utc not in et_date_cache:
+            dt = datetime.fromisoformat(tipoff_utc.replace("Z", "+00:00"))
+            et_date_cache[tipoff_utc] = dt.astimezone(US_EASTERN).strftime("%Y-%m-%d")
+        return et_date_cache[tipoff_utc]
+
+    relevant = [
+        g for g in season_schedule
+        if g["is_final"] and g["game_id"].startswith("002") and et_date(g["tipoff_utc"]) <= date_str
+    ]
+    relevant.sort(key=lambda g: g["tipoff_utc"])
+
+    # tricode -> ordered list of "W"/"L" results, oldest first.
+    results_by_tricode: dict[str, list[str]] = {}
+    for g in relevant:
+        home_won = g["home_score"] > g["away_score"]
+        results_by_tricode.setdefault(g["home_tricode"], []).append("W" if home_won else "L")
+        results_by_tricode.setdefault(g["away_tricode"], []).append("L" if home_won else "W")
+
+    def streak_str(results: list[str]) -> str:
+        if not results:
+            return ""
+        last = results[-1]
+        n = 0
+        for r in reversed(results):
+            if r != last:
+                break
+            n += 1
+        return f"{last}{n}"
+
+    # LeagueStandingsV3 has no tricode column at all - joined instead on the
+    # full "City Name" string, which both this and season_schedule's own
+    # home_team/away_team fields share.
+    tricode_by_fullname = {}
+    for g in season_schedule:
+        tricode_by_fullname[g["home_team"]] = g["home_tricode"]
+        tricode_by_fullname[g["away_team"]] = g["away_tricode"]
+
+    meta_by_tricode = {}
+    for m in standings_meta.to_dict(orient="records"):
+        fullname = f"{m['TeamCity']} {m['TeamName']}"
+        tricode = tricode_by_fullname.get(fullname)
+        if tricode:
+            meta_by_tricode[tricode] = m
+
+    rows = []
+    for tricode, meta in meta_by_tricode.items():
+        results = results_by_tricode.get(tricode, [])
+        wins = results.count("W")
+        losses = results.count("L")
+        rows.append({
+            "TeamID": meta["TeamID"],
+            "Tricode": tricode,
+            "Conference": meta["Conference"],
+            "TeamCity": meta["TeamCity"],
+            "TeamName": meta["TeamName"],
+            "WINS": wins,
+            "LOSSES": losses,
+            "strCurrentStreak": streak_str(results),
+            "_win_pct": (wins / (wins + losses)) if (wins + losses) else 0.0,
+        })
+
+    for conf in ("East", "West"):
+        conf_rows = [r for r in rows if r["Conference"] == conf]
+        conf_rows.sort(key=lambda r: (-r["_win_pct"], -r["WINS"]))
+        for i, r in enumerate(conf_rows, start=1):
+            r["PlayoffRank"] = i
+
+    for r in rows:
+        del r["_win_pct"]
+    return rows
 
 
 def get_playoff_series(as_of_date: str) -> list[dict]:
@@ -400,9 +501,10 @@ def get_season_schedule(date_str: str) -> list[dict]:
     games = []
     for _, game in schedule_df.iterrows():
         is_final = int(game["gameStatus"]) == 3
+        game_id = game["gameId"]
         games.append(
             {
-                "game_id": game["gameId"],
+                "game_id": game_id,
                 "tipoff_utc": game["gameDateTimeUTC"],
                 "home_team": f"{game['homeTeam_teamCity']} {game['homeTeam_teamName']}",
                 "home_tricode": game["homeTeam_teamTricode"],
@@ -411,6 +513,19 @@ def get_season_schedule(date_str: str) -> list[dict]:
                 "home_score": int(game["homeTeam_score"]) if is_final else None,
                 "away_score": int(game["awayTeam_score"]) if is_final else None,
                 "is_final": is_final,
+                # Series/Cup/Play-In context - free from this same row (no
+                # extra call), used by the comprehensive demo to enrich
+                # every past day's games, not just the one night a real
+                # brief fetches box scores for (see
+                # _generate_comprehensive_demo.py). Not used by the real
+                # nightly pipeline, which gets this from get_games_for_date
+                # instead - harmless extra fields either way.
+                "po_round": game_id.startswith("004"),
+                "is_play_in": game_id.startswith("005"),
+                "cup_subtype": game["gameSubtype"] or None,
+                "cup_sub_label": game["gameSubLabel"] or None,
+                "series_text": game["seriesText"] or None,
+                "series_game_number": game["seriesGameNumber"] or None,
             }
         )
     return sorted(games, key=lambda g: g["tipoff_utc"])
