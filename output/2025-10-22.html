@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>FULL COURT - 22/10/2025</title>
 <link rel="icon" type="image/png" href="assets/favicon.png">
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="demos-manifest.json">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
 <meta name="theme-color" content="#EFEAD8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#2A2118" media="(prefers-color-scheme: dark)">
@@ -2803,5 +2803,57 @@
       document.getElementById("settings-theme-btn").textContent = isDark ? "☀" : "🌙";
     }
   </script>
+<!-- curated-nav-start -->
+<script type="application/json" id="curatedDates">["2025-10-22", "2025-11-28", "2025-12-13", "2026-04-17", "2026-05-17"]</script>
+<script>
+(function() {
+  var css = document.createElement("style");
+  css.textContent = [
+    ".curated-nav { position: fixed; left: 0; right: 0; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 999;",
+    "  display: flex; align-items: center; justify-content: center; gap: 6px;",
+    "  padding: 8px; border-radius: 999px; margin: 0 12px;",
+    "  background: var(--card-bg); border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.15);",
+    "  direction: rtl; flex-wrap: nowrap;",
+    "  transform: translateZ(0); -webkit-transform: translateZ(0); will-change: transform; }",
+    ".curated-nav button { border: 1px solid var(--border); background: var(--bg); color: var(--text-heading);",
+    "  border-radius: 999px; font-size: 13px; cursor: pointer; flex-shrink: 0;",
+    "  padding: 5px 9px; font-family: inherit; }",
+    ".curated-nav button:disabled { opacity: 0.35; cursor: default; }",
+    ".curated-nav .curated-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; padding: 0 4px; }"
+  ].join("\n");
+  document.head.appendChild(css);
+
+  var bar = document.createElement("div");
+  bar.className = "curated-nav";
+  bar.dir = "rtl";
+  bar.innerHTML =
+    '<button type="button" id="curatedPrev" title="דמו קודם">‹</button>' +
+    '<span class="curated-label" id="curatedLabel"></span>' +
+    '<button type="button" id="curatedNext" title="דמו הבא">›</button>';
+  document.body.appendChild(bar);
+
+  var dates = JSON.parse(document.getElementById("curatedDates").textContent);
+  var here = "2025-10-22";
+  var idx = dates.indexOf(here);
+  var label = document.getElementById("curatedLabel");
+  var prev = document.getElementById("curatedPrev");
+  var next = document.getElementById("curatedNext");
+
+  function go(newIdx) {
+    newIdx = Math.max(0, Math.min(newIdx, dates.length - 1));
+    if (newIdx === idx) return;
+    location.href = dates[newIdx] + ".html";
+  }
+  if (idx === -1) { if (label) label.textContent = here; }
+  else {
+    label.textContent = here + " (" + (idx + 1) + "/" + dates.length + ")";
+    prev.disabled = idx === 0;
+    next.disabled = idx === dates.length - 1;
+    prev.addEventListener("click", function() { go(idx - 1); });
+    next.addEventListener("click", function() { go(idx + 1); });
+  }
+})();
+</script>
+<!-- curated-nav-end -->
 </body>
 </html>
