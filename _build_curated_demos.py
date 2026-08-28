@@ -58,6 +58,7 @@ from _generate_comprehensive_demo import _il_today, enrich_full_history, load_hi
 
 REPO_DIR = Path(__file__).parent
 DATA_CACHE_DIR = REPO_DIR / "_comprehensive_cache"
+SUMMARY_CACHE_PATH = DATA_CACHE_DIR / "_curated_summaries.json"
 SEASON = "2025-26"
 
 CURATED_DATES = [
@@ -69,11 +70,23 @@ CURATED_DATES = [
 ]
 
 
+def _load_summary_cache() -> dict:
+    if SUMMARY_CACHE_PATH.exists():
+        return json.loads(SUMMARY_CACHE_PATH.read_text(encoding="utf-8"))
+    return {}
+
+
 def build():
-    print(f"Building {len(CURATED_DATES)} curated demos with real Claude summaries...")
+    print(f"Building {len(CURATED_DATES)} curated demos...")
     base_schedule = get_season_schedule(CURATED_DATES[-1])
     standings_meta = get_standings(SEASON)
     highlight_cache = load_highlight_cache()
+    # The one real, billed step here - cached by date so a later re-render
+    # (e.g. after a render.py CSS change, nothing to do with the summary
+    # text itself) doesn't call Claude again for the same date. Delete this
+    # cache file (or a specific date's key in it) to force a genuinely fresh
+    # summary for that date.
+    summary_cache = _load_summary_cache()
 
     for i, date_str in enumerate(CURATED_DATES):
         cache_path = DATA_CACHE_DIR / f"{date_str}.json"
@@ -88,10 +101,16 @@ def build():
         data["standings"] = compute_standings_as_of(date_str, base_schedule, standings_meta)
         enrich_full_history(data["season_schedule"], date_str, highlight_cache, data["standings"])
 
-        print(f"  finding storylines...")
-        detected_storylines = find_storylines(data)
-        print(f"  calling Claude for a real summary...")
-        summary = summarize(data, detected_storylines)
+        if date_str in summary_cache:
+            print(f"  reusing cached real summary (no Claude call)...")
+            summary = summary_cache[date_str]
+        else:
+            print(f"  finding storylines...")
+            detected_storylines = find_storylines(data)
+            print(f"  calling Claude for a real summary...")
+            summary = summarize(data, detected_storylines)
+            summary_cache[date_str] = summary
+            SUMMARY_CACHE_PATH.write_text(json.dumps(summary_cache, ensure_ascii=False), encoding="utf-8")
 
         output_path = save(data, summary)
         print(f"  saved: {output_path}")

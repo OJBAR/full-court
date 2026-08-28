@@ -758,6 +758,16 @@ TEMPLATE = """<!DOCTYPE html>
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 3px;
+    /* .cal-count's badge (below) deliberately hangs 3px outside its own day
+       cell, into the gap between cells - works fine for every interior
+       column, but the two EDGE columns (leftmost/rightmost, whichever has
+       games that week) have no gap to hang into on their outer side, so
+       their badge extended past the whole grid's own edge - invisible
+       while overflow was visible anywhere upstream, clipped/cut-off once
+       .schedule-games's own overflow-x:hidden fix (see its own comment)
+       started actually being enforced nearby. This padding just gives both
+       edges the same 3px of breathing room every interior gap already had. */
+    padding: 0 3px;
   }}
   .schedule-calendar-dow {{
     text-align: center;
