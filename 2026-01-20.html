@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-28T08:53:47.045298+00:00">
+<meta name="app-version" content="2026-08-28T08:59:58.678891+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -65,8 +65,14 @@
   html { font-size: calc(16px * var(--a11y-text-scale, 1)); }
   /* Belt-and-suspenders alongside the viewport meta tag's user-scalable=no
      above - blocks double-tap-to-zoom too, which that meta tag alone
-     doesn't cover on every browser. */
-  html, body { touch-action: manipulation; }
+     doesn't cover on every browser. pan-y (not manipulation): manipulation
+     still allows horizontal panning of the document itself, which on iOS
+     was enough to let a swipe gesture (e.g. in the schedule tab - see
+     initScheduleTab()) shift the whole page sideways for a moment before
+     JS's own preventDefault took over, visibly jumping/truncating the
+     sticky header. pan-y is stricter (vertical only) and still blocks
+     double-tap-zoom the same way manipulation does. */
+  html, body { touch-action: pan-y; }
   * { box-sizing: border-box; }
   a:focus-visible,
   button:focus-visible,
