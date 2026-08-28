@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-28T22:23:00.509366+00:00">
+<meta name="app-version" content="2026-08-28T22:29:50.414327+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -1707,16 +1707,21 @@
         var firstCol = track && track.children[0];
         if (!firstCol) return 0;
         var gap = parseFloat(getComputedStyle(track).gap || "0") || 0;
-        // +16: a round's own .bracket-pair::after connector stub (25px, or
-        // 33px for a round-2 pair) reaches PAST the column's own measured
-        // width, into the gap - column-width+gap alone lands the pan
-        // exactly at the column's edge, leaving a few px of that
-        // now-disconnected stub still poking into view past the strip
-        // viewport's own clip edge. 16px reliably clears it (measured:
-        // a round-2 stub's own worst-case overlap was ~13px) without
-        // shifting far enough to cut into the NEXT column's own content.
-        return firstCol.getBoundingClientRect().width + gap + 16;
+        return firstCol.getBoundingClientRect().width + gap;
       }
+      // A round's own .bracket-pair::after connector stub (25px, or 33px
+      // for a round-2 pair) reaches PAST the column's own measured width,
+      // into the gap - column-width+gap alone lands the pan exactly at the
+      // column's edge, leaving a few px of that now-disconnected stub still
+      // poking into view past the strip viewport's own clip edge. This is a
+      // FLAT one-time extra (added once, not per step - see its one caller
+      // below) since it only ever needs to clear the single trailing stub
+      // at whatever the current step's own edge is, not accumulate with
+      // every step taken; folding it into unitShift() itself (multiplied by
+      // step) overshot at step 2, clipping content that should stay
+      // visible. 0 at step 0 - there's no previous round's stub to clear
+      // yet there.
+      var STUB_CLEAR_PX = 45;
 
       function setTracks(px, animate) {
         tracks.forEach(function(track) {
@@ -1759,7 +1764,7 @@
         var height = bottomRect.bottom - topRect.top;
         finalsWrap.style.top = top + "px";
         finalsWrap.style.height = height + "px";
-        var currentShift = step * unitShift();
+        var currentShift = totalShift();
         connector.style.top = top + "px";
         connector.style.height = height + "px";
         connector.style.left = (topRect.right - stripsRect.left + 16 + currentShift) + "px";
@@ -1767,9 +1772,22 @@
         if (tracks.indexOf(connector) === -1) tracks.push(connector);
       }
 
+      function totalShift() {
+        // Reverted to plain step * unitShift() (no extra stub-clearing
+        // offset) - two attempts at compensating for the connector stub's
+        // small cosmetic overhang (per-step-multiplied, then flat) both
+        // introduced worse, real content clipping (the NBA Finals box's own
+        // right edge cut off at step 2) instead of just hiding the stub.
+        // The stub nub is a known, deferred cosmetic issue - see CLAUDE.md
+        // backlog - not worth re-risking real clipping to chase further
+        // without being able to properly re-derive the Finals track's own
+        // width math first.
+        return step * unitShift();
+      }
+
       function render(animate) {
         wrap.setAttribute("data-step", step);
-        setTracks(step * unitShift(), animate);
+        setTracks(totalShift(), animate);
         prevBtn.disabled = step === 0;
         nextBtn.disabled = step === maxStep;
       }
