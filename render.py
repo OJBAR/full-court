@@ -815,8 +815,17 @@ TEMPLATE = """<!DOCTYPE html>
      .schedule-games visibly offset sideways (see its own comment on the
      race condition this guards against): even if some other future bug
      leaves an X transform stuck non-zero, clipping it here keeps that
-     invisible instead of turning <main> itself horizontally scrollable. */
-  .schedule-tab, .schedule-games, .schedule-calendar {{ overflow-x: hidden; }}
+     invisible instead of turning <main> itself horizontally scrollable.
+     Deliberately NOT on .schedule-tab itself (an earlier version of this
+     rule included it) - overflow-x set to anything but visible implicitly
+     computes overflow-y to auto too, which turned .schedule-tab into its
+     OWN scrolling/sticky-positioning container instead of <main> being the
+     one .schedule-nav sticks against - .schedule-nav (a child of
+     .schedule-tab) ended up "stuck" 50px+50px down from the top instead of
+     right under the title bar. .schedule-games/.schedule-calendar are
+     BELOW .schedule-nav as siblings, not its ancestor, so clipping there
+     doesn't create that problem. */
+  .schedule-games, .schedule-calendar {{ overflow-x: hidden; }}
 
   /* The playoff bracket's own pager (see initPlayoffBracketPager()) - a
      continuous per-conference strip panned by a JS-measured column width
