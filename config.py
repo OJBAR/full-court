@@ -2,6 +2,17 @@ from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta
 
 US_EASTERN = ZoneInfo("America/New_York")
+# The schedule tab's own client-side day grouping (render.py's
+# initScheduleTab()/ilDateKey()) buckets games by ISRAEL calendar day, not
+# US Eastern - correct for the viewer ("future days show tip-off time in
+# Israel time"), but a US-Eastern date string like the one
+# last_night_game_date() returns is NOT automatically the same calendar day
+# in Israel (a game tipping off late evening ET already lands on the NEXT
+# Israel calendar day). Anything that feeds a date into that tab's own
+# "today" bucket (see _generate_comprehensive_demo.py's demo_today) needs
+# this zone, not US_EASTERN, or it opens on a day whose bucket doesn't
+# actually contain the games it's supposed to.
+ISRAEL = ZoneInfo("Asia/Jerusalem")
 
 
 def last_night_game_date(now: datetime | None = None) -> str:

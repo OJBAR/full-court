@@ -69,7 +69,7 @@ from fetch import (
     _dataframe_for,
 )
 from highlights import find_highlight_url
-from config import US_EASTERN
+from config import US_EASTERN, ISRAEL
 from render import render, OUTPUT_DIR
 
 COMPREHENSIVE_DIR = OUTPUT_DIR / "comprehensive"
@@ -155,6 +155,28 @@ def build_highlight_cache(base_schedule: list[dict]) -> dict:
             print(f"  [{i + 1}/{len(missing)}] highlights looked up")
         time.sleep(0.5)
     return cache
+
+
+def _il_today(season_schedule: list[dict], date_str: str) -> str:
+    """
+    The Israel calendar day this page's own night of games actually falls
+    into - see config.ISRAEL's docstring for why this is NOT just date_str
+    itself. render.py's schedule tab buckets games by Israel calendar day
+    client-side (ilDateKey()) but opens on whatever data-simulated-today
+    says verbatim (todayKey()) - passing the raw US-Eastern date_str there
+    landed the tab on the wrong bucket for any night with a late-evening ET
+    tipoff (which is already the next calendar day in Israel), showing that
+    bucket's real, un-masked games and making the "next day" masking look
+    like it wasn't applied ("still showing tomorrow's games" - it was
+    showing TODAY's games, just under tomorrow's label). Any game from
+    date_str's own night works to derive this - they're all the same real
+    game night, so they land on the same Israel day.
+    """
+    for entry in season_schedule:
+        if _et_date(entry["tipoff_utc"]) == date_str:
+            dt = datetime.fromisoformat(entry["tipoff_utc"].replace("Z", "+00:00"))
+            return dt.astimezone(ISRAEL).strftime("%Y-%m-%d")
+    return date_str  # shouldn't happen for a real game date - defensive fallback only
 
 
 def enrich_full_history(season_schedule: list[dict], date_str: str, highlight_cache: dict, standings: list[dict]) -> None:
@@ -257,20 +279,22 @@ def build():
             print(f"[{i + 1}/{len(dates)}] Fetching real data for {date_str}...")
             try:
                 data = fetch_for_date(date_str, season_schedule=base_schedule)  # include_highlights defaults True
-                # See _fix_comprehensive_demo.py's fix_file() comment - the
-                # "לוח התוצאות" tab needs to open on this page's own date,
-                # not whatever the real viewer's live "today" happens to be.
-                data["demo_today"] = date_str
             except Exception as e:
                 print(f"  FAILED: {e} - skipping this date.")
                 continue
             cache_path.write_text(json.dumps(data, ensure_ascii=False, default=_json_default), encoding="utf-8")
             time.sleep(0.5)
 
-        # Both pure local computation (no API calls) - always redone fresh
-        # from the freshest base_schedule/highlight_cache/standings_meta,
-        # even for an already-cached date, so a fix to either computation
-        # reaches every page on the next run without re-fetching anything.
+        # All three: pure local computation (no API calls) - always redone
+        # fresh from the freshest base_schedule/highlight_cache/
+        # standings_meta, even for an already-cached date, so a fix to any
+        # of them reaches every page on the next run without re-fetching
+        # anything. demo_today in particular must NOT be cached-and-reused
+        # as-is: an older cached run may have written the wrong (raw
+        # US-Eastern date_str) value before _il_today() existed - see its
+        # own docstring - and every date needs the corrected value, not just
+        # freshly-fetched ones.
+        data["demo_today"] = _il_today(data["season_schedule"], date_str)
         data["standings"] = compute_standings_as_of(date_str, base_schedule, standings_meta)
         enrich_full_history(data["season_schedule"], date_str, highlight_cache, data["standings"])
 
