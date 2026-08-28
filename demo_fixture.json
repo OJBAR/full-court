@@ -9911,22 +9911,61 @@
     "cup_bracket": [],
     "is_cup_groups": false,
     "cup_group_standings": [],
-    "upcoming_games": [
+    "season_schedule": [
       {
-        "game_id": "0022500999",
-        "home_team": "Los Angeles Lakers",
-        "home_tricode": "LAL",
-        "away_team": "Golden State Warriors",
-        "away_tricode": "GSW",
-        "tipoff_utc": "2026-01-22T03:00:00Z"
+        "game_id": "0022500801",
+        "tipoff_utc": "2026-01-19T00:30:00Z",
+        "home_team": "New York Knicks",
+        "home_tricode": "NYK",
+        "away_team": "Philadelphia 76ers",
+        "away_tricode": "PHI",
+        "home_score": 115,
+        "away_score": 108,
+        "is_final": true
       },
       {
-        "game_id": "0022500998",
-        "home_team": "Boston Celtics",
-        "home_tricode": "BOS",
-        "away_team": "Miami Heat",
-        "away_tricode": "MIA",
-        "tipoff_utc": "2026-01-22T00:30:00Z"
+        "game_id": "0022500802",
+        "tipoff_utc": "2026-01-20T03:00:00Z",
+        "home_team": "Denver Nuggets",
+        "home_tricode": "DEN",
+        "away_team": "Los Angeles Lakers",
+        "away_tricode": "LAL",
+        "home_score": 112,
+        "away_score": 101,
+        "is_final": true
+      },
+      {
+        "game_id": "0022500805",
+        "tipoff_utc": "2026-01-22T00:00:00Z",
+        "home_team": "Minnesota Timberwolves",
+        "home_tricode": "MIN",
+        "away_team": "Milwaukee Bucks",
+        "away_tricode": "MIL",
+        "home_score": null,
+        "away_score": null,
+        "is_final": false
+      },
+      {
+        "game_id": "0022500806",
+        "tipoff_utc": "2026-01-22T03:30:00Z",
+        "home_team": "Oklahoma City Thunder",
+        "home_tricode": "OKC",
+        "away_team": "Dallas Mavericks",
+        "away_tricode": "DAL",
+        "home_score": null,
+        "away_score": null,
+        "is_final": false
+      },
+      {
+        "game_id": "0022500807",
+        "tipoff_utc": "2026-01-23T01:00:00Z",
+        "home_team": "Phoenix Suns",
+        "home_tricode": "PHX",
+        "away_team": "Golden State Warriors",
+        "away_tricode": "GSW",
+        "home_score": null,
+        "away_score": null,
+        "is_final": false
       }
     ]
   },

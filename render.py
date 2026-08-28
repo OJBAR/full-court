@@ -1,11 +1,10 @@
 import html
+import json
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 OUTPUT_DIR = Path(__file__).parent / "output"
-_ISRAEL = ZoneInfo("Asia/Jerusalem")
 
 _HEBREW_WEEKDAYS = {
     0: "שני",
@@ -225,6 +224,9 @@ TEMPLATE = """<!DOCTYPE html>
   }}
   .score {{ width: 2.2em; text-align: center; color: var(--text-muted); font-variant-numeric: tabular-nums; }}
   .score.winner {{ color: var(--accent); font-weight: 700; }}
+  /* A not-yet-played game's tip-off time ("19:30") is wider than a plain
+     2-digit score - .score's fixed 2.2em would clip it. */
+  .score.time {{ width: auto; min-width: 3.4em; }}
   .ot-tag {{
     /* Absolutely positioned off to the side, out of the flex flow, so it
        never shifts the row's true center - .game-row centers just the
@@ -670,6 +672,18 @@ TEMPLATE = """<!DOCTYPE html>
     justify-content: center;
   }}
   .pager-arrow:disabled {{ opacity: 0.35; cursor: default; }}
+
+  /* The season schedule tab's day nav (see initScheduleTab()) - reuses
+     .pager-nav/.pager-arrow above for the arrows themselves, just needs its
+     own label in between and a bit more breathing room above the list. */
+  .schedule-nav {{ margin-bottom: 8px; }}
+  .schedule-date-label {{
+    min-width: 9em;
+    text-align: center;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--text-heading);
+  }}
 
   /* The playoff bracket's own pager (see initPlayoffBracketPager()) - a
      continuous per-conference strip panned by a JS-measured column width
@@ -2156,6 +2170,117 @@ TEMPLATE = """<!DOCTYPE html>
       main.insertBefore(home, main.firstChild);
     }})();
 
+    (function initScheduleTab() {{
+      // The season schedule browser (see _build_schedule_html) - a single
+      // flat game list embedded as JSON, grouped into Israel-calendar days
+      // and paged entirely here in JS. "Today" is resolved to the real
+      // viewer's today at render() time below, not baked in at page-
+      // generation time, since the same static page keeps being viewed for
+      // as long as it's the latest brief.
+      var wrap = document.querySelector(".schedule-tab");
+      if (!wrap) return;
+      var dataEl = wrap.querySelector(".schedule-data");
+      var games;
+      try {{
+        games = JSON.parse(dataEl.textContent);
+      }} catch (e) {{
+        return;
+      }}
+      var label = wrap.querySelector(".schedule-date-label");
+      var gamesEl = wrap.querySelector(".schedule-games");
+      var prevBtn = wrap.querySelector(".schedule-prev");
+      var nextBtn = wrap.querySelector(".schedule-next");
+      var IL_TZ = "Asia/Jerusalem";
+      var WEEKDAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+
+      function ilDateKey(isoUtc) {{
+        return new Date(isoUtc).toLocaleDateString("en-CA", {{ timeZone: IL_TZ }});
+      }}
+      function ilTimeStr(isoUtc) {{
+        return new Date(isoUtc).toLocaleTimeString("he-IL", {{
+          timeZone: IL_TZ, hour: "2-digit", minute: "2-digit", hour12: false
+        }});
+      }}
+      // "en-CA" gives a plain YYYY-MM-DD string directly, so day keys sort
+      // correctly as plain strings with no separate date-parsing step.
+      function todayKey() {{
+        return new Date().toLocaleDateString("en-CA", {{ timeZone: IL_TZ }});
+      }}
+      function addDays(key, delta) {{
+        var parts = key.split("-").map(Number);
+        // Noon, not midnight - keeps this away from any DST-transition edge
+        // where "midnight" itself doesn't exist or repeats in a local zone.
+        var d = new Date(parts[0], parts[1] - 1, parts[2], 12);
+        d.setDate(d.getDate() + delta);
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      }}
+      function formatLabel(key) {{
+        var parts = key.split("-").map(Number);
+        var d = new Date(parts[0], parts[1] - 1, parts[2], 12);
+        return WEEKDAYS[d.getDay()] + ", " + String(parts[2]).padStart(2, "0") + "." + String(parts[1]).padStart(2, "0") + "." + parts[0];
+      }}
+      function gameUrl(g) {{
+        return "https://www.nba.com/game/" + g.away_tricode.toLowerCase() + "-vs-" + g.home_tricode.toLowerCase() + "-" + g.game_id;
+      }}
+
+      var byDate = {{}};
+      games.forEach(function(g) {{
+        var key = ilDateKey(g.tipoff_utc);
+        (byDate[key] = byDate[key] || []).push(g);
+      }});
+      var sortedKeys = Object.keys(byDate).sort();
+      var minKey = sortedKeys[0];
+      var maxKey = sortedKeys[sortedKeys.length - 1];
+
+      function pickInitialKey() {{
+        var today = todayKey();
+        if (byDate[today] || !sortedKeys.length) return today;
+        // No games today - default to the nearest upcoming gameday instead
+        // of an empty screen.
+        for (var i = 0; i < sortedKeys.length; i++) {{
+          if (sortedKeys[i] > today) return sortedKeys[i];
+        }}
+        // No games left ahead either (the season's over) - fall back to the
+        // most recent one so there's still something to look at.
+        return maxKey;
+      }}
+
+      var currentKey = pickInitialKey();
+
+      function render() {{
+        label.textContent = formatLabel(currentKey);
+        prevBtn.disabled = !!minKey && currentKey <= minKey;
+        nextBtn.disabled = !!maxKey && currentKey >= maxKey;
+
+        var dayGames = (byDate[currentKey] || []).slice().sort(function(a, b) {{
+          return a.tipoff_utc < b.tipoff_utc ? -1 : a.tipoff_utc > b.tipoff_utc ? 1 : 0;
+        }});
+        if (!dayGames.length) {{
+          gamesEl.innerHTML = '<p style="color:var(--text-muted); font-size:0.875rem; text-align:center;">אין משחקים ביום זה.</p>';
+          return;
+        }}
+        gamesEl.innerHTML = dayGames.map(function(g) {{
+          var awayWon = g.is_final && g.away_score > g.home_score;
+          var homeWon = g.is_final && g.home_score > g.away_score;
+          var mid = g.is_final
+            ? '<span class="score' + (awayWon ? " winner" : "") + '">' + g.away_score + '</span>' +
+              '<span class="score">–</span>' +
+              '<span class="score' + (homeWon ? " winner" : "") + '">' + g.home_score + '</span>'
+            : '<span class="score time">' + ilTimeStr(g.tipoff_utc) + '</span>';
+          return '<div class="game-block"><div class="game-row">' +
+            '<span class="team' + (awayWon ? " winner" : "") + '">' + g.away_tricode + '</span>' +
+            mid +
+            '<span class="team' + (homeWon ? " winner" : "") + '">' + g.home_tricode + '</span>' +
+            '</div><div class="game-links"><a class="game-link" href="' + gameUrl(g) + '" target="_blank" rel="noopener">דף המשחק</a></div></div>';
+        }}).join("");
+      }}
+
+      prevBtn.addEventListener("click", function() {{ currentKey = addDays(currentKey, -1); render(); }});
+      nextBtn.addEventListener("click", function() {{ currentKey = addDays(currentKey, 1); render(); }});
+
+      render();
+    }})();
+
     function toggleTheme() {{
       var current = document.documentElement.getAttribute("data-theme");
       var systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -2340,31 +2465,38 @@ def _build_standings_html(standings: list[dict]) -> str:
     return _build_pager_html(pages)
 
 
-def _build_upcoming_games_html(upcoming_games: list[dict]) -> str:
+def _build_schedule_html(season_schedule: list[dict]) -> str:
     """
-    A preview of tonight's slate (the US Eastern day right after the one this
-    brief covers) - away @ home matchups with tip-off time converted to
-    Israel time, reusing the same .game-block/.game-row/.team/.score classes
-    as the results tab so it looks like part of the same list, just without
-    a score (the game hasn't been played yet).
+    A day-by-day season schedule browser: past days show final scores,
+    future days show the tip-off time - one flat game list (see
+    fetch.get_season_schedule) embedded as JSON and grouped/paged entirely
+    client-side (see initScheduleTab() below), since "today" has to resolve
+    to the viewer's own real today, not the day this page happened to be
+    generated on - the same static page keeps getting viewed for as long as
+    it's the latest brief (see render.save()). Grouping by calendar day is
+    done in Israel time in JS too (Intl's timeZone support), not US Eastern,
+    so a westward-tipping game after local midnight correctly lands on the
+    next Israel day instead of staying lumped in with the earlier one.
+    Reuses the exact same .game-block/.game-row/.team/.score markup as the
+    results tab so a schedule day looks like part of the same list.
     """
-    if not upcoming_games:
-        return '<p style="color:var(--text-muted); font-size:0.875rem;">אין משחקים קרובים ידועים.</p>'
+    if not season_schedule:
+        return '<p style="color:var(--text-muted); font-size:0.875rem;">לוח המשחקים לא זמין כרגע.</p>'
 
-    rows = []
-    for game in upcoming_games:
-        tipoff_utc = datetime.fromisoformat(str(game["tipoff_utc"]).replace("Z", "+00:00"))
-        tipoff_israel = tipoff_utc.astimezone(_ISRAEL).strftime("%H:%M")
-        rows.append(
-            '<div class="game-block">'
-            '<div class="game-row">'
-            f'<span class="team">{html.escape(game["away_tricode"])}</span>'
-            f'<span class="score">{tipoff_israel}</span>'
-            f'<span class="team">{html.escape(game["home_tricode"])}</span>'
-            "</div>"
-            "</div>"
-        )
-    return "\n        ".join(rows)
+    # "</" could otherwise prematurely close this <script> tag if it ever
+    # appeared inside a team name/city string.
+    payload = json.dumps(season_schedule, ensure_ascii=False).replace("</", "<\\/")
+    return (
+        '<div class="schedule-tab">'
+        '<div class="pager-nav schedule-nav">'
+        '<button type="button" class="pager-arrow schedule-prev" aria-label="יום קודם">‹</button>'
+        '<div class="schedule-date-label"></div>'
+        '<button type="button" class="pager-arrow schedule-next" aria-label="יום הבא">›</button>'
+        "</div>"
+        '<div class="schedule-games"></div>'
+        f'<script type="application/json" class="schedule-data">{payload}</script>'
+        "</div>"
+    )
 
 
 def _pad_series(series_list: list[dict], count: int) -> list[dict | None]:
@@ -3102,9 +3234,9 @@ def _build_secondary_section(data: dict) -> str:
     the Championship counts toward the regular season - plus a group-standings
     tab on group-stage days and a connected bracket tab on knockout days.
     Otherwise: standings only.
-    Last, in every case: a preview of tonight's slate (see
-    _build_upcoming_games_html) - always the final tab, after everything
-    else including the results tab itself.
+    Last, in every case: the season schedule browser (see
+    _build_schedule_html) - always the final tab, after everything else
+    including the results tab itself.
     """
     if data.get("is_playoffs"):
         playoff_series = data.get("playoff_series", [])
@@ -3130,7 +3262,7 @@ def _build_secondary_section(data: dict) -> str:
             sections.append(("פלייאין", f'<div class="play-in-bracket">{play_in_blocks}</div>'))
         sections.append(standings_section)
 
-    sections.append(("משחקי הלילה הבא", _build_upcoming_games_html(data.get("upcoming_games", []))))
+    sections.append(("לוח המשחקים", _build_schedule_html(data.get("season_schedule", []))))
 
     return "\n\n    ".join(_details_block(title, body_html) for title, body_html in sections)
 

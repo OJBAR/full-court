@@ -1,6 +1,5 @@
 import json
 import time
-from datetime import datetime, timedelta
 
 import pandas as pd
 import requests
@@ -374,41 +373,47 @@ def highlight_url_for_game(game_code: str, line_score_rows: list[dict], date_str
     return find_highlight_url(home_name, away_name, date_str)
 
 
-def get_upcoming_games(date_str: str) -> list[dict]:
+def get_season_schedule(date_str: str) -> list[dict]:
     """
-    Returns the next US Eastern calendar day's scheduled games - team
-    matchups and tip-off time - so the brief can preview tonight's slate
-    alongside last night's results. Unlike get_cup_bracket()/
-    get_play_in_bracket(), this needs no second ScoreboardV3 call: these
-    games haven't been played yet (no line score/box score to fetch), and
-    ScheduleLeagueV2's own SeasonGames dataframe already carries the home/
-    away team names and the real scheduled gameDateTimeUTC tip-off timestamp
-    for the full season, future dates included.
+    Returns every regular-season/Cup/Play-In/Playoff game (gameId prefixes
+    "002"/"004"/"005"/"006" - excludes preseason "001" and All-Star "003")
+    for the NBA season date_str belongs to, one flat list spanning the whole
+    season: past games carry their final score, future games carry just
+    their scheduled tip-off time. One ScheduleLeagueV2 call covers both
+    directions - unlike get_cup_bracket()/get_play_in_bracket(), no second
+    ScoreboardV3 call is needed, since ScheduleLeagueV2 already reports the
+    final score directly once a game is done (homeTeam_score/awayTeam_score),
+    alongside the real scheduled gameDateTimeUTC tip-off timestamp for games
+    that haven't happened yet. Powers the "schedule" tab's day-by-day
+    browser (_build_schedule_html in render.py), which needs a single
+    continuous timeline to page back and forth across, not just "yesterday"
+    or just "tomorrow".
     """
-    next_date = (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
-    season = season_string_for(next_date)
+    season = season_string_for(date_str)
     result = scheduleleaguev2.ScheduleLeagueV2(season=season)
     schedule_df = _dataframe_for(result, "SeasonGames").copy()
 
-    schedule_df["date_str"] = pd.to_datetime(schedule_df["gameDate"]).dt.strftime("%Y-%m-%d")
-    upcoming = schedule_df[schedule_df["date_str"] == next_date]
-    # "N" = not postponed; anything else means the game shouldn't be previewed
-    # as if it's actually happening that night.
-    upcoming = upcoming[upcoming["postponedStatus"] == "N"]
+    schedule_df = schedule_df[schedule_df["gameId"].str.startswith(("002", "004", "005", "006"))]
+    # "N" = not postponed; a postponed game has no real date to show it under.
+    schedule_df = schedule_df[schedule_df["postponedStatus"] == "N"]
 
     games = []
-    for _, game in upcoming.sort_values("gameDateTimeUTC").iterrows():
+    for _, game in schedule_df.iterrows():
+        is_final = int(game["gameStatus"]) == 3
         games.append(
             {
                 "game_id": game["gameId"],
+                "tipoff_utc": game["gameDateTimeUTC"],
                 "home_team": f"{game['homeTeam_teamCity']} {game['homeTeam_teamName']}",
                 "home_tricode": game["homeTeam_teamTricode"],
                 "away_team": f"{game['awayTeam_teamCity']} {game['awayTeam_teamName']}",
                 "away_tricode": game["awayTeam_teamTricode"],
-                "tipoff_utc": game["gameDateTimeUTC"],
+                "home_score": int(game["homeTeam_score"]) if is_final else None,
+                "away_score": int(game["awayTeam_score"]) if is_final else None,
+                "is_final": is_final,
             }
         )
-    return games
+    return sorted(games, key=lambda g: g["tipoff_utc"])
 
 
 def fetch_for_date(date_str: str) -> dict:
@@ -487,10 +492,10 @@ def fetch_for_date(date_str: str) -> dict:
         power_ratings = {}
 
     try:
-        upcoming_games = get_upcoming_games(date_str)
+        season_schedule = get_season_schedule(date_str)
     except Exception as e:
-        print(f"Warning: could not fetch upcoming games ({e}) - continuing without them.")
-        upcoming_games = []
+        print(f"Warning: could not fetch season schedule ({e}) - continuing without it.")
+        season_schedule = []
 
     return {
         "date": date_str,
@@ -506,7 +511,7 @@ def fetch_for_date(date_str: str) -> dict:
         "play_in_bracket": play_in_bracket,
         "injuries": injuries,
         "player_power_ratings": power_ratings,
-        "upcoming_games": upcoming_games,
+        "season_schedule": season_schedule,
     }
 
 
