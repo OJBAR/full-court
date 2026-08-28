@@ -1026,6 +1026,14 @@ TEMPLATE = """<!DOCTYPE html>
     min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    /* pan-y: <main> is the real scroll container in tabs-mode (the sticky
+       tab-title bar sticks to ITS scroll position) - without this, iOS
+       Safari can still engage its own horizontal/elastic-bounce handling
+       for a fraction of a touch gesture before a descendant's touch-action
+       or preventDefault takes effect, which is enough to nudge <main>'s
+       scroll position and visibly jump the sticky bar even during a swipe
+       that's fully handled in JS (see initScheduleTab()). */
+    touch-action: pan-y;
     display: flex;
     flex-direction: column;
   }}
