@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-28T07:58:12.567148+00:00">
+<meta name="app-version" content="2026-08-28T08:07:19.909204+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -234,13 +234,15 @@
     color: var(--text-muted);
     margin-top: 6px;
   }
-  /* The game's own page on nba.com (see _nba_game_url) and its highlight
-     video on GAMETIME HIGHLIGHTS, an unofficial third-party channel (see
-     highlights.py) - either or both may be missing (the highlight
-     especially, since it's often not up yet at brief time - see
-     scheduler.py's two-pass design), so .game-links only renders the ones
-     that exist, side by side. Both open in a real browser tab/app, out of
-     the installed PWA. */
+  /* The game's own page on nba.com and its highlight video on GAMETIME
+     HIGHLIGHTS, an unofficial third-party channel (see highlights.py) -
+     either or both may be missing (the highlight especially, since it's
+     often not up yet at brief time - see scheduler.py's two-pass design),
+     so .game-links only renders the ones that exist, side by side. Both
+     open in a real browser tab/app, out of the installed PWA. See
+     initScheduleTab()'s gameUrl()/renderRichRow() - the schedule tab (see
+     _build_schedule_html) is what builds these now, results are no longer
+     a separate tab. */
   .game-links {
     display: flex;
     justify-content: center;
@@ -1226,16 +1228,13 @@
       </div>
 
       <details class="tab-section">
-        <summary>כל תוצאות הלילה</summary>
-        <div class="details-body">
-          <div class="game-block"><div class="game-row"><span class="team winner">ORL</span><span class="score winner">113</span><span class="score">–</span><span class="score">105</span><span class="team">DET</span></div><div class="game-sub">Game 3 · ORL leads 2-1</div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/det-vs-orl-0042500103" target="_blank" rel="noopener">דף המשחק</a></div></div>
-        <div class="game-block"><div class="game-row"><span class="team">PHX</span><span class="score">109</span><span class="score">–</span><span class="score winner">121</span><span class="team winner">OKC</span></div><div class="game-sub">Game 3 · OKC leads 3-0</div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/okc-vs-phx-0042500143" target="_blank" rel="noopener">דף המשחק</a></div></div>
-        <div class="game-block"><div class="game-row"><span class="team">ATL</span><span class="score">98</span><span class="score">–</span><span class="score winner">114</span><span class="team winner">NYK</span></div><div class="game-sub">Game 4 · Series tied 2-2</div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/nyk-vs-atl-0042500124" target="_blank" rel="noopener">דף המשחק</a></div></div>
-        <div class="game-block"><div class="game-row"><span class="team winner">MIN</span><span class="score winner">112</span><span class="score">–</span><span class="score">96</span><span class="team">DEN</span></div><div class="game-sub">Game 4 · MIN leads 3-1</div><div class="game-links"><a class="game-link" href="https://www.nba.com/game/den-vs-min-0042500164" target="_blank" rel="noopener">דף המשחק</a></div></div>
-        </div>
-      </details>
+      <summary>לוח המשחקים</summary>
+      <div class="details-body" dir="ltr">
+        <div class="schedule-tab" data-simulated-today="2026-04-25"><div class="pager-nav schedule-nav"><button type="button" class="pager-arrow schedule-prev" aria-label="יום קודם">‹</button><div class="schedule-date-label"></div><button type="button" class="pager-arrow schedule-next" aria-label="יום הבא">›</button></div><div class="schedule-games"></div><script type="application/json" class="schedule-data">[{"game_id": "0022500801", "tipoff_utc": "2026-04-23T23:30:00Z", "home_team": "New York Knicks", "home_tricode": "NYK", "away_team": "Philadelphia 76ers", "away_tricode": "PHI", "home_score": 115, "away_score": 108, "is_final": true}, {"game_id": "0022500802", "tipoff_utc": "2026-04-25T02:00:00Z", "home_team": "Denver Nuggets", "home_tricode": "DEN", "away_team": "Los Angeles Lakers", "away_tricode": "LAL", "home_score": 112, "away_score": 101, "is_final": true}, {"game_id": "0022500803", "tipoff_utc": "2026-04-29T23:00:00Z", "home_team": "Boston Celtics", "home_tricode": "BOS", "away_team": "Miami Heat", "away_tricode": "MIA", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022500804", "tipoff_utc": "2026-04-30T02:30:00Z", "home_team": "Phoenix Suns", "home_tricode": "PHX", "away_team": "Oklahoma City Thunder", "away_tricode": "OKC", "home_score": null, "away_score": null, "is_final": false}]</script></div>
+      </div>
+    </details>
 
-      <details class="tab-section">
+    <details class="tab-section">
       <summary>בראקט הפלייאוף</summary>
       <div class="details-body" dir="ltr">
         <div class="bracket-pager" data-step="0"><div class="bracket-pager-strips"><div class="strip-viewport"><div class="strip-track"><div class="bracket-column"><h4 class="bracket-round-label">1st Round</h4></div><div class="bracket-column"><h4 class="bracket-round-label">Conf. Semifinals</h4></div><div class="bracket-column"><h4 class="bracket-round-label">Conf. Finals</h4></div><div class="bracket-column"><h4 class="bracket-round-label">NBA Finals</h4></div></div></div><div class="bracket-conf-block"><h4 class="sr-only">מערב</h4><div class="strip-viewport"><div class="strip-track"><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team pending"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>OKC</span></span><span class="bracket-score">3</span></div><div class="bracket-team pending"><span class="bracket-team-label"><span class="bracket-seed">8</span><span>PHX</span></span><span class="bracket-score">0</span></div></div><div class="bracket-match"><div class="bracket-team pending"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>LAL</span></span><span class="bracket-score">3</span></div><div class="bracket-team pending"><span class="bracket-team-label"><span class="bracket-seed">5</span><span>HOU</span></span><span class="bracket-score">0</span></div></div></div><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team pending"><span class="bracket-team-label"><span class="bracket-seed">3</span><span>DEN</span></span><span class="bracket-score">1</span></div><div class="bracket-team pending"><span class="bracket-team-label"><span class="bracket-seed">6</span><span>MIN</span></span><span class="bracket-score">3</span></div></div><div class="bracket-match"><div class="bracket-team pending"><span class="bracket-team-label"><span class="bracket-seed">2</span><span>SAS</span></span><span class="bracket-score">2</span></div><div class="bracket-team pending"><span class="bracket-team-label"><span class="bracket-seed">7</span><span>POR</span></span><span class="bracket-score">1</span></div></div></div></div></div><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair bracket-pair-r2"><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div></div></div></div><div class="bracket-column"><div class="bracket-round bracket-final bracket-final-conf"><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div></div></div></div></div></div><div class="bracket-conf-block"><h4 class="sr-only">מזרח</h4><div class="strip-viewport"><div class="strip-track"><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team pending"><span class="bracket-team-label"><span class="bracket-seed">1</span><span>DET</span></span><span class="bracket-score">1</span></div><div class="bracket-team pending"><span class="bracket-team-label"><span class="bracket-seed">8</span><span>ORL</span></span><span class="bracket-score">2</span></div></div><div class="bracket-match"><div class="bracket-team pending"><span class="bracket-team-label"><span class="bracket-seed">4</span><span>CLE</span></span><span class="bracket-score">2</span></div><div class="bracket-team pending"><span class="bracket-team-label"><span class="bracket-seed">5</span><span>TOR</span></span><span class="bracket-score">1</span></div></div></div><div class="bracket-pair"><div class="bracket-match"><div class="bracket-team pending"><span class="bracket-team-label"><span class="bracket-seed">3</span><span>NYK</span></span><span class="bracket-score">2</span></div><div class="bracket-team pending"><span class="bracket-team-label"><span class="bracket-seed">6</span><span>ATL</span></span><span class="bracket-score">2</span></div></div><div class="bracket-match"><div class="bracket-team pending"><span class="bracket-team-label"><span class="bracket-seed">2</span><span>BOS</span></span><span class="bracket-score">2</span></div><div class="bracket-team pending"><span class="bracket-team-label"><span class="bracket-seed">7</span><span>PHI</span></span><span class="bracket-score">1</span></div></div></div></div></div><div class="bracket-column"><div class="bracket-round"><div class="bracket-pair bracket-pair-r2"><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div></div></div></div><div class="bracket-column"><div class="bracket-round bracket-final bracket-final-conf"><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div></div></div></div></div></div><div class="nba-finals-track-wrap"><div class="strip-viewport"><div class="strip-track"><div class="bracket-column"></div><div class="bracket-column"></div><div class="bracket-column"></div><div class="bracket-column"><div class="bracket-round bracket-final"><div class="bracket-match bracket-match-tbd"><div class="bracket-team"><span>TBD</span></div><div class="bracket-team"><span>TBD</span></div></div></div></div></div></div></div><div class="nba-finals-connector"></div></div><div class="pager-nav"><button type="button" class="pager-arrow pager-prev" aria-label="הקודם">‹</button><button type="button" class="pager-arrow pager-next" aria-label="הבא">›</button></div></div>
@@ -1274,13 +1273,6 @@
           <div class="standing-row"><span class="standing-rank">13</span><span class="standing-team">Brooklyn Nets</span><span class="standing-record">20-62</span><span class="standing-streak loss">L 3</span></div>
           <div class="standing-row"><span class="standing-rank">14</span><span class="standing-team">Indiana Pacers</span><span class="standing-record">19-63</span><span class="standing-streak loss">L 2</span></div>
           <div class="standing-row"><span class="standing-rank">15</span><span class="standing-team">Washington Wizards</span><span class="standing-record">17-65</span><span class="standing-streak loss">L 10</span></div></div></div></div></div><div class="pager-nav"><button type="button" class="pager-arrow pager-prev" aria-label="הקודם">‹</button><button type="button" class="pager-arrow pager-next" aria-label="הבא">›</button></div></div>
-      </div>
-    </details>
-
-    <details class="tab-section">
-      <summary>לוח המשחקים</summary>
-      <div class="details-body" dir="ltr">
-        <div class="schedule-tab" data-simulated-today="2026-04-25"><div class="pager-nav schedule-nav"><button type="button" class="pager-arrow schedule-prev" aria-label="יום קודם">‹</button><div class="schedule-date-label"></div><button type="button" class="pager-arrow schedule-next" aria-label="יום הבא">›</button></div><div class="schedule-games"></div><script type="application/json" class="schedule-data">[{"game_id": "0022500801", "tipoff_utc": "2026-04-23T23:30:00Z", "home_team": "New York Knicks", "home_tricode": "NYK", "away_team": "Philadelphia 76ers", "away_tricode": "PHI", "home_score": 115, "away_score": 108, "is_final": true}, {"game_id": "0022500802", "tipoff_utc": "2026-04-25T02:00:00Z", "home_team": "Denver Nuggets", "home_tricode": "DEN", "away_team": "Los Angeles Lakers", "away_tricode": "LAL", "home_score": 112, "away_score": 101, "is_final": true}, {"game_id": "0022500803", "tipoff_utc": "2026-04-29T23:00:00Z", "home_team": "Boston Celtics", "home_tricode": "BOS", "away_team": "Miami Heat", "away_tricode": "MIA", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022500804", "tipoff_utc": "2026-04-30T02:30:00Z", "home_team": "Phoenix Suns", "home_tricode": "PHX", "away_team": "Oklahoma City Thunder", "away_tricode": "OKC", "home_score": null, "away_score": null, "is_final": false}]</script></div>
       </div>
     </details>
     </main>
@@ -2271,6 +2263,51 @@
         return "https://www.nba.com/game/" + g.away_tricode.toLowerCase() + "-vs-" + g.home_tricode.toLowerCase() + "-" + g.game_id;
       }
 
+      // The "rich" row - same look as the old, now-removed results tab
+      // (.team-record/.ot-tag/.game-sub/.game-links) - for a game this
+      // brief actually fetched box scores/highlights for (see g.rich, set
+      // by fetch.fetch_for_date's schedule-enrichment step). Mirrors that
+      // Python code's logic exactly, just in JS since this renders client-
+      // side on demand.
+      function renderRichRow(g) {
+        var r = g.rich;
+        var awayWon = g.is_final && g.away_score > g.home_score;
+        var homeWon = g.is_final && g.home_score > g.away_score;
+        // Season record next to the team code - not during Playoffs/Play-In,
+        // where the series score / seed context (the caption below) is the
+        // relevant number instead.
+        var showRecord = !r.po_round && !r.is_play_in;
+        function teamSpan(tricode, wins, losses, isWinner) {
+          var record = (showRecord && wins != null && losses != null)
+            ? '<span class="team-record">' + wins + '-' + losses + '</span>' : '';
+          return '<span class="team' + (isWinner ? " winner" : "") + '">' + tricode + record + '</span>';
+        }
+        var otCount = (r.period || 4) - 4;
+        var otHtml = otCount > 0
+          ? '<span class="ot-tag">' + (otCount === 1 ? "OT" : otCount + "OT") + '</span>' : '';
+        var block = '<div class="game-row">' +
+          teamSpan(g.away_tricode, r.away_wins, r.away_losses, awayWon) +
+          '<span class="score' + (awayWon ? " winner" : "") + '">' + g.away_score + '</span>' +
+          '<span class="score">–</span>' +
+          '<span class="score' + (homeWon ? " winner" : "") + '">' + g.home_score + '</span>' +
+          teamSpan(g.home_tricode, r.home_wins, r.home_losses, homeWon) +
+          otHtml +
+          '</div>';
+        if (r.po_round) {
+          block += '<div class="game-sub">' + (r.series_game_number || "") + " · " + (r.series_text || "") + '</div>';
+        } else if (r.cup_subtype) {
+          block += '<div class="game-sub">NBA Cup · ' + (r.cup_sub_label || "") + '</div>';
+        } else if (r.is_play_in && r.series_text) {
+          block += '<div class="game-sub">Play-In · ' + r.series_text + '</div>';
+        }
+        var links = '<a class="game-link" href="' + gameUrl(g) + '" target="_blank" rel="noopener">דף המשחק</a>';
+        if (r.highlight_url) {
+          links += '<a class="game-link" href="' + r.highlight_url + '" target="_blank" rel="noopener">תקציר</a>';
+        }
+        block += '<div class="game-links">' + links + '</div>';
+        return '<div class="game-block">' + block + '</div>';
+      }
+
       var byDate = {};
       games.forEach(function(g) {
         var key = ilDateKey(g.tipoff_utc);
@@ -2308,6 +2345,7 @@
           return;
         }
         gamesEl.innerHTML = dayGames.map(function(g) {
+          if (g.rich) return renderRichRow(g);
           var awayWon = g.is_final && g.away_score > g.home_score;
           var homeWon = g.is_final && g.home_score > g.away_score;
           var mid = g.is_final
