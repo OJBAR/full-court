@@ -1685,7 +1685,15 @@ TEMPLATE = """<!DOCTYPE html>
         var firstCol = track && track.children[0];
         if (!firstCol) return 0;
         var gap = parseFloat(getComputedStyle(track).gap || "0") || 0;
-        return firstCol.getBoundingClientRect().width + gap;
+        // +16: a round's own .bracket-pair::after connector stub (25px, or
+        // 33px for a round-2 pair) reaches PAST the column's own measured
+        // width, into the gap - column-width+gap alone lands the pan
+        // exactly at the column's edge, leaving a few px of that
+        // now-disconnected stub still poking into view past the strip
+        // viewport's own clip edge. 16px reliably clears it (measured:
+        // a round-2 stub's own worst-case overlap was ~13px) without
+        // shifting far enough to cut into the NEXT column's own content.
+        return firstCol.getBoundingClientRect().width + gap + 16;
       }}
 
       function setTracks(px, animate) {{
