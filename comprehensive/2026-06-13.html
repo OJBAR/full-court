@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-28T20:24:21.801307+00:00">
+<meta name="app-version" content="2026-08-28T20:31:16.464291+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -2347,14 +2347,26 @@
             ? '<span class="team-record">' + wins + '-' + losses + '</span>' : '';
           return '<span class="team' + (isWinner ? " winner" : "") + '">' + tricode + record + '</span>';
         }
+        // g.is_final can be false with rich data still attached - the
+        // comprehensive demo attaches next-game team records (see
+        // enrich_full_history()'s next_date handling) to the single game
+        // night right after its own simulated "today", where the real score
+        // already exists in the underlying data (it's real history) but
+        // showing it would spoil a game the viewer "hasn't gotten to yet".
+        // Same score-vs-tipoff-time branch the plain (non-rich) row below
+        // uses, so an unplayed rich row looks the same as an unplayed plain
+        // one - only the extra record/context makes it "rich".
+        var mid = g.is_final
+          ? '<span class="score' + (awayWon ? " winner" : "") + '">' + g.away_score + '</span>' +
+            '<span class="score">–</span>' +
+            '<span class="score' + (homeWon ? " winner" : "") + '">' + g.home_score + '</span>'
+          : '<span class="score time">' + ilTimeStr(g.tipoff_utc) + '</span>';
         var otCount = (r.period || 4) - 4;
-        var otHtml = otCount > 0
+        var otHtml = g.is_final && otCount > 0
           ? '<span class="ot-tag">' + (otCount === 1 ? "OT" : otCount + "OT") + '</span>' : '';
         var block = '<div class="game-row">' +
           teamSpan(g.away_tricode, r.away_wins, r.away_losses, awayWon) +
-          '<span class="score' + (awayWon ? " winner" : "") + '">' + g.away_score + '</span>' +
-          '<span class="score">–</span>' +
-          '<span class="score' + (homeWon ? " winner" : "") + '">' + g.home_score + '</span>' +
+          mid +
           teamSpan(g.home_tricode, r.home_wins, r.home_losses, homeWon) +
           otHtml +
           '</div>';
@@ -2366,7 +2378,7 @@
           block += '<div class="game-sub">Play-In · ' + r.series_text + '</div>';
         }
         var links = '<a class="game-link" href="' + gameUrl(g) + '" target="_blank" rel="noopener">דף המשחק</a>';
-        if (r.highlight_url) {
+        if (g.is_final && r.highlight_url) {
           links += '<a class="game-link" href="' + r.highlight_url + '" target="_blank" rel="noopener">תקציר</a>';
         }
         block += '<div class="game-links">' + links + '</div>';
@@ -2727,7 +2739,15 @@
     "  display: flex; align-items: center; justify-content: center; gap: 6px;",
     "  padding: 8px; border-radius: 999px; margin: 0 12px;",
     "  background: var(--card-bg); border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.15);",
-    "  direction: rtl; flex-wrap: nowrap; }",
+    "  direction: rtl; flex-wrap: nowrap;",
+    // A known iOS Safari bug: a plain position:fixed element can visibly
+    // drift/lag sideways and downward for a moment during an active touch
+    // drag elsewhere on the page (like the schedule tab's own day-swipe) -
+    // reported as "the bar moves left-right and down" mid-swipe. Forcing
+    // this element onto its own GPU compositing layer (the standard fix for
+    // this exact class of bug) keeps it visually pinned regardless of what
+    // else on the page is being dragged.
+    "  transform: translateZ(0); -webkit-transform: translateZ(0); will-change: transform; }",
     ".cd-nav button { border: 1px solid var(--border); background: var(--bg); color: var(--text-heading);",
     "  border-radius: 999px; font-size: 13px; cursor: pointer; flex-shrink: 0;",
     "  padding: 5px 9px; font-family: inherit; }",
