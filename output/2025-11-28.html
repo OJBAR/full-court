@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-28T08:29:25.164029+00:00">
+<meta name="app-version" content="2026-08-28T08:35:50.369735+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -674,8 +674,15 @@
   }
   /* pan-y (not none): a day with many games still has to scroll vertically
      normally - only horizontal panning is taken over by initScheduleTab()'s
-     own touch handling (swipe between days). */
+     own touch handling (swipe between days). Applied to the whole
+     .details-body (not just .schedule-tab) since that's what the swipe
+     listener is actually attached to (see initScheduleTab()) - a short
+     day's list leaves empty space below .schedule-tab itself that's still
+     part of .details-body, and without this the browser's own native
+     touch-action:auto there can grab a horizontal drag before JS gets a
+     chance to, making swipe silently not work only in that empty area. */
   .schedule-tab { touch-action: pan-y; }
+  .details-body:has(> .schedule-tab) { touch-action: pan-y; }
 
   /* The playoff bracket's own pager (see initPlayoffBracketPager()) - a
      continuous per-conference strip panned by a JS-measured column width
@@ -2191,10 +2198,14 @@
       }
       var label = wrap.querySelector(".schedule-date-label");
       var gamesEl = wrap.querySelector(".schedule-games");
-      var prevBtn = wrap.querySelector(".schedule-prev");
-      var nextBtn = wrap.querySelector(".schedule-next");
+      // Named by screen position (left/right), not prev/next - the button
+      // that goes to the previous day sits on the right (glyph '›'), the
+      // one that goes to the next day sits on the left (glyph '‹'), by
+      // request - the opposite of what the class names ("schedule-prev"/
+      // "schedule-next", left as-is) would suggest.
+      var leftBtn = wrap.querySelector(".schedule-prev");
+      var rightBtn = wrap.querySelector(".schedule-next");
       var IL_TZ = "Asia/Jerusalem";
-      // "שבת" stands alone (not "יום שבת") - standard Hebrew usage.
       var WEEKDAYS = ["יום ראשון", "יום שני", "יום שלישי", "יום רביעי", "יום חמישי", "יום שישי", "יום שבת"];
 
       function ilDateKey(isoUtc) {
@@ -2302,8 +2313,8 @@
 
       function render() {
         label.textContent = formatLabel(currentKey);
-        prevBtn.disabled = !!minKey && currentKey <= minKey;
-        nextBtn.disabled = !!maxKey && currentKey >= maxKey;
+        rightBtn.disabled = !!minKey && currentKey <= minKey; // yesterday
+        leftBtn.disabled = !!maxKey && currentKey >= maxKey; // tomorrow
 
         var dayGames = (byDate[currentKey] || []).slice().sort(function(a, b) {
           return a.tipoff_utc < b.tipoff_utc ? -1 : a.tipoff_utc > b.tipoff_utc ? 1 : 0;
@@ -2329,8 +2340,11 @@
         }).join("");
       }
 
-      prevBtn.addEventListener("click", function() { currentKey = addDays(currentKey, -1); render(); });
-      nextBtn.addEventListener("click", function() { currentKey = addDays(currentKey, 1); render(); });
+      // Same animated slide as a swipe (see swipeTo() below), not an
+      // instant re-render - by request, so a button tap feels the same as
+      // a swipe.
+      rightBtn.addEventListener("click", function() { swipeTo(-1); }); // yesterday
+      leftBtn.addEventListener("click", function() { swipeTo(1); }); // tomorrow
 
       // Swipe, same spirit as the bracket pagers (initPlayoffBracketPager/
       // initCupBracketPager) - finger-follow during the drag, then either
