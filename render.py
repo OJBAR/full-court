@@ -20,7 +20,7 @@ TEMPLATE = """<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>FULL COURT - {display_date}</title>
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="manifest" href="manifest.json">
@@ -81,6 +81,10 @@ TEMPLATE = """<!DOCTYPE html>
      on every browser. */
   html {{ -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }}
   html {{ font-size: calc(16px * var(--a11y-text-scale, 1)); }}
+  /* Belt-and-suspenders alongside the viewport meta tag's user-scalable=no
+     above - blocks double-tap-to-zoom too, which that meta tag alone
+     doesn't cover on every browser. */
+  html, body {{ touch-action: manipulation; }}
   * {{ box-sizing: border-box; }}
   a:focus-visible,
   button:focus-visible,
@@ -684,6 +688,10 @@ TEMPLATE = """<!DOCTYPE html>
     font-weight: 700;
     color: var(--text-heading);
   }}
+  /* pan-y (not none): a day with many games still has to scroll vertically
+     normally - only horizontal panning is taken over by initScheduleTab()'s
+     own touch handling (swipe between days). */
+  .schedule-games {{ touch-action: pan-y; }}
 
   /* The playoff bracket's own pager (see initPlayoffBracketPager()) - a
      continuous per-conference strip panned by a JS-measured column width
@@ -2203,8 +2211,12 @@ TEMPLATE = """<!DOCTYPE html>
       }}
       // "en-CA" gives a plain YYYY-MM-DD string directly, so day keys sort
       // correctly as plain strings with no separate date-parsing step.
+      // data-simulated-today (demo fixtures only - see _build_schedule_html)
+      // overrides the real live date, so an old demo still opens somewhere
+      // inside its own frozen game data instead of always falling back to
+      // "season's over" once real time has moved past it.
       function todayKey() {{
-        return new Date().toLocaleDateString("en-CA", {{ timeZone: IL_TZ }});
+        return wrap.dataset.simulatedToday || new Date().toLocaleDateString("en-CA", {{ timeZone: IL_TZ }});
       }}
       function addDays(key, delta) {{
         var parts = key.split("-").map(Number);
@@ -2277,6 +2289,69 @@ TEMPLATE = """<!DOCTYPE html>
 
       prevBtn.addEventListener("click", function() {{ currentKey = addDays(currentKey, -1); render(); }});
       nextBtn.addEventListener("click", function() {{ currentKey = addDays(currentKey, 1); render(); }});
+
+      // Swipe, same spirit as the bracket pagers (initPlayoffBracketPager/
+      // initCupBracketPager) - finger-follow during the drag, then either
+      // commit to the next/prev day or snap back. Not the same mechanism
+      // underneath, though: the brackets pan one continuous pre-built strip,
+      // but here each day's list is a different height and is only built on
+      // demand, so there's no adjacent panel to pan onto - instead the
+      // current day's card slides out, the new day's content gets built,
+      // and it slides in from the matching side. Same felt gesture, applied
+      // to swapped content instead of a shared track.
+      var startX = null;
+      var startY = null;
+      var dragging = false;
+
+      gamesEl.addEventListener("touchstart", function(e) {{
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        dragging = false;
+      }}, {{ passive: true }});
+
+      gamesEl.addEventListener("touchmove", function(e) {{
+        if (startX === null) return;
+        var dx = e.touches[0].clientX - startX;
+        var dy = e.touches[0].clientY - startY;
+        if (!dragging && Math.abs(dx) < Math.abs(dy)) return;
+        dragging = true;
+        gamesEl.style.transition = "none";
+        gamesEl.style.transform = "translateX(" + dx + "px)";
+      }}, {{ passive: true }});
+
+      gamesEl.addEventListener("touchend", function(e) {{
+        if (!dragging) {{ startX = null; startY = null; return; }}
+        var dx = e.changedTouches[0].clientX - startX;
+        var threshold = 40;
+        startX = null;
+        startY = null;
+        dragging = false;
+
+        if (dx <= -threshold) {{ swipeTo(1); }}
+        else if (dx >= threshold) {{ swipeTo(-1); }}
+        else {{
+          gamesEl.style.transition = "transform 0.2s ease";
+          gamesEl.style.transform = "translateX(0)";
+        }}
+      }});
+
+      // direction 1 = swiped toward the next day, -1 = toward the previous.
+      function swipeTo(direction) {{
+        currentKey = addDays(currentKey, direction);
+        gamesEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
+        gamesEl.style.transform = "translateX(" + (direction * -60) + "px)";
+        gamesEl.style.opacity = "0";
+        window.setTimeout(function() {{
+          render();
+          gamesEl.style.transition = "none";
+          gamesEl.style.transform = "translateX(" + (direction * 60) + "px)";
+          gamesEl.style.opacity = "0";
+          void gamesEl.offsetWidth; // force reflow so the next line animates
+          gamesEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
+          gamesEl.style.transform = "translateX(0)";
+          gamesEl.style.opacity = "1";
+        }}, 200);
+      }}
 
       render();
     }})();
@@ -2465,7 +2540,7 @@ def _build_standings_html(standings: list[dict]) -> str:
     return _build_pager_html(pages)
 
 
-def _build_schedule_html(season_schedule: list[dict]) -> str:
+def _build_schedule_html(season_schedule: list[dict], simulated_today: str | None = None) -> str:
     """
     A day-by-day season schedule browser: past days show final scores,
     future days show the tip-off time - one flat game list (see
@@ -2479,6 +2554,14 @@ def _build_schedule_html(season_schedule: list[dict]) -> str:
     next Israel day instead of staying lumped in with the earlier one.
     Reuses the exact same .game-block/.game-row/.team/.score markup as the
     results tab so a schedule day looks like part of the same list.
+
+    simulated_today (YYYY-MM-DD) is demo-only: real briefs never set it, so
+    initScheduleTab() falls through to the viewer's real live date exactly
+    as before. Demo fixtures - frozen at whatever date they were written
+    for, forever - set it so the tab still opens on a date that's actually
+    inside that fixture's own game data instead of the real, ever-advancing
+    "today" (which would just fall back to "season's over" for every old
+    demo the moment real time moves past its data).
     """
     if not season_schedule:
         return '<p style="color:var(--text-muted); font-size:0.875rem;">לוח המשחקים לא זמין כרגע.</p>'
@@ -2486,8 +2569,9 @@ def _build_schedule_html(season_schedule: list[dict]) -> str:
     # "</" could otherwise prematurely close this <script> tag if it ever
     # appeared inside a team name/city string.
     payload = json.dumps(season_schedule, ensure_ascii=False).replace("</", "<\\/")
+    sim_attr = f' data-simulated-today="{html.escape(simulated_today)}"' if simulated_today else ""
     return (
-        '<div class="schedule-tab">'
+        f'<div class="schedule-tab"{sim_attr}>'
         '<div class="pager-nav schedule-nav">'
         '<button type="button" class="pager-arrow schedule-prev" aria-label="יום קודם">‹</button>'
         '<div class="schedule-date-label"></div>'
@@ -3262,7 +3346,10 @@ def _build_secondary_section(data: dict) -> str:
             sections.append(("פלייאין", f'<div class="play-in-bracket">{play_in_blocks}</div>'))
         sections.append(standings_section)
 
-    sections.append(("לוח המשחקים", _build_schedule_html(data.get("season_schedule", []))))
+    sections.append((
+        "לוח המשחקים",
+        _build_schedule_html(data.get("season_schedule", []), data.get("demo_today")),
+    ))
 
     return "\n\n    ".join(_details_block(title, body_html) for title, body_html in sections)
 
