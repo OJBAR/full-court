@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-28T20:47:57.709521+00:00">
+<meta name="app-version" content="2026-08-28T20:59:17.821556+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -793,6 +793,12 @@
      interact with that handler. */
   .schedule-tab { touch-action: pan-y; }
   .details-body:has(> .schedule-tab) { touch-action: pan-y; }
+  /* Belt-and-suspenders against swipeTo()'s own animation ever leaving
+     .schedule-games visibly offset sideways (see its own comment on the
+     race condition this guards against): even if some other future bug
+     leaves an X transform stuck non-zero, clipping it here keeps that
+     invisible instead of turning <main> itself horizontally scrollable. */
+  .schedule-tab, .schedule-games, .schedule-calendar { overflow-x: hidden; }
 
   /* The playoff bracket's own pager (see initPlayoffBracketPager()) - a
      continuous per-conference strip panned by a JS-measured column width
@@ -2671,12 +2677,29 @@
       // swipe gesture and the (same, reused) top arrows while the calendar
       // is open, so a tap and a swipe feel identical - same visual language
       // as the day view.
+      // A second swipe/tap fired before the first one's 200ms animation
+      // finishes used to leave the element stuck mid-transform (each call's
+      // own setTimeout still fires later and stomps whatever the newer
+      // call had already set up) - visible as the game list sitting
+      // permanently offset sideways, wide enough to make <main> itself
+      // horizontally scrollable ("jumps to the sides"), especially likely
+      // on a full/busy day where there's more swiping back and forth to
+      // find something. Shared between swipeTo()/monthSwipeTo() (own
+      // tokens, since they animate different elements) - each call's
+      // timeout checks it's still the most recent call for ITS element
+      // before touching anything; a stale one just no-ops, since the
+      // newer call's own timeout will finish the job for real.
+      var swipeToken = 0;
+      var monthSwipeToken = 0;
+
       function monthSwipeTo(direction) {
         if (!changeMonth(direction)) return;
+        var myToken = ++monthSwipeToken;
         calEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
         calEl.style.transform = "translateX(" + (direction * 60) + "px)";
         calEl.style.opacity = "0";
         window.setTimeout(function() {
+          if (myToken !== monthSwipeToken) return;
           renderCalendar();
           calEl.style.transition = "none";
           calEl.style.transform = "translateX(" + (direction * -60) + "px)";
@@ -2694,10 +2717,12 @@
       // the new content enters from the opposite side.
       function swipeTo(direction) {
         currentKey = addDays(currentKey, direction);
+        var myToken = ++swipeToken;
         gamesEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
         gamesEl.style.transform = "translateX(" + (direction * 60) + "px)";
         gamesEl.style.opacity = "0";
         window.setTimeout(function() {
+          if (myToken !== swipeToken) return;
           render();
           gamesEl.style.transition = "none";
           gamesEl.style.transform = "translateX(" + (direction * -60) + "px)";
