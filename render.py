@@ -1081,6 +1081,15 @@ TEMPLATE = """<!DOCTYPE html>
     top: 0;
     z-index: 5;
     background: var(--bg);
+    /* Without this, summary is a flex item (its parent <details> is
+       flex-direction:column) with the default flex-shrink:1 - if its
+       sibling .details-body ever needs more room than <details> actually
+       has (the schedule tab's own fitToScreen() forces a min-height on
+       .details-body to reach empty space below a short day for swipe -
+       see initScheduleTab()), the flex algorithm can shrink summary itself
+       to make room, changing its real rendered height. flex-shrink:0 locks
+       it to its natural height no matter what its sibling asks for. */
+    flex-shrink: 0;
   }}
   /* A full-screen tab's own content is centered as a block within the
      available height instead of pinned to the top with empty space below
