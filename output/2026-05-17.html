@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-28T22:11:59.275123+00:00">
+<meta name="app-version" content="2026-08-28T22:14:04.189548+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -2858,55 +2858,5 @@
       document.getElementById("settings-theme-btn").textContent = isDark ? "☀" : "🌙";
     }
   </script>
-<!-- curated-nav-start -->
-<script type="application/json" id="curatedDates">["2025-10-22", "2025-11-28", "2025-12-13", "2026-04-17", "2026-05-17"]</script>
-<script>
-(function() {
-  var css = document.createElement("style");
-  css.textContent = [
-    ".curated-nav { position: fixed; left: 0; right: 0; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 999;",
-    "  display: flex; align-items: center; justify-content: center; gap: 6px;",
-    "  padding: 8px; border-radius: 999px; margin: 0 12px;",
-    "  background: var(--card-bg); border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.15);",
-    "  direction: rtl; flex-wrap: nowrap;",
-    "  transform: translateZ(0); -webkit-transform: translateZ(0); will-change: transform; }",
-    ".curated-nav button { border: 1px solid var(--border); background: var(--bg); color: var(--text-heading);",
-    "  border-radius: 999px; font-size: 13px; cursor: pointer; flex-shrink: 0;",
-    "  padding: 5px 9px; font-family: inherit; }",
-    ".curated-nav button:disabled { opacity: 0.35; cursor: default; }",
-  ].join("\n");
-  document.head.appendChild(css);
-
-  // No date label here (see the fix script's own comment) - the app
-  // already shows the date itself (header / settings), so a second one
-  // in this bar was redundant. Just the two arrows to move between demos.
-  var bar = document.createElement("div");
-  bar.className = "curated-nav";
-  bar.dir = "rtl";
-  bar.innerHTML =
-    '<button type="button" id="curatedPrev" title="דמו קודם">‹</button>' +
-    '<button type="button" id="curatedNext" title="דמו הבא">›</button>';
-  document.body.appendChild(bar);
-
-  var dates = JSON.parse(document.getElementById("curatedDates").textContent);
-  var here = "2026-05-17";
-  var idx = dates.indexOf(here);
-  var prev = document.getElementById("curatedPrev");
-  var next = document.getElementById("curatedNext");
-
-  function go(newIdx) {
-    newIdx = Math.max(0, Math.min(newIdx, dates.length - 1));
-    if (newIdx === idx) return;
-    location.href = dates[newIdx] + ".html";
-  }
-  if (idx !== -1) {
-    prev.disabled = idx === 0;
-    next.disabled = idx === dates.length - 1;
-    prev.addEventListener("click", function() { go(idx - 1); });
-    next.addEventListener("click", function() { go(idx + 1); });
-  }
-})();
-</script>
-<!-- curated-nav-end -->
 </body>
 </html>
