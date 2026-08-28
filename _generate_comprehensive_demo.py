@@ -157,13 +157,27 @@ def build_highlight_cache(base_schedule: list[dict]) -> dict:
     return cache
 
 
-def enrich_full_history(season_schedule: list[dict], date_str: str, highlight_cache: dict) -> None:
+def enrich_full_history(season_schedule: list[dict], date_str: str, highlight_cache: dict, standings: list[dict]) -> None:
     """
     Attaches "rich" to every FINAL game up to and including date_str that
     doesn't already have it - the page's own night already got the full
     treatment (OT tag, real per-game win/loss) from fetch_for_date()'s own
     _enrich_schedule_with_rich_data. See the module docstring for why these
     get no OT tag and no team-record badge.
+
+    Also handles the OTHER direction - days after date_str: the underlying
+    scores are real (this whole season already happened), but the page
+    pretends only date_str's own games are "in" yet, so every later day's
+    is_final is masked to False here - render.py's renderRichRow()/plain-row
+    fallback both key off is_final to decide whether to show the real score
+    or just a tip-off time, and without this a game the viewer "hasn't
+    gotten to" by paging forward would spoil its own real result. The
+    single NEXT real game night, specifically, additionally gets a
+    lightweight rich (team records only, computed as of date_str - each
+    team's record heading INTO that game, not the season's real end state)
+    so paging one day ahead shows "who's playing next" instead of a blank
+    tip-off time. Mirrors fetch.py's _attach_next_game_preview, which does
+    the same thing for the real product's live, actually-upcoming games.
     """
     for entry in season_schedule:
         if "rich" in entry or not entry.get("is_final"):
@@ -183,6 +197,41 @@ def enrich_full_history(season_schedule: list[dict], date_str: str, highlight_ca
             "away_losses": None,
             "home_wins": None,
             "home_losses": None,
+        }
+
+    for entry in season_schedule:
+        if _et_date(entry["tipoff_utc"]) > date_str:
+            entry["is_final"] = False
+
+    upcoming_dates = sorted({
+        _et_date(g["tipoff_utc"]) for g in season_schedule if _et_date(g["tipoff_utc"]) > date_str
+    })
+    if not upcoming_dates:
+        return
+    next_date = upcoming_dates[0]
+    record_by_tricode = {s["Tricode"]: (s["WINS"], s["LOSSES"]) for s in standings}
+    for entry in season_schedule:
+        if "rich" in entry or _et_date(entry["tipoff_utc"]) != next_date:
+            continue
+        if entry.get("po_round") or entry.get("is_play_in"):
+            continue
+        away_record = record_by_tricode.get(entry["away_tricode"])
+        home_record = record_by_tricode.get(entry["home_tricode"])
+        if not away_record or not home_record:
+            continue
+        entry["rich"] = {
+            "period": None,
+            "highlight_url": None,
+            "po_round": entry.get("po_round"),
+            "series_text": entry.get("series_text"),
+            "series_game_number": entry.get("series_game_number"),
+            "cup_subtype": entry.get("cup_subtype"),
+            "cup_sub_label": entry.get("cup_sub_label"),
+            "is_play_in": entry.get("is_play_in"),
+            "away_wins": away_record[0],
+            "away_losses": away_record[1],
+            "home_wins": home_record[0],
+            "home_losses": home_record[1],
         }
 
 
@@ -223,7 +272,7 @@ def build():
         # even for an already-cached date, so a fix to either computation
         # reaches every page on the next run without re-fetching anything.
         data["standings"] = compute_standings_as_of(date_str, base_schedule, standings_meta)
-        enrich_full_history(data["season_schedule"], date_str, highlight_cache)
+        enrich_full_history(data["season_schedule"], date_str, highlight_cache, data["standings"])
 
         html = render(data, FILLER_SUMMARY)
         (COMPREHENSIVE_DIR / f"{date_str}.html").write_text(html, encoding="utf-8")

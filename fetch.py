@@ -590,6 +590,66 @@ def _enrich_schedule_with_rich_data(season_schedule: list[dict], games: list[dic
         }
 
 
+def _attach_next_game_preview(season_schedule: list[dict], date_str: str, standings: pd.DataFrame) -> None:
+    """
+    Attaches a lightweight "rich" (team records only - no score, no OT tag,
+    no highlight, since the game hasn't been played) to the single game
+    night immediately after date_str, so browsing one day forward in the
+    schedule tab shows "who's playing next" with each team's current record
+    instead of a bare tip-off time. Every day beyond that (2+ nights out)
+    is left untouched on purpose - a look at what's coming up next, not the
+    whole rest of the schedule turned into a standings preview. Skips
+    Playoffs/Play-In games (series/seed context is the relevant number
+    there, same convention as _enrich_schedule_with_rich_data) and any
+    entry _enrich_schedule_with_rich_data already enriched (date_str's own
+    night, which needs no preview - it already has the real thing).
+    """
+
+    def et_date(tipoff_utc: str) -> str:
+        return datetime.fromisoformat(tipoff_utc.replace("Z", "+00:00")).astimezone(US_EASTERN).strftime("%Y-%m-%d")
+
+    upcoming_dates = sorted({et_date(g["tipoff_utc"]) for g in season_schedule if et_date(g["tipoff_utc"]) > date_str})
+    if not upcoming_dates:
+        return
+    next_date = upcoming_dates[0]
+
+    tricode_by_fullname = {}
+    for g in season_schedule:
+        tricode_by_fullname[g["home_team"]] = g["home_tricode"]
+        tricode_by_fullname[g["away_team"]] = g["away_tricode"]
+    # LeagueStandingsV3 has no tricode column (see compute_standings_as_of) -
+    # same full "City Name" join used there.
+    record_by_tricode = {}
+    for row in standings.to_dict(orient="records"):
+        tricode = tricode_by_fullname.get(f"{row['TeamCity']} {row['TeamName']}")
+        if tricode:
+            record_by_tricode[tricode] = (row["WINS"], row["LOSSES"])
+
+    for entry in season_schedule:
+        if entry.get("rich") or et_date(entry["tipoff_utc"]) != next_date:
+            continue
+        if entry.get("po_round") or entry.get("is_play_in"):
+            continue
+        away_record = record_by_tricode.get(entry["away_tricode"])
+        home_record = record_by_tricode.get(entry["home_tricode"])
+        if not away_record or not home_record:
+            continue
+        entry["rich"] = {
+            "period": None,
+            "highlight_url": None,
+            "po_round": entry.get("po_round"),
+            "series_text": entry.get("series_text"),
+            "series_game_number": entry.get("series_game_number"),
+            "cup_subtype": entry.get("cup_subtype"),
+            "cup_sub_label": entry.get("cup_sub_label"),
+            "is_play_in": entry.get("is_play_in", False),
+            "away_wins": away_record[0],
+            "away_losses": away_record[1],
+            "home_wins": home_record[0],
+            "home_losses": home_record[1],
+        }
+
+
 def fetch_for_date(
     date_str: str,
     *,
@@ -693,6 +753,7 @@ def fetch_for_date(
             [dict(g) for g in season_schedule] if season_schedule is not None else get_season_schedule(date_str)
         )
         _enrich_schedule_with_rich_data(this_date_schedule, games, standings)
+        _attach_next_game_preview(this_date_schedule, date_str, standings)
     except Exception as e:
         print(f"Warning: could not fetch season schedule ({e}) - continuing without it.")
         this_date_schedule = []

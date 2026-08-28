@@ -96,7 +96,15 @@ _NAV_BLOCK = """<!-- cd-nav-start -->
     "  display: flex; align-items: center; justify-content: center; gap: 6px;",
     "  padding: 8px; border-radius: 999px; margin: 0 12px;",
     "  background: var(--card-bg); border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.15);",
-    "  direction: rtl; flex-wrap: nowrap; }",
+    "  direction: rtl; flex-wrap: nowrap;",
+    // A known iOS Safari bug: a plain position:fixed element can visibly
+    // drift/lag sideways and downward for a moment during an active touch
+    // drag elsewhere on the page (like the schedule tab's own day-swipe) -
+    // reported as "the bar moves left-right and down" mid-swipe. Forcing
+    // this element onto its own GPU compositing layer (the standard fix for
+    // this exact class of bug) keeps it visually pinned regardless of what
+    // else on the page is being dragged.
+    "  transform: translateZ(0); -webkit-transform: translateZ(0); will-change: transform; }",
     ".cd-nav button { border: 1px solid var(--border); background: var(--bg); color: var(--text-heading);",
     "  border-radius: 999px; font-size: 13px; cursor: pointer; flex-shrink: 0;",
     "  padding: 5px 9px; font-family: inherit; }",
