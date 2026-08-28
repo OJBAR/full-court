@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-28T21:36:59.267690+00:00">
+<meta name="app-version" content="2026-08-28T22:12:22.041451+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -677,25 +677,29 @@
   .schedule-nav { margin-bottom: 8px; position: relative; }
   /* Locks the day-pager row (label + arrows + calendar icon) to the top
      alongside the tab's own "לוח התוצאות" title bar, the same way every
-     other tab's title stays put while its content scrolls underneath -
-     without this, a day with enough games to need scrolling carried the
-     pager row away with the list, so only the plain title bar (no arrows)
-     stayed visible once you scrolled past it. --schedule-nav-top is set in
-     JS (see fitToScreen()) to the title bar's own real measured height, so
-     this sticks exactly below it instead of overlapping or leaving a gap.
-     The translateZ/will-change pair forces this onto its own GPU
-     compositing layer - the same fix used for the comprehensive demo's
-     cd-nav bar - because a plain sticky/fixed element here visibly drifted
-     sideways for a moment during the tab's own active touch-drag handling
-     (the day-swipe gesture) without it. */
+     other tab's title stays put while its content scrolls underneath.
+     TRUE position:fixed, not sticky - a real device (not just a static
+     measurement, which always looked fine) kept showing this bar wobble/
+     unlock during actual momentum scrolling, a known iOS Safari bug where
+     position:sticky specifically (not fixed) can misbehave on an element
+     that shares the page with its own active touch-drag handling (this
+     tab's day-swipe gesture). position:fixed has no such "stuck vs
+     unstuck" state to get wrong in the first place - it's simply always
+     positioned relative to the viewport, which is exactly the technique
+     the comprehensive demo's cd-nav bar already proved stable. All the
+     --schedule-fixed-* custom properties are measured live in JS (see
+     fitToScreen()) against elements that stay unaffected by this fixed
+     positioning itself (<main>'s own rect, and .schedule-games' rect for
+     the horizontal position/width - both stable regardless of whether
+     the bars above them are fixed or not). */
   :root.tabs-mode details.tab-section.app-screen-active > .details-body:has(> .schedule-tab) .schedule-nav {
-    position: sticky;
-    top: var(--schedule-nav-top, 0px);
+    position: fixed;
+    top: var(--schedule-nav-fixed-top, 0px);
+    left: var(--schedule-nav-fixed-left, 0px);
+    width: var(--schedule-nav-fixed-width, 100%);
     z-index: 4;
     background: var(--bg);
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    will-change: transform;
+    padding: 4px 0;
   }
   .schedule-date-label {
     min-width: 9em;
@@ -1206,13 +1210,24 @@
        to make room, changing its real rendered height. flex-shrink:0 locks
        it to its natural height no matter what its sibling asks for. */
     flex-shrink: 0;
-    /* Own GPU compositing layer - see .schedule-nav's sticky rule below for
-       why (this same title bar visibly drifted sideways during the
-       schedule tab's active touch-drag handling without it; harmless on
-       every other tab, which has no touch-drag of its own running). */
+    /* Own GPU compositing layer - see .schedule-nav's fixed-position rule
+       below for why (this same title bar could wobble/unlock during real
+       momentum scrolling on the schedule tab specifically, the one tab
+       with its own active touch-drag handling running alongside the
+       scroll; harmless on every other tab, which has none). */
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
     will-change: transform;
+  }
+  /* The schedule tab specifically overrides the sticky rule above to a
+     true position:fixed - see .schedule-nav's own rule (right below the
+     tab's CSS block, search "TRUE position:fixed") for the full reasoning.
+     Every other tab keeps plain sticky, which has been fine there. */
+  :root.tabs-mode details.tab-section.app-screen-active:has(> .details-body > .schedule-tab) > summary {
+    position: fixed;
+    top: var(--schedule-fixed-top, 0px);
+    left: var(--schedule-fixed-left, 0px);
+    width: var(--schedule-fixed-width, 100%);
   }
   /* A full-screen tab's own content is centered as a block within the
      available height instead of pinned to the top with empty space below
@@ -1241,6 +1256,14 @@
      other tab already does with its own naturally-short content. */
   :root.tabs-mode details.tab-section.app-screen-active > .details-body:has(> .schedule-tab) {
     justify-content: flex-start;
+    /* The title bar + day-pager row are position:fixed now (removed from
+       normal flow entirely - see .schedule-nav's own rule for why), so
+       without this the game list would start right under <main>'s own
+       top edge, hidden behind both fixed bars. --schedule-fixed-offset
+       (set in JS, see fitToScreen()) is their combined real height -
+       added on top of this rule's own base 12px top padding, not
+       replacing it. */
+    padding-top: calc(12px + var(--schedule-fixed-offset, 0px));
   }
   .app-home { display: none; }
   /* Positioned like a vertical ruler from 0 (bottom of the home screen) to
@@ -2333,6 +2356,7 @@
         return;
       }
       var label = wrap.querySelector(".schedule-date-label");
+      var navEl = wrap.querySelector(".schedule-nav");
       var gamesEl = wrap.querySelector(".schedule-games");
       var calEl = wrap.querySelector(".schedule-calendar");
       var calToggle = wrap.querySelector(".schedule-cal-toggle");
@@ -2646,11 +2670,40 @@
         var summaryHeight = summary ? summary.getBoundingClientRect().height : 0;
         var available = detailsEl.getBoundingClientRect().height - summaryHeight;
         if (available > 0) touchArea.style.minHeight = available + "px";
-        // .schedule-nav's own sticky top offset (see its CSS) - measured
-        // instead of hardcoded, since the title bar's real height isn't a
-        // fixed constant (font size / a11y zoom / RTL rendering can all
-        // shift it slightly).
-        wrap.style.setProperty("--schedule-nav-top", summaryHeight + "px");
+
+        // Both the title bar and the day-pager row are position:fixed now
+        // (see their CSS - a real position:sticky wobble bug during actual
+        // momentum scrolling, not just a static check). Everything below
+        // measures real elements that stay accurate regardless of the
+        // fixed bars' own positioning: <main>'s own rect for the title
+        // bar (it always spans <details>' full width, same as <main>'s),
+        // and .schedule-games' rect for the day-pager row (it should line
+        // up with the padded content below it, not <main>'s outer edge).
+        //
+        // Set on detailsEl, NOT wrap (.schedule-tab) - summary is a SIBLING
+        // of .details-body (which contains .schedule-tab), not its
+        // descendant, so a custom property set on wrap would never inherit
+        // up to summary at all (custom properties only inherit DOWN the
+        // tree from wherever they're set). detailsEl is the nearest common
+        // ancestor of both summary and .schedule-tab, so setting it there
+        // reaches everything that needs it.
+        var mainEl = document.querySelector("main");
+        var mainRect = mainEl ? mainEl.getBoundingClientRect() : null;
+        var gamesRect = gamesEl.getBoundingClientRect();
+        var navHeight = navEl.getBoundingClientRect().height;
+
+        if (mainRect) {
+          detailsEl.style.setProperty("--schedule-fixed-top", mainRect.top + "px");
+          detailsEl.style.setProperty("--schedule-fixed-left", mainRect.left + "px");
+          detailsEl.style.setProperty("--schedule-fixed-width", mainRect.width + "px");
+          detailsEl.style.setProperty("--schedule-nav-fixed-top", (mainRect.top + summaryHeight) + "px");
+        }
+        detailsEl.style.setProperty("--schedule-nav-fixed-left", gamesRect.left + "px");
+        detailsEl.style.setProperty("--schedule-nav-fixed-width", gamesRect.width + "px");
+        // Combined real height of both fixed bars - .details-body's own
+        // padding-top adds this on top of its base padding, so the game
+        // list starts right below them instead of hidden underneath.
+        detailsEl.style.setProperty("--schedule-fixed-offset", (summaryHeight + navHeight) + "px");
       }
 
       var startX = null;
