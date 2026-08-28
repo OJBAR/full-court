@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-28T08:59:59.744044+00:00">
+<meta name="app-version" content="2026-08-28T09:04:25.770662+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -680,20 +680,17 @@
   }
   /* pan-y (not none): a day with many games still has to scroll vertically
      normally - only horizontal panning is taken over by initScheduleTab()'s
-     own touch handling (swipe between days). Applied to the whole
-     details.tab-section (not just .schedule-tab or .details-body) - that's
-     what the swipe listener is actually attached to (see initScheduleTab()),
-     since .details-body does NOT reliably stretch to fill the screen here
-     (confirmed directly - same <details>-as-flex-child quirk as the Cup
-     bracket), while the <details> element itself does. touch-action set on
-     an ancestor bounds every descendant's gesture handling too (including
-     the sticky summary bar), so this also stops the browser from grabbing
-     even the first bit of a horizontal drag natively before our own
-     touchmove/preventDefault gets a chance to - a native-scroll-then-
-     preventDefault race that showed up as the summary bar visibly jumping
-     at the start of a swipe. */
+     own touch handling (swipe between days). Applied to .details-body too,
+     not just .schedule-tab - that's what the swipe listener is actually
+     attached to (see initScheduleTab()'s touchArea/fitToScreen()), and its
+     own natural content height leaves empty space below a short day's list
+     that .schedule-tab alone doesn't cover. Deliberately NOT applied to the
+     summary/title bar above it (see initScheduleTab()'s comment on
+     touchArea) - that has its own click-to-go-home handler, and giving it
+     touch-action here too would still let a swipe starting near/on it
+     interact with that handler. */
   .schedule-tab { touch-action: pan-y; }
-  details.tab-section:has(.schedule-tab) { touch-action: pan-y; }
+  .details-body:has(> .schedule-tab) { touch-action: pan-y; }
 
   /* The playoff bracket's own pager (see initPlayoffBracketPager()) - a
      continuous per-conference strip panned by a JS-measured column width
@@ -2344,23 +2341,33 @@
       // current day's card slides out, the new day's content gets built,
       // and it slides in from the matching side. Same felt gesture, applied
       // to swapped content instead of a shared track.
-      // Listens on the whole open tab <details> (not .details-body, and not
-      // just .schedule-tab) so a swipe works even over the empty space below
-      // a short day's list. Confirmed directly (via the real tabs-mode
-      // summary click, not just .open=true) that .details-body does NOT
-      // actually stretch to fill the screen here, despite its own CSS flex:1
-      // - same underlying <details>-as-flex-child quirk already hit and
-      // worked around for the Cup bracket (see initCupBracketPager's
-      // centerVertically()). The <details> element itself DOES reliably
-      // fill the screen (its own flex:1 is relative to <main>, a plain
-      // element, not nested inside another flex-child-of-<details>
-      // relationship), so that's the one this binds to instead. Only the
-      // games list itself visually slides, the nav bar stays put.
+      // Listens on .details-body, NOT the whole <details> - the <details>
+      // also contains the sticky summary/title bar, which has its own
+      // click-to-go-home handler (see initAppHome()); binding the swipe
+      // there too risked that handler firing off a swipe (even with
+      // preventDefault - not reliably suppressed for this on iOS), which
+      // looks exactly like a stray jump/flash toward the home screen. Kept
+      // scoped to .details-body instead, and separately fixed THAT not
+      // reliably stretching to fill the screen (confirmed directly - same
+      // <details>-as-flex-child quirk as the Cup bracket) via fitToScreen()
+      // below, an explicit JS-measured min-height, rather than trusting its
+      // own CSS flex:1. Only the games list itself visually slides during
+      // the drag, the nav bar stays put.
       // Right-to-left date order: swiping right (finger moves right, dx>0)
       // goes to the next day, swiping left goes to the previous - matching
       // how the day label itself reads (today on the right, moving right
       // steps forward), the opposite of a plain LTR carousel.
-      var touchArea = wrap.closest("details.tab-section") || wrap;
+      var detailsEl = wrap.closest("details.tab-section");
+      var touchArea = wrap.closest(".details-body") || wrap;
+
+      function fitToScreen() {
+        if (!detailsEl) return;
+        var summary = detailsEl.querySelector(":scope > summary");
+        var summaryHeight = summary ? summary.getBoundingClientRect().height : 0;
+        var available = detailsEl.getBoundingClientRect().height - summaryHeight;
+        if (available > 0) touchArea.style.minHeight = available + "px";
+      }
+
       var startX = null;
       var startY = null;
       var dragging = false;
@@ -2425,7 +2432,16 @@
         }, 200);
       }
 
+      window.addEventListener("resize", fitToScreen);
+      // The tab starts hidden (0 height), same reason the Cup bracket
+      // pager needs this same pattern - re-measure once tabs-mode actually
+      // promotes this <details> to the active full-screen tab.
+      if (detailsEl && window.MutationObserver) {
+        new MutationObserver(fitToScreen).observe(detailsEl, { attributes: true, attributeFilter: ["class"] });
+      }
+
       render();
+      fitToScreen();
     })();
 
     function manualRefresh() {
