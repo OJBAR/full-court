@@ -72,10 +72,10 @@ _NAV_BLOCK = """<!-- cd-nav-start -->
   // it - and moved to the bottom, by request.
   var css = document.createElement("style");
   css.textContent = [
-    ".cd-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 999;",
+    ".cd-nav { position: fixed; left: 0; right: 0; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 999;",
     "  display: flex; align-items: center; justify-content: center; gap: 6px;",
-    "  padding: 8px; padding-bottom: calc(8px + env(safe-area-inset-bottom));",
-    "  background: var(--card-bg); border-top: 1px solid var(--border);",
+    "  padding: 8px; border-radius: 999px; margin: 0 12px;",
+    "  background: var(--card-bg); border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.15);",
     "  direction: rtl; flex-wrap: nowrap; }",
     ".cd-nav button { border: 1px solid var(--border); background: var(--bg); color: var(--text-heading);",
     "  border-radius: 999px; font-size: 13px; cursor: pointer; flex-shrink: 0;",

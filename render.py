@@ -2397,8 +2397,12 @@ TEMPLATE = """<!DOCTYPE html>
       // Same animated slide as a swipe (see swipeTo() below), not an
       // instant re-render - by request, so a button tap feels the same as
       // a swipe.
-      rightBtn.addEventListener("click", function() {{ swipeTo(-1); }}); // yesterday
-      leftBtn.addEventListener("click", function() {{ swipeTo(1); }}); // tomorrow
+      // Guarded on calOpen (declared further down, but var-hoisted and
+      // already set by the time either of these can actually fire from a
+      // real click) - the day arrows have no reason to do anything while
+      // the calendar is showing, by request.
+      rightBtn.addEventListener("click", function() {{ if (!calOpen) swipeTo(-1); }}); // yesterday
+      leftBtn.addEventListener("click", function() {{ if (!calOpen) swipeTo(1); }}); // tomorrow
 
       // Month-at-a-glance jump-to-date view (backlog item 7) - a plain grid
       // for whichever month currentKey is in when opened, days with games
@@ -2484,12 +2488,16 @@ TEMPLATE = """<!DOCTYPE html>
         calOpen = true;
         gamesEl.hidden = true;
         calEl.hidden = false;
+        leftBtn.hidden = true;
+        rightBtn.hidden = true;
         renderCalendar();
       }}
       function closeCalendar() {{
         calOpen = false;
         calEl.hidden = true;
         gamesEl.hidden = false;
+        leftBtn.hidden = false;
+        rightBtn.hidden = false;
       }}
       calToggle.addEventListener("click", function() {{
         if (calOpen) closeCalendar(); else openCalendar();
@@ -2572,9 +2580,40 @@ TEMPLATE = """<!DOCTYPE html>
         startY = null;
         dragging = false;
 
+        // While the calendar is open, the exact same swipe here steps a
+        // month instead of a day - the day-swipe/arrows only make sense
+        // for the day list underneath, which isn't even visible right now.
+        if (calOpen) {{
+          if (dx >= threshold) {{ monthSwipeTo(1); }}
+          else if (dx <= -threshold) {{ monthSwipeTo(-1); }}
+          return;
+        }}
         if (dx >= threshold) {{ swipeTo(1); }}
         else if (dx <= -threshold) {{ swipeTo(-1); }}
       }}, {{ passive: true }});
+
+      // Same shape as swipeTo() (see below) but for a month step instead of
+      // a day - direction 1 = swiped right (next month), -1 = swiped left
+      // (previous month). Clamped/no-op past the real min/max month, same
+      // as the calendar's own prev/next-month arrows.
+      function monthSwipeTo(direction) {{
+        var next = clampMonthKey(shiftMonthKey(calMonthKey, direction));
+        if (next === calMonthKey) return;
+        calMonthKey = next;
+        calEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
+        calEl.style.transform = "translateX(" + (direction * 60) + "px)";
+        calEl.style.opacity = "0";
+        window.setTimeout(function() {{
+          renderCalendar();
+          calEl.style.transition = "none";
+          calEl.style.transform = "translateX(" + (direction * -60) + "px)";
+          calEl.style.opacity = "0";
+          void calEl.offsetWidth;
+          calEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
+          calEl.style.transform = "translateX(0)";
+          calEl.style.opacity = "1";
+        }}, 200);
+      }}
 
       // direction 1 = swiped right, toward the next day; -1 = swiped left,
       // toward the previous. The exit continues further the same way the
