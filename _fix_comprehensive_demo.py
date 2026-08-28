@@ -3,14 +3,26 @@ Post-processes the already-built output/comprehensive/{date}.html pages (no
 re-fetching, no network calls - just string surgery on files that already
 exist) to fix two things reported after the first version shipped:
 
-1. Broken logo/favicon/manifest/demos-link: render.py's TEMPLATE always
-   writes asset paths relative to output/ itself (e.g. "assets/logo_light.png")
+1. Broken logo/favicon/demos-link: render.py's TEMPLATE always writes
+   asset paths relative to output/ itself (e.g. "assets/logo_light.png")
    since that's where every real output/{date}.html lives - but these pages
    live one level deeper, in output/comprehensive/, so those same relative
    paths resolve to a comprehensive/assets/ that doesn't exist. Rewritten to
-   "../assets/...", "../manifest.json", "../demos.html" here instead of in
-   render.py itself, since render.py's own paths are correct for every real
-   caller - this subdirectory placement is specific to this demo.
+   "../assets/...", "../demos.html" here instead of in render.py itself,
+   since render.py's own paths are correct for every real caller - this
+   subdirectory placement is specific to this demo.
+
+   manifest.json is the one exception, and deliberately NOT rewritten to
+   "../manifest.json": a PWA's start_url/scope resolve relative to the
+   MANIFEST FILE's own location, not the page that links it - pointing at
+   the real site's root manifest meant every "Add to Home Screen" icon
+   silently launched the real production brief instead of this demo,
+   regardless of which page you were on when you added it (this was the
+   actual explanation for a long "the app looks broken/unchanged" back-
+   and-forth - the installed icon was never showing this demo at all).
+   comprehensive/manifest.json is its own small file with
+   start_url:"./index.html" so an icon added from here actually opens
+   here.
 
 2. Inconvenient date switching: a persistent nav bar (prev/next single day,
    plus skip-10-game-nights forward/back) injected right into each page's
@@ -29,7 +41,11 @@ COMPREHENSIVE_DIR = OUTPUT_DIR / "comprehensive"
 _PATH_FIXES = [
     ('href="assets/', 'href="../assets/'),
     ('src="assets/', 'src="../assets/'),
-    ('href="manifest.json"', 'href="../manifest.json"'),
+    # Reverses an earlier, wrong version of this same fix (see the module
+    # docstring) - a previous run of this script rewrote this to
+    # "../manifest.json", which needs undoing on files that already have
+    # it; harmless no-op on files that don't.
+    ('href="../manifest.json"', 'href="manifest.json"'),
     ('href="demos.html"', 'href="../demos.html"'),
     ('"assets/icon-192.png"', '"../assets/icon-192.png"'),
     # Prefilled mailto body ("תוכן הפניה:" / "צילומי מסך:") - added to
