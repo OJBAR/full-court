@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-27T16:07:33.853275+00:00">
+<meta name="app-version" content="2026-08-28T07:51:07.828116+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -206,6 +206,9 @@
   }
   .score { width: 2.2em; text-align: center; color: var(--text-muted); font-variant-numeric: tabular-nums; }
   .score.winner { color: var(--accent); font-weight: 700; }
+  /* A not-yet-played game's tip-off time ("19:30") is wider than a plain
+     2-digit score - .score's fixed 2.2em would clip it. */
+  .score.time { width: auto; min-width: 3.4em; }
   .ot-tag {
     /* Absolutely positioned off to the side, out of the flex flow, so it
        never shifts the row's true center - .game-row centers just the
@@ -651,6 +654,18 @@
     justify-content: center;
   }
   .pager-arrow:disabled { opacity: 0.35; cursor: default; }
+
+  /* The season schedule tab's day nav (see initScheduleTab()) - reuses
+     .pager-nav/.pager-arrow above for the arrows themselves, just needs its
+     own label in between and a bit more breathing room above the list. */
+  .schedule-nav { margin-bottom: 8px; }
+  .schedule-date-label {
+    min-width: 9em;
+    text-align: center;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--text-heading);
+  }
 
   /* The playoff bracket's own pager (see initPlayoffBracketPager()) - a
      continuous per-conference strip panned by a JS-measured column width
@@ -1292,9 +1307,9 @@
     </details>
 
     <details class="tab-section">
-      <summary>משחקי הלילה הבא</summary>
+      <summary>לוח המשחקים</summary>
       <div class="details-body" dir="ltr">
-        <p style="color:var(--text-muted); font-size:0.875rem;">אין משחקים קרובים ידועים.</p>
+        <p style="color:var(--text-muted); font-size:0.875rem;">לוח המשחקים לא זמין כרגע.</p>
       </div>
     </details>
     </main>
@@ -2226,6 +2241,117 @@
       home.appendChild(tabsGroup);
 
       main.insertBefore(home, main.firstChild);
+    })();
+
+    (function initScheduleTab() {
+      // The season schedule browser (see _build_schedule_html) - a single
+      // flat game list embedded as JSON, grouped into Israel-calendar days
+      // and paged entirely here in JS. "Today" is resolved to the real
+      // viewer's today at render() time below, not baked in at page-
+      // generation time, since the same static page keeps being viewed for
+      // as long as it's the latest brief.
+      var wrap = document.querySelector(".schedule-tab");
+      if (!wrap) return;
+      var dataEl = wrap.querySelector(".schedule-data");
+      var games;
+      try {
+        games = JSON.parse(dataEl.textContent);
+      } catch (e) {
+        return;
+      }
+      var label = wrap.querySelector(".schedule-date-label");
+      var gamesEl = wrap.querySelector(".schedule-games");
+      var prevBtn = wrap.querySelector(".schedule-prev");
+      var nextBtn = wrap.querySelector(".schedule-next");
+      var IL_TZ = "Asia/Jerusalem";
+      var WEEKDAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+
+      function ilDateKey(isoUtc) {
+        return new Date(isoUtc).toLocaleDateString("en-CA", { timeZone: IL_TZ });
+      }
+      function ilTimeStr(isoUtc) {
+        return new Date(isoUtc).toLocaleTimeString("he-IL", {
+          timeZone: IL_TZ, hour: "2-digit", minute: "2-digit", hour12: false
+        });
+      }
+      // "en-CA" gives a plain YYYY-MM-DD string directly, so day keys sort
+      // correctly as plain strings with no separate date-parsing step.
+      function todayKey() {
+        return new Date().toLocaleDateString("en-CA", { timeZone: IL_TZ });
+      }
+      function addDays(key, delta) {
+        var parts = key.split("-").map(Number);
+        // Noon, not midnight - keeps this away from any DST-transition edge
+        // where "midnight" itself doesn't exist or repeats in a local zone.
+        var d = new Date(parts[0], parts[1] - 1, parts[2], 12);
+        d.setDate(d.getDate() + delta);
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      }
+      function formatLabel(key) {
+        var parts = key.split("-").map(Number);
+        var d = new Date(parts[0], parts[1] - 1, parts[2], 12);
+        return WEEKDAYS[d.getDay()] + ", " + String(parts[2]).padStart(2, "0") + "." + String(parts[1]).padStart(2, "0") + "." + parts[0];
+      }
+      function gameUrl(g) {
+        return "https://www.nba.com/game/" + g.away_tricode.toLowerCase() + "-vs-" + g.home_tricode.toLowerCase() + "-" + g.game_id;
+      }
+
+      var byDate = {};
+      games.forEach(function(g) {
+        var key = ilDateKey(g.tipoff_utc);
+        (byDate[key] = byDate[key] || []).push(g);
+      });
+      var sortedKeys = Object.keys(byDate).sort();
+      var minKey = sortedKeys[0];
+      var maxKey = sortedKeys[sortedKeys.length - 1];
+
+      function pickInitialKey() {
+        var today = todayKey();
+        if (byDate[today] || !sortedKeys.length) return today;
+        // No games today - default to the nearest upcoming gameday instead
+        // of an empty screen.
+        for (var i = 0; i < sortedKeys.length; i++) {
+          if (sortedKeys[i] > today) return sortedKeys[i];
+        }
+        // No games left ahead either (the season's over) - fall back to the
+        // most recent one so there's still something to look at.
+        return maxKey;
+      }
+
+      var currentKey = pickInitialKey();
+
+      function render() {
+        label.textContent = formatLabel(currentKey);
+        prevBtn.disabled = !!minKey && currentKey <= minKey;
+        nextBtn.disabled = !!maxKey && currentKey >= maxKey;
+
+        var dayGames = (byDate[currentKey] || []).slice().sort(function(a, b) {
+          return a.tipoff_utc < b.tipoff_utc ? -1 : a.tipoff_utc > b.tipoff_utc ? 1 : 0;
+        });
+        if (!dayGames.length) {
+          gamesEl.innerHTML = '<p style="color:var(--text-muted); font-size:0.875rem; text-align:center;">אין משחקים ביום זה.</p>';
+          return;
+        }
+        gamesEl.innerHTML = dayGames.map(function(g) {
+          var awayWon = g.is_final && g.away_score > g.home_score;
+          var homeWon = g.is_final && g.home_score > g.away_score;
+          var mid = g.is_final
+            ? '<span class="score' + (awayWon ? " winner" : "") + '">' + g.away_score + '</span>' +
+              '<span class="score">–</span>' +
+              '<span class="score' + (homeWon ? " winner" : "") + '">' + g.home_score + '</span>'
+            : '<span class="score time">' + ilTimeStr(g.tipoff_utc) + '</span>';
+          return '<div class="game-block"><div class="game-row">' +
+            '<span class="team' + (awayWon ? " winner" : "") + '">' + g.away_tricode + '</span>' +
+            mid +
+            '<span class="team' + (homeWon ? " winner" : "") + '">' + g.home_tricode + '</span>' +
+            '</div><div class="game-links"><a class="game-link" href="' + gameUrl(g) + '" target="_blank" rel="noopener">דף המשחק</a></div></div>';
+        }).join("");
+      }
+
+      prevBtn.addEventListener("click", function() { currentKey = addDays(currentKey, -1); render(); });
+      nextBtn.addEventListener("click", function() { currentKey = addDays(currentKey, 1); render(); });
+
+      render();
     })();
 
     function toggleTheme() {
