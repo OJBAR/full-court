@@ -718,6 +718,14 @@ TEMPLATE = """<!DOCTYPE html>
     z-index: 4;
     background: var(--bg);
     padding: 4px 0;
+    /* .pager-nav's own base margin-top:4px still applies to position:fixed
+       (margin isn't ignored just because top/left are used) - pushed this
+       box 4px further down than --schedule-nav-fixed-top actually says,
+       opening a thin gap above it where scrolled content briefly showed
+       through. Zeroed out here instead of baking the offset into the JS
+       measurement, so this rule stays correct even if .pager-nav's own
+       margin ever changes. */
+    margin: 0;
   }}
   .schedule-date-label {{
     min-width: 9em;
