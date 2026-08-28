@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-28T08:47:38.368061+00:00">
+<meta name="app-version" content="2026-08-28T08:53:47.369757+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -1008,6 +1008,14 @@
     min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    /* pan-y: <main> is the real scroll container in tabs-mode (the sticky
+       tab-title bar sticks to ITS scroll position) - without this, iOS
+       Safari can still engage its own horizontal/elastic-bounce handling
+       for a fraction of a touch gesture before a descendant's touch-action
+       or preventDefault takes effect, which is enough to nudge <main>'s
+       scroll position and visibly jump the sticky bar even during a swipe
+       that's fully handled in JS (see initScheduleTab()). */
+    touch-action: pan-y;
     display: flex;
     flex-direction: column;
   }
