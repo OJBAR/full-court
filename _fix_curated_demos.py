@@ -61,23 +61,23 @@ _NAV_BLOCK = """<!-- curated-nav-start -->
     "  border-radius: 999px; font-size: 13px; cursor: pointer; flex-shrink: 0;",
     "  padding: 5px 9px; font-family: inherit; }",
     ".curated-nav button:disabled { opacity: 0.35; cursor: default; }",
-    ".curated-nav .curated-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; padding: 0 4px; }"
   ].join("\\n");
   document.head.appendChild(css);
 
+  // No date label here (see the fix script's own comment) - the app
+  // already shows the date itself (header / settings), so a second one
+  // in this bar was redundant. Just the two arrows to move between demos.
   var bar = document.createElement("div");
   bar.className = "curated-nav";
   bar.dir = "rtl";
   bar.innerHTML =
     '<button type="button" id="curatedPrev" title="דמו קודם">‹</button>' +
-    '<span class="curated-label" id="curatedLabel"></span>' +
     '<button type="button" id="curatedNext" title="דמו הבא">›</button>';
   document.body.appendChild(bar);
 
   var dates = JSON.parse(document.getElementById("curatedDates").textContent);
   var here = "__DATE__";
   var idx = dates.indexOf(here);
-  var label = document.getElementById("curatedLabel");
   var prev = document.getElementById("curatedPrev");
   var next = document.getElementById("curatedNext");
 
@@ -86,9 +86,7 @@ _NAV_BLOCK = """<!-- curated-nav-start -->
     if (newIdx === idx) return;
     location.href = dates[newIdx] + ".html";
   }
-  if (idx === -1) { if (label) label.textContent = here; }
-  else {
-    label.textContent = here + " (" + (idx + 1) + "/" + dates.length + ")";
+  if (idx !== -1) {
     prev.disabled = idx === 0;
     next.disabled = idx === dates.length - 1;
     prev.addEventListener("click", function() { go(idx - 1); });
