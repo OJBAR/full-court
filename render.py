@@ -2132,7 +2132,7 @@ TEMPLATE = """<!DOCTYPE html>
       var nextBtn = wrap.querySelector(".schedule-next");
       var IL_TZ = "Asia/Jerusalem";
       // "שבת" stands alone (not "יום שבת") - standard Hebrew usage.
-      var WEEKDAYS = ["יום ראשון", "יום שני", "יום שלישי", "יום רביעי", "יום חמישי", "יום שישי", "שבת"];
+      var WEEKDAYS = ["יום ראשון", "יום שני", "יום שלישי", "יום רביעי", "יום חמישי", "יום שישי", "יום שבת"];
 
       function ilDateKey(isoUtc) {{
         return new Date(isoUtc).toLocaleDateString("en-CA", {{ timeZone: IL_TZ }});
@@ -2246,7 +2246,7 @@ TEMPLATE = """<!DOCTYPE html>
           return a.tipoff_utc < b.tipoff_utc ? -1 : a.tipoff_utc > b.tipoff_utc ? 1 : 0;
         }});
         if (!dayGames.length) {{
-          gamesEl.innerHTML = '<p style="color:var(--text-muted); font-size:0.875rem; text-align:center;">אין משחקים ביום זה.</p>';
+          gamesEl.innerHTML = '<p dir="rtl" style="color:var(--text-muted); font-size:0.875rem; text-align:center;">אין משחקים ביום זה.</p>';
           return;
         }}
         gamesEl.innerHTML = dayGames.map(function(g) {{
@@ -2278,35 +2278,45 @@ TEMPLATE = """<!DOCTYPE html>
       // current day's card slides out, the new day's content gets built,
       // and it slides in from the matching side. Same felt gesture, applied
       // to swapped content instead of a shared track.
-      // Listens on the whole tab (nav + label + list), not just the games
-      // list, so a swipe anywhere in the tab works - only the list itself
-      // visually slides, the nav bar stays put.
+      // Listens on the whole open tab body (not just .schedule-tab itself,
+      // which is only as tall as its own content) so a swipe works even
+      // over the empty space below a short day's list, not just directly on
+      // the nav bar/list. Only the list visually slides, the nav bar stays
+      // put.
       // Right-to-left date order: swiping right (finger moves right, dx>0)
       // goes to the next day, swiping left goes to the previous - matching
       // how the day label itself reads (today on the right, moving right
       // steps forward), the opposite of a plain LTR carousel.
+      var touchArea = wrap.closest(".details-body") || wrap;
       var startX = null;
       var startY = null;
       var dragging = false;
 
-      wrap.addEventListener("touchstart", function(e) {{
+      touchArea.addEventListener("touchstart", function(e) {{
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         dragging = false;
       }}, {{ passive: true }});
 
-      wrap.addEventListener("touchmove", function(e) {{
+      touchArea.addEventListener("touchmove", function(e) {{
         if (startX === null) return;
         var dx = e.touches[0].clientX - startX;
         var dy = e.touches[0].clientY - startY;
         if (!dragging && Math.abs(dx) < Math.abs(dy)) return;
         dragging = true;
+        // Suppresses the browser's own synthetic click on whatever element
+        // the drag started over (e.g. the prev/next buttons) once this is
+        // confirmed to be a swipe, not a tap - without this, a swipe that
+        // starts on a button could also fire that button's own click right
+        // after, snapping the nav an extra, uncommanded step.
+        e.preventDefault();
         gamesEl.style.transition = "none";
         gamesEl.style.transform = "translateX(" + dx + "px)";
-      }}, {{ passive: true }});
+      }}, {{ passive: false }});
 
-      wrap.addEventListener("touchend", function(e) {{
+      touchArea.addEventListener("touchend", function(e) {{
         if (!dragging) {{ startX = null; startY = null; return; }}
+        e.preventDefault();
         var dx = e.changedTouches[0].clientX - startX;
         var threshold = 40;
         startX = null;
@@ -2319,7 +2329,7 @@ TEMPLATE = """<!DOCTYPE html>
           gamesEl.style.transition = "transform 0.2s ease";
           gamesEl.style.transform = "translateX(0)";
         }}
-      }});
+      }}, {{ passive: false }});
 
       // direction 1 = swiped right, toward the next day; -1 = swiped left,
       // toward the previous. The exit continues further the same way the
@@ -2462,7 +2472,7 @@ def _build_schedule_html(season_schedule: list[dict], simulated_today: str | Non
     demo the moment real time moves past its data).
     """
     if not season_schedule:
-        return '<p style="color:var(--text-muted); font-size:0.875rem;">לוח המשחקים לא זמין כרגע.</p>'
+        return '<p dir="rtl" style="color:var(--text-muted); font-size:0.875rem;">לוח התוצאות לא זמין כרגע.</p>'
 
     # "</" could otherwise prematurely close this <script> tag if it ever
     # appeared inside a team name/city string.
@@ -2472,7 +2482,7 @@ def _build_schedule_html(season_schedule: list[dict], simulated_today: str | Non
         f'<div class="schedule-tab"{sim_attr}>'
         '<div class="pager-nav schedule-nav">'
         '<button type="button" class="pager-arrow schedule-prev" aria-label="יום קודם">‹</button>'
-        '<div class="schedule-date-label"></div>'
+        '<div class="schedule-date-label" dir="rtl"></div>'
         '<button type="button" class="pager-arrow schedule-next" aria-label="יום הבא">›</button>'
         "</div>"
         '<div class="schedule-games"></div>'
@@ -3227,7 +3237,7 @@ def _build_secondary_section(data: dict) -> str:
     Otherwise: standings only.
     """
     sections = [(
-        "לוח המשחקים",
+        "לוח התוצאות",
         _build_schedule_html(data.get("season_schedule", []), data.get("demo_today")),
     )]
 
