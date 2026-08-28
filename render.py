@@ -825,7 +825,14 @@ TEMPLATE = """<!DOCTYPE html>
      right under the title bar. .schedule-games/.schedule-calendar are
      BELOW .schedule-nav as siblings, not its ancestor, so clipping there
      doesn't create that problem. */
-  .schedule-games, .schedule-calendar {{ overflow-x: hidden; }}
+  /* .schedule-calendar deliberately NOT included here (an earlier version
+     of this rule had it) - it clipped a few px of the calendar grid's own
+     right edge (7 columns + gaps doesn't divide the available width to a
+     clean integer, a normal sub-pixel rounding situation) that used to just
+     spill over harmlessly when overflow was visible - "cut off on the
+     left" once it wasn't. .schedule-games has no such legitimate content
+     that needs the overflow, so it stays clipped. */
+  .schedule-games {{ overflow-x: hidden; }}
 
   /* The playoff bracket's own pager (see initPlayoffBracketPager()) - a
      continuous per-conference strip panned by a JS-measured column width

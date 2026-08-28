@@ -41,8 +41,12 @@ full-court/
 ├── scheduler.py                 # check() - נקודת הכניסה לריצה מתוזמנת (ראו "תזמון" למטה)
 ├── _generate_assets.py          # יוצר favicon/logo (לוגיקת ציור "כדור" + טקסט)
 ├── _generate_pwa_icons.py       # יוצר אייקוני PWA (icon-192/512/180) מאותה לוגיקת כדור
-├── _generate_demo_index.py      # בונה output/demos.html (עמוד דמו זמני, ראו למטה)
-├── demo*.py + demo*_fixture.json  # 11 תרחישי דמו (JSON קפוא + סקריפט טעינה) לכל סוג יום
+├── _generate_demo_index.py      # בונה output/demos.html (5 דמואים אמיתיים, ראו למטה)
+├── _build_curated_demos.py      # בונה את 5 הדמואים עצמם (נתונים+סיכום אמיתיים, ראו למטה)
+├── _generate_comprehensive_demo.py  # "גרסת מפתח" - כל 212 לילות המשחק האמיתיים של העונה,
+│                                 # בלי סיכומי Claude (ראו "גרסת מפתח" למטה)
+├── _fix_comprehensive_demo.py   # post-processing על עמודי גרסת המפתח (נתיבים, סרגל ניווט)
+├── _comprehensive_cache/        # מטמון מקומי לנתוני גרסת המפתח (לא ב-git, ראו למטה)
 ├── requirements.txt
 ├── .env                         # ANTHROPIC_API_KEY (לא ב-git)
 ├── .github/workflows/daily-brief.yml  # workflow פרסום ל-Pages (לא מריץ פייתון, ראו למטה)

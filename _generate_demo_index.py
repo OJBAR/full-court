@@ -1,62 +1,35 @@
 """
-Temporary browsing page listing every demo brief currently in output/, since
-it's NBA offseason right now (no real content to publish) but we still want
-to verify the whole Pages/PWA publish chain works end-to-end. Once the real
-season starts and scheduler.py is producing genuine nightly briefs, this page
-stops being useful and can just be deleted (index.html - the PWA's actual
-start_url - always shows the single latest real brief, unaffected by this).
-
-Classifies each demo into exactly one of the five day-types (regular / cup
-groups / cup knockout / playoffs / Play-In) from the underlying fixture's
-real data flags, not by scraping the rendered HTML - the Finals no longer
-get their own category here either, matching the site itself where the
-Finals are just another stage of the single combined playoff bracket, not
-a separate tab.
+The 5-demo "beta" browsing page linked from every real page's footer
+("גרסת בטא · מעבר בין דמואים"). Replaces the old 11-demo lineup (a mix of
+real data and entirely fabricated playoff/cup/Play-In scenarios) - all 5 of
+these are real 2025-26 season data with a real Claude-written summary, built
+by _build_curated_demos.py (see that file's own docstring for exactly which
+5 dates and why). This script only builds the browsing/index page itself,
+reading each date's already-rendered output/{date}.html for its metadata -
+run _build_curated_demos.py first if any of these 5 pages don't exist yet.
 """
-import json
 from pathlib import Path
 
 REPO_DIR = Path(__file__).parent
 OUTPUT_DIR = REPO_DIR / "output"
 
-FIXTURES = [
-    "demo_fixture.json",
-    "demo_regular_new_fixture.json",
-    "demo_cup_groups_fixture.json",
-    "demo_cup_groups_new_fixture.json",
-    "demo_cup_knockout_fixture.json",
-    "demo_cup_final_fixture.json",
-    "demo_playoffs_fixture.json",
-    "demo_playoffs_round2_fixture.json",
-    "demo_playoffs_conf_finals_fixture.json",
-    "demo_finals_fixture.json",
-    "demo_play_in_fixture.json",
+# Keep in sync with _build_curated_demos.py's own CURATED_DATES - mirrored
+# here (not imported) since this script only needs the date+label pairs,
+# not any of that module's heavier real-data-fetching imports.
+CURATED = [
+    ("2025-10-22", "יום רגיל"),
+    ("2025-11-28", "גביע (בתים)"),
+    ("2025-12-13", "גביע (נוקאאוט)"),
+    ("2026-04-17", "פלייאין"),
+    ("2026-05-17", "פלייאוף"),
 ]
 
 
-def classify(data: dict) -> str:
-    if data.get("is_playoffs"):
-        return "פלייאוף"
-    if data.get("is_cup_knockout"):
-        return "גביע (נוקאאוט)"
-    if data.get("is_cup_groups"):
-        return "גביע (בתים)"
-    if data.get("is_play_in"):
-        return "פלייאין"
-    return "יום רגיל"
-
-
 rows = []
-for fixture_name in FIXTURES:
-    with open(REPO_DIR / fixture_name, encoding="utf-8") as f:
-        fixture = json.load(f)
-    data = fixture["data"]
-    date_str = data["date"]
+for date_str, category in CURATED:
     if not (OUTPUT_DIR / f"{date_str}.html").exists():
         continue
-    rows.append((date_str, classify(data)))
-
-rows.sort()  # earliest to latest
+    rows.append((date_str, category))
 
 items_html = "\n".join(
     f'<li><a href="{date}.html">{date}</a><span class="tabs"> - {category}</span></li>'
@@ -65,14 +38,13 @@ items_html = "\n".join(
 
 # Same theme-variable system as render.py's TEMPLATE (light palette on :root,
 # dark overrides via prefers-color-scheme + a manual data-theme toggle), so
-# this temporary page matches the real site's look instead of being hardcoded
-# to one look.
+# this page matches the real site's look instead of being hardcoded to one.
 page = f"""<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Full Court - דמואים (זמני)</title>
+<title>Full Court - דמואים</title>
 <style>
   :root {{
     --bg: #EFEAD8;
@@ -117,8 +89,8 @@ page = f"""<!DOCTYPE html>
 </style>
 </head>
 <body>
-  <h1>דמואים זמינים (זמני)</h1>
-  <p class="note">דף זמני לבדיקת פרסום בלבד - זה offseason, אין עדיין תוכן אמיתי. ייעלם כשהעונה תתחיל.</p>
+  <h1>דמואים</h1>
+  <p class="note">5 לילות אמיתיים מהעונה שעברה - נתונים וסיכומים אמיתיים, אחד לכל סוג יום.</p>
   <ul>
     {items_html}
   </ul>

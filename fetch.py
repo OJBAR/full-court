@@ -99,16 +99,24 @@ def compute_standings_as_of(date_str: str, season_schedule: list[dict], standing
         results_by_tricode.setdefault(g["home_tricode"], []).append("W" if home_won else "L")
         results_by_tricode.setdefault(g["away_tricode"], []).append("L" if home_won else "W")
 
-    def streak_str(results: list[str]) -> str:
+    def streak(results: list[str]) -> tuple[str, int]:
+        """
+        (display string e.g. "W3", signed length e.g. 3 or -2) - both real
+        LeagueStandingsV3 columns ("strCurrentStreak"/"CurrentStreak"), not
+        just the display one: storylines.find_streaks reads the numeric
+        "CurrentStreak" directly (via .get() with a silent 0 default - would
+        never crash but would also never detect a real streak if this field
+        were missing, since every result would compute as length 0).
+        """
         if not results:
-            return ""
+            return "", 0
         last = results[-1]
         n = 0
         for r in reversed(results):
             if r != last:
                 break
             n += 1
-        return f"{last}{n}"
+        return f"{last}{n}", (n if last == "W" else -n)
 
     # LeagueStandingsV3 has no tricode column at all - joined instead on the
     # full "City Name" string, which both this and season_schedule's own
@@ -130,6 +138,7 @@ def compute_standings_as_of(date_str: str, season_schedule: list[dict], standing
         results = results_by_tricode.get(tricode, [])
         wins = results.count("W")
         losses = results.count("L")
+        streak_display, streak_numeric = streak(results)
         rows.append({
             "TeamID": meta["TeamID"],
             "Tricode": tricode,
@@ -138,18 +147,22 @@ def compute_standings_as_of(date_str: str, season_schedule: list[dict], standing
             "TeamName": meta["TeamName"],
             "WINS": wins,
             "LOSSES": losses,
-            "strCurrentStreak": streak_str(results),
-            "_win_pct": (wins / (wins + losses)) if (wins + losses) else 0.0,
+            "strCurrentStreak": streak_display,
+            "CurrentStreak": streak_numeric,
+            # Real key name (matches LeagueStandingsV3's own "WinPCT" column)
+            # rather than an internal-only field - storylines.find_surprises
+            # sorts standings by this directly, so this needs to be a drop-in
+            # replacement for the real get_standings() output, not just
+            # enough for render.py's own standings tab.
+            "WinPCT": (wins / (wins + losses)) if (wins + losses) else 0.0,
         })
 
     for conf in ("East", "West"):
         conf_rows = [r for r in rows if r["Conference"] == conf]
-        conf_rows.sort(key=lambda r: (-r["_win_pct"], -r["WINS"]))
+        conf_rows.sort(key=lambda r: (-r["WinPCT"], -r["WINS"]))
         for i, r in enumerate(conf_rows, start=1):
             r["PlayoffRank"] = i
 
-    for r in rows:
-        del r["_win_pct"]
     return rows
 
 
