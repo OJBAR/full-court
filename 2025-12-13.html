@@ -4,15 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>FULL COURT - 13/12/2025</title>
-<link rel="icon" type="image/png" href="../assets/favicon.png">
+<link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="../assets/icon-180.png">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
 <meta name="theme-color" content="#EFEAD8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#2A2118" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-28T21:29:09.333875+00:00">
+<meta name="app-version" content="2026-08-28T21:23:29.664933+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -807,14 +807,7 @@
      right under the title bar. .schedule-games/.schedule-calendar are
      BELOW .schedule-nav as siblings, not its ancestor, so clipping there
      doesn't create that problem. */
-  /* .schedule-calendar deliberately NOT included here (an earlier version
-     of this rule had it) - it clipped a few px of the calendar grid's own
-     right edge (7 columns + gaps doesn't divide the available width to a
-     clean integer, a normal sub-pixel rounding situation) that used to just
-     spill over harmlessly when overflow was visible - "cut off on the
-     left" once it wasn't. .schedule-games has no such legitimate content
-     that needs the overflow, so it stays clipped. */
-  .schedule-games { overflow-x: hidden; }
+  .schedule-games, .schedule-calendar { overflow-x: hidden; }
 
   /* The playoff bracket's own pager (see initPlayoffBracketPager()) - a
      continuous per-conference strip panned by a JS-measured column width
@@ -1339,8 +1332,8 @@
 </head>
 <body>
   <div id="splash-screen" class="splash-screen">
-    <img class="logo-img logo-light" src="../assets/logo_light.png" alt="Full Court">
-    <img class="logo-img logo-dark" src="../assets/logo_dark.png" alt="Full Court">
+    <img class="logo-img logo-light" src="assets/logo_light.png" alt="Full Court">
+    <img class="logo-img logo-dark" src="assets/logo_dark.png" alt="Full Court">
   </div>
   <script>
     (function() {
@@ -1383,8 +1376,8 @@
   <div class="wrapper">
     <button class="settings-toggle" id="settings-toggle" onclick="openSettingsPanel()" aria-haspopup="dialog" aria-expanded="false" aria-label="פתח הגדרות">⚙️</button>
     <header class="header">
-      <img class="logo-img logo-light" src="../assets/logo_light.png" alt="Full Court">
-      <img class="logo-img logo-dark" src="../assets/logo_dark.png" alt="Full Court">
+      <img class="logo-img logo-light" src="assets/logo_light.png" alt="Full Court">
+      <img class="logo-img logo-dark" src="assets/logo_dark.png" alt="Full Court">
       <div class="header-text">
         <h1>סיכום הלילה ב-NBA</h1>
         <div class="date">13/12/2025, הלילה בין שבת לראשון</div>
@@ -1393,7 +1386,10 @@
     <main>
       <div class="summary">
         <div class="summary-date">13/12/2025, הלילה בין שבת לראשון</div>
-        <p>כאן יופיע הסיכום שכתב Claude על לילה זה - כמה פסקאות בעברית על מה שקרה, כולל הרגעים הבולטים וההקשר הרחב יותר. הדף הזה מדגים את שאר הברייף (טבלה, בראקטים, תוצאות, קישורים - כולל תקצירי וידאו אמיתיים) עם נתונים אמיתיים מהעונה שעברה, בלי להריץ בפועל את הקריאה היקרה יותר ל-Claude לכל תאריך.</p>
+        <p>לילה של דרמה בגביע ה-NBA, עם שני משחקי חצי גמר שהעלו את המנצחות צעד נוסף לקראת הגמר בלאס וגאס.</p>
+      <p>בחצי הגמר של המזרח, ניו יורק ניקס לא הותירו מקום לספק מול אורלנדו מג&#x27;יק וניצחו 132-120, במשחק שבו ג&#x27;יילן ברנסון היה בלתי עצור עם 40 נקודות, 4 ריבאונדים ו-8 אסיסטים. הניצחון גם מאריך את רצף הניצחונות של הניקס לחמישה משחקים ברציפות, והם ממשיכים הלאה בטורניר.</p>
+      <p>בחצי הגמר של המערב נדרשה דרמה גדולה בהרבה: סן אנטוניו ספרס גברו על אוקלהומה סיטי ת&#x27;אנדר 111-109, בניצחון צמוד שנקבע רק בשתי נקודות בסיום. זו ניצחון שלישי ברציפות לספרס, שממשיכים הלאה לקראת הגמר על חשבון האלופה המחזיקה. יצוין כי הספרס משחקים בימים אלה גם ללא ג&#x27;יידן קוונטאנס, שעבר בשבוע שעבר ניתוח ברך ימין וללא לוח זמנים ידוע לשובו.</p>
+      <p>שני המנצחים, ניקס וספרס, ממשיכים הלאה בטורניר הנוקאאוט של גביע ה-NBA - כל אחד מהם צעד אחד קרוב יותר להגיע לגמר הגדול בטי-מובייל ארנה שבלאס וגאס.</p>
       </div>
 
       <details class="tab-section">
@@ -1496,7 +1492,7 @@
       </details>
 
       <div class="beta-note">
-        <span>גרסת מפתח</span>
+        <span>גרסת בטא · <a href="demos.html">מעבר בין דמואים</a></span>
         <button type="button" class="manual-refresh-btn" onclick="manualRefresh()" aria-label="רענן את הדף">🔄</button>
       </div>
     </div>
@@ -2145,7 +2141,7 @@
       row.className = "install-banner-row";
 
       var icon = document.createElement("img");
-      icon.src = "../assets/icon-192.png";
+      icon.src = "assets/icon-192.png";
       icon.alt = "";
 
       var text = document.createElement("div");
@@ -2795,91 +2791,5 @@
       document.getElementById("settings-theme-btn").textContent = isDark ? "☀" : "🌙";
     }
   </script>
-<!-- cd-nav-start -->
-<script type="application/json" id="cdDates">["2025-10-21", "2025-10-22", "2025-10-23", "2025-10-24", "2025-10-25", "2025-10-26", "2025-10-27", "2025-10-28", "2025-10-29", "2025-10-30", "2025-10-31", "2025-11-01", "2025-11-02", "2025-11-03", "2025-11-04", "2025-11-05", "2025-11-06", "2025-11-07", "2025-11-08", "2025-11-09", "2025-11-10", "2025-11-11", "2025-11-12", "2025-11-13", "2025-11-14", "2025-11-15", "2025-11-16", "2025-11-17", "2025-11-18", "2025-11-19", "2025-11-20", "2025-11-21", "2025-11-22", "2025-11-23", "2025-11-24", "2025-11-25", "2025-11-26", "2025-11-28", "2025-11-29", "2025-11-30", "2025-12-01", "2025-12-02", "2025-12-03", "2025-12-04", "2025-12-05", "2025-12-06", "2025-12-07", "2025-12-08", "2025-12-09", "2025-12-10", "2025-12-11", "2025-12-12", "2025-12-13", "2025-12-14", "2025-12-15", "2025-12-16", "2025-12-17", "2025-12-18", "2025-12-19", "2025-12-20", "2025-12-21", "2025-12-22", "2025-12-23", "2025-12-25", "2025-12-26", "2025-12-27", "2025-12-28", "2025-12-29", "2025-12-30", "2025-12-31", "2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09", "2026-01-10", "2026-01-11", "2026-01-12", "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16", "2026-01-17", "2026-01-18", "2026-01-19", "2026-01-20", "2026-01-21", "2026-01-22", "2026-01-23", "2026-01-24", "2026-01-25", "2026-01-26", "2026-01-27", "2026-01-28", "2026-01-29", "2026-01-30", "2026-01-31", "2026-02-01", "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-05", "2026-02-06", "2026-02-07", "2026-02-08", "2026-02-09", "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-19", "2026-02-20", "2026-02-21", "2026-02-22", "2026-02-23", "2026-02-24", "2026-02-25", "2026-02-26", "2026-02-27", "2026-02-28", "2026-03-01", "2026-03-02", "2026-03-03", "2026-03-04", "2026-03-05", "2026-03-06", "2026-03-07", "2026-03-08", "2026-03-09", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-14", "2026-03-15", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19", "2026-03-20", "2026-03-21", "2026-03-22", "2026-03-23", "2026-03-24", "2026-03-25", "2026-03-26", "2026-03-27", "2026-03-28", "2026-03-29", "2026-03-30", "2026-03-31", "2026-04-01", "2026-04-02", "2026-04-03", "2026-04-04", "2026-04-05", "2026-04-06", "2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-12", "2026-04-14", "2026-04-15", "2026-04-17", "2026-04-18", "2026-04-19", "2026-04-20", "2026-04-21", "2026-04-22", "2026-04-23", "2026-04-24", "2026-04-25", "2026-04-26", "2026-04-27", "2026-04-28", "2026-04-29", "2026-04-30", "2026-05-01", "2026-05-02", "2026-05-03", "2026-05-04", "2026-05-05", "2026-05-06", "2026-05-07", "2026-05-08", "2026-05-09", "2026-05-10", "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-15", "2026-05-17", "2026-05-18", "2026-05-19", "2026-05-20", "2026-05-21", "2026-05-22", "2026-05-23", "2026-05-24", "2026-05-25", "2026-05-26", "2026-05-28", "2026-05-30", "2026-06-03", "2026-06-05", "2026-06-08", "2026-06-10", "2026-06-13"]</script>
-<script>
-(function() {
-  // Appended straight to document.body (the codebase's own proven pattern
-  // for an always-visible overlay control - see the old install banner)
-  // and position:fixed, deliberately NOT placed in the normal document
-  // flow inside .wrapper. Two earlier attempts (sticky, top of the page,
-  // living inside .wrapper) came up invisible specifically in the
-  // installed PWA - tabs-mode makes .wrapper a fixed-height 100dvh flex
-  // column, and every position/sizing trick tried there still depended on
-  // that flow one way or another. Fixed-at-the-viewport sidesteps all of
-  // it - and moved to the bottom, by request.
-  var css = document.createElement("style");
-  css.textContent = [
-    ".cd-nav { position: fixed; left: 0; right: 0; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 999;",
-    "  display: flex; align-items: center; justify-content: center; gap: 6px;",
-    "  padding: 8px; border-radius: 999px; margin: 0 12px;",
-    "  background: var(--card-bg); border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.15);",
-    "  direction: rtl; flex-wrap: nowrap;",
-    // A known iOS Safari bug: a plain position:fixed element can visibly
-    // drift/lag sideways and downward for a moment during an active touch
-    // drag elsewhere on the page (like the schedule tab's own day-swipe) -
-    // reported as "the bar moves left-right and down" mid-swipe. Forcing
-    // this element onto its own GPU compositing layer (the standard fix for
-    // this exact class of bug) keeps it visually pinned regardless of what
-    // else on the page is being dragged.
-    "  transform: translateZ(0); -webkit-transform: translateZ(0); will-change: transform; }",
-    ".cd-nav button { border: 1px solid var(--border); background: var(--bg); color: var(--text-heading);",
-    "  border-radius: 999px; font-size: 13px; cursor: pointer; flex-shrink: 0;",
-    "  padding: 5px 9px; font-family: inherit; }",
-    ".cd-nav button:disabled { opacity: 0.35; cursor: default; }",
-    ".cd-nav .cd-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; padding: 0 4px; }",
-    // The splash-logo-animation only ever shows in standalone mode (see
-    // render.py) - which this demo's own manifest.json now makes it run
-    // in too. Skipped here specifically (by request) since it just slows
-    // down repeatedly reopening this dev-only demo while testing; the real
-    // product and the curated demos (neither gets this override) keep it.
-    "#splash-screen { display: none !important; }"
-  ].join("\n");
-  document.head.appendChild(css);
-
-  var bar = document.createElement("div");
-  bar.className = "cd-nav";
-  bar.dir = "rtl";
-  bar.innerHTML =
-    '<button type="button" id="cdBack10" title="10 אחורה">«« 10</button>' +
-    '<button type="button" id="cdPrev" title="יום קודם">‹</button>' +
-    '<span class="cd-label" id="cdLabel"></span>' +
-    '<button type="button" id="cdNext" title="יום הבא">›</button>' +
-    '<button type="button" id="cdFwd10" title="10 קדימה">10 »»</button>';
-  document.body.appendChild(bar);
-
-  var dates = JSON.parse(document.getElementById("cdDates").textContent);
-  var here = "2025-12-13";
-  var idx = dates.indexOf(here);
-  var label = document.getElementById("cdLabel");
-  var back10 = document.getElementById("cdBack10");
-  var prev = document.getElementById("cdPrev");
-  var next = document.getElementById("cdNext");
-  var fwd10 = document.getElementById("cdFwd10");
-
-  function fmt(d) {
-    var p = d.split("-");
-    return p[2] + "." + p[1] + "." + p[0];
-  }
-  function go(newIdx) {
-    newIdx = Math.max(0, Math.min(newIdx, dates.length - 1));
-    if (newIdx === idx) return;
-    location.href = dates[newIdx] + ".html";
-  }
-  if (idx === -1) { if (label) label.textContent = here; }
-  else {
-    label.textContent = fmt(dates[idx]) + " (" + (idx + 1) + "/" + dates.length + ")";
-    prev.disabled = idx === 0;
-    next.disabled = idx === dates.length - 1;
-    back10.disabled = idx === 0;
-    fwd10.disabled = idx === dates.length - 1;
-    prev.addEventListener("click", function() { go(idx - 1); });
-    next.addEventListener("click", function() { go(idx + 1); });
-    back10.addEventListener("click", function() { go(idx - 10); });
-    fwd10.addEventListener("click", function() { go(idx + 10); });
-  }
-})();
-</script>
-<!-- cd-nav-end -->
 </body>
 </html>
