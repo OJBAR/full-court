@@ -114,12 +114,14 @@ page = f"""<!DOCTYPE html>
   }}
   a {{ color: var(--accent); text-decoration: none; font-weight: 700; }}
   .tabs {{ color: var(--text-muted); font-size: 12px; font-weight: 400; }}
+  .comprehensive-link {{ border-color: var(--accent); border-width: 2px; }}
 </style>
 </head>
 <body>
   <h1>דמואים זמינים (זמני)</h1>
   <p class="note">דף זמני לבדיקת פרסום בלבד - זה offseason, אין עדיין תוכן אמיתי. ייעלם כשהעונה תתחיל.</p>
   <ul>
+    <li class="comprehensive-link"><a href="comprehensive/index.html">דמו כולל</a><span class="tabs"> - נתונים אמיתיים מהעונה שעברה, לא מומצאים</span></li>
     {items_html}
   </ul>
 </body>

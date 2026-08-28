@@ -475,10 +475,29 @@ def _enrich_schedule_with_rich_data(season_schedule: list[dict], games: list[dic
         }
 
 
-def fetch_for_date(date_str: str) -> dict:
+def fetch_for_date(
+    date_str: str,
+    *,
+    include_highlights: bool = True,
+    season_schedule: list[dict] | None = None,
+) -> dict:
     """
     Fetches all games for a given US Eastern date, their box scores, and current
     league standings. Returns a plain dict, ready to be dumped as JSON.
+
+    include_highlights/season_schedule exist for batch use (see
+    _generate_comprehensive_demo.py's full-season run), not the real nightly
+    pipeline (scheduler.py never passes either, so its behavior is
+    unchanged): include_highlights=False skips the highlights.py YouTube
+    lookup entirely (the slowest, least reliable step, and irrelevant for a
+    demo that already fills its own filler text in for the Claude summary
+    too) - highlight_url is just always None instead. season_schedule lets a
+    caller building many dates in one run pass in a schedule it already
+    fetched once, instead of get_season_schedule() re-fetching the entire
+    season's ScheduleLeagueV2 (a genuinely heavy call) again for every single
+    date - the caller owns giving this function its own fresh copy per date
+    (this function still enrich_data-mutates it in place for date_str's own
+    games), so "rich" tags from one date never leak into another's page.
     """
     game_header, line_score = get_games_for_date(date_str)
 
@@ -490,15 +509,19 @@ def fetch_for_date(date_str: str) -> dict:
 
         game_line_score = line_score[line_score["gameId"] == game_id].to_dict(orient="records")
 
-        # Unofficial, best-effort (see highlights.py) - a game whose highlight
-        # isn't up yet just gets None here, not an error; scheduler.py's
-        # second pass retries whatever's still missing a couple hours later.
-        try:
-            highlight_url = highlight_url_for_game(game["gameCode"], game_line_score, date_str)
-        except Exception as e:
-            print(f"Warning: highlight lookup failed for {game_id} ({e}) - continuing without it.")
+        if include_highlights:
+            # Unofficial, best-effort (see highlights.py) - a game whose
+            # highlight isn't up yet just gets None here, not an error;
+            # scheduler.py's second pass retries whatever's still missing a
+            # couple hours later.
+            try:
+                highlight_url = highlight_url_for_game(game["gameCode"], game_line_score, date_str)
+            except Exception as e:
+                print(f"Warning: highlight lookup failed for {game_id} ({e}) - continuing without it.")
+                highlight_url = None
+            time.sleep(REQUEST_DELAY_SECONDS)
+        else:
             highlight_url = None
-        time.sleep(REQUEST_DELAY_SECONDS)
 
         games.append(
             {
@@ -551,11 +574,13 @@ def fetch_for_date(date_str: str) -> dict:
         power_ratings = {}
 
     try:
-        season_schedule = get_season_schedule(date_str)
-        _enrich_schedule_with_rich_data(season_schedule, games, standings)
+        this_date_schedule = (
+            [dict(g) for g in season_schedule] if season_schedule is not None else get_season_schedule(date_str)
+        )
+        _enrich_schedule_with_rich_data(this_date_schedule, games, standings)
     except Exception as e:
         print(f"Warning: could not fetch season schedule ({e}) - continuing without it.")
-        season_schedule = []
+        this_date_schedule = []
 
     return {
         "date": date_str,
@@ -571,7 +596,7 @@ def fetch_for_date(date_str: str) -> dict:
         "play_in_bracket": play_in_bracket,
         "injuries": injuries,
         "player_power_ratings": power_ratings,
-        "season_schedule": season_schedule,
+        "season_schedule": this_date_schedule,
     }
 
 
