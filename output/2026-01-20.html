@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-28T12:26:39.455460+00:00">
+<meta name="app-version" content="2026-08-28T12:44:04.988075+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -678,6 +678,83 @@
     font-weight: 700;
     color: var(--text-heading);
   }
+  .schedule-cal-toggle {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Month-at-a-glance jump-to-date view (backlog item 7) - a plain grid,
+     one cell per day of the currently-shown month, days outside that month
+     left blank (not "bleeding" into neighboring months' numbers, to keep
+     it uncluttered). Replaces .schedule-games while open; the day nav row
+     above it stays visible throughout (its own arrows step by single day,
+     independent of which month the calendar happens to be showing). */
+  .schedule-calendar-head {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .schedule-calendar-month {
+    min-width: 7em;
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-heading);
+  }
+  .schedule-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+  }
+  .schedule-calendar-dow {
+    text-align: center;
+    font-size: 0.625rem;
+    color: var(--text-muted);
+    padding-bottom: 2px;
+  }
+  .schedule-calendar-day {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: var(--text-body);
+    border-radius: 6px;
+    background: var(--card-bg);
+    border: none;
+    font-family: inherit;
+    cursor: default;
+  }
+  .schedule-calendar-day.empty { background: transparent; }
+  .schedule-calendar-day.has-games { cursor: pointer; color: var(--text-heading); font-weight: 700; }
+  .schedule-calendar-day.is-today { box-shadow: inset 0 0 0 1.5px var(--accent); }
+  .schedule-calendar-day .cal-count {
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 2px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--card-bg);
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
   /* pan-y (not none): a day with many games still has to scroll vertically
      normally - only horizontal panning is taken over by initScheduleTab()'s
      own touch handling (swipe between days). Applied to .details-body too,
@@ -1274,7 +1351,7 @@
       <details class="tab-section">
       <summary>לוח התוצאות</summary>
       <div class="details-body" dir="ltr">
-        <div class="schedule-tab" data-simulated-today="2026-01-20"><div class="pager-nav schedule-nav"><button type="button" class="pager-arrow schedule-prev" aria-label="יום הבא">‹</button><div class="schedule-date-label" dir="rtl"></div><button type="button" class="pager-arrow schedule-next" aria-label="יום קודם">›</button></div><div class="schedule-games"></div><script type="application/json" class="schedule-data">[{"game_id": "0022509000", "tipoff_utc": "2025-12-31T00:00:00Z", "home_team": "Golden State Warriors", "home_tricode": "GSW", "away_team": "Los Angeles Lakers", "away_tricode": "LAL", "home_score": 100, "away_score": 95, "is_final": true}, {"game_id": "0022509001", "tipoff_utc": "2026-01-03T01:00:00Z", "home_team": "Boston Celtics", "home_tricode": "BOS", "away_team": "Golden State Warriors", "away_tricode": "GSW", "home_score": 105, "away_score": 98, "is_final": true}, {"game_id": "0022509002", "tipoff_utc": "2026-01-06T02:00:00Z", "home_team": "Miami Heat", "home_tricode": "MIA", "away_team": "Boston Celtics", "away_tricode": "BOS", "home_score": 110, "away_score": 101, "is_final": true}, {"game_id": "0022509003", "tipoff_utc": "2026-01-09T00:00:00Z", "home_team": "Milwaukee Bucks", "home_tricode": "MIL", "away_team": "Miami Heat", "away_tricode": "MIA", "home_score": 115, "away_score": 104, "is_final": true}, {"game_id": "0022509004", "tipoff_utc": "2026-01-12T01:00:00Z", "home_team": "Denver Nuggets", "home_tricode": "DEN", "away_team": "Milwaukee Bucks", "away_tricode": "MIL", "home_score": 120, "away_score": 107, "is_final": true}, {"game_id": "0022509005", "tipoff_utc": "2026-01-15T02:00:00Z", "home_team": "Phoenix Suns", "home_tricode": "PHX", "away_team": "Denver Nuggets", "away_tricode": "DEN", "home_score": 100, "away_score": 110, "is_final": true}, {"game_id": "0022509006", "tipoff_utc": "2026-01-18T00:00:00Z", "home_team": "New York Knicks", "home_tricode": "NYK", "away_team": "Phoenix Suns", "away_tricode": "PHX", "home_score": 105, "away_score": 113, "is_final": true}, {"game_id": "0022509007", "tipoff_utc": "2026-01-21T01:00:00Z", "home_team": "Philadelphia 76ers", "home_tricode": "PHI", "away_team": "New York Knicks", "away_tricode": "NYK", "home_score": 110, "away_score": 96, "is_final": true}, {"game_id": "0022509008", "tipoff_utc": "2026-01-24T02:00:00Z", "home_team": "Dallas Mavericks", "home_tricode": "DAL", "away_team": "Philadelphia 76ers", "away_tricode": "PHI", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509009", "tipoff_utc": "2026-01-27T00:00:00Z", "home_team": "Oklahoma City Thunder", "home_tricode": "OKC", "away_team": "Dallas Mavericks", "away_tricode": "DAL", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509010", "tipoff_utc": "2026-01-30T01:00:00Z", "home_team": "Minnesota Timberwolves", "home_tricode": "MIN", "away_team": "Oklahoma City Thunder", "away_tricode": "OKC", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509011", "tipoff_utc": "2026-02-02T02:00:00Z", "home_team": "Los Angeles Lakers", "home_tricode": "LAL", "away_team": "Minnesota Timberwolves", "away_tricode": "MIN", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509012", "tipoff_utc": "2026-02-05T00:00:00Z", "home_team": "Golden State Warriors", "home_tricode": "GSW", "away_team": "Los Angeles Lakers", "away_tricode": "LAL", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509013", "tipoff_utc": "2026-02-08T01:00:00Z", "home_team": "Boston Celtics", "home_tricode": "BOS", "away_team": "Golden State Warriors", "away_tricode": "GSW", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509014", "tipoff_utc": "2026-02-11T02:00:00Z", "home_team": "Miami Heat", "home_tricode": "MIA", "away_team": "Boston Celtics", "away_tricode": "BOS", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509015", "tipoff_utc": "2026-02-14T00:00:00Z", "home_team": "Milwaukee Bucks", "home_tricode": "MIL", "away_team": "Miami Heat", "away_tricode": "MIA", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509016", "tipoff_utc": "2026-02-17T01:00:00Z", "home_team": "Denver Nuggets", "home_tricode": "DEN", "away_team": "Milwaukee Bucks", "away_tricode": "MIL", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509017", "tipoff_utc": "2026-02-20T02:00:00Z", "home_team": "Phoenix Suns", "home_tricode": "PHX", "away_team": "Denver Nuggets", "away_tricode": "DEN", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509018", "tipoff_utc": "2026-02-23T00:00:00Z", "home_team": "New York Knicks", "home_tricode": "NYK", "away_team": "Phoenix Suns", "away_tricode": "PHX", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509019", "tipoff_utc": "2026-02-26T01:00:00Z", "home_team": "Philadelphia 76ers", "home_tricode": "PHI", "away_team": "New York Knicks", "away_tricode": "NYK", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509020", "tipoff_utc": "2026-03-01T02:00:00Z", "home_team": "Dallas Mavericks", "home_tricode": "DAL", "away_team": "Philadelphia 76ers", "away_tricode": "PHI", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509021", "tipoff_utc": "2026-03-04T00:00:00Z", "home_team": "Oklahoma City Thunder", "home_tricode": "OKC", "away_team": "Dallas Mavericks", "away_tricode": "DAL", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022500613", "tipoff_utc": "2026-01-20T00:00:00Z", "home_team": "Philadelphia 76ers", "home_tricode": "PHI", "away_team": "Phoenix Suns", "away_tricode": "PHX", "home_score": 110, "away_score": 116, "is_final": true, "rich": {"period": 4, "highlight_url": "https://www.youtube.com/watch?v=bJooVVfYjMk", "po_round": "", "series_text": "", "series_game_number": "", "cup_subtype": "", "cup_sub_label": "", "is_play_in": false, "away_wins": 27, "away_losses": 17, "home_wins": 23, "home_losses": 19}}, {"game_id": "0022500614", "tipoff_utc": "2026-01-20T00:00:00Z", "home_team": "Chicago Bulls", "home_tricode": "CHI", "away_team": "LA Clippers", "away_tricode": "LAC", "home_score": 138, "away_score": 110, "is_final": true, "rich": {"period": 4, "highlight_url": null, "po_round": "", "series_text": "", "series_game_number": "", "cup_subtype": "", "cup_sub_label": "", "is_play_in": false, "away_wins": 19, "away_losses": 24, "home_wins": 21, "home_losses": 22}}, {"game_id": "0022500615", "tipoff_utc": "2026-01-20T00:30:00Z", "home_team": "Houston Rockets", "home_tricode": "HOU", "away_team": "San Antonio Spurs", "away_tricode": "SAS", "home_score": 111, "away_score": 106, "is_final": true, "rich": {"period": 4, "highlight_url": "https://www.youtube.com/watch?v=bJooVVfYjMk", "po_round": "", "series_text": "", "series_game_number": "", "cup_subtype": "", "cup_sub_label": "", "is_play_in": false, "away_wins": 30, "away_losses": 14, "home_wins": 26, "home_losses": 15}}, {"game_id": "0022500616", "tipoff_utc": "2026-01-20T01:00:00Z", "home_team": "Utah Jazz", "home_tricode": "UTA", "away_team": "Minnesota Timberwolves", "away_tricode": "MIN", "home_score": 127, "away_score": 122, "is_final": true, "rich": {"period": 4, "highlight_url": null, "po_round": "", "series_text": "", "series_game_number": "", "cup_subtype": "", "cup_sub_label": "", "is_play_in": false, "away_wins": 27, "away_losses": 17, "home_wins": 15, "home_losses": 29}}, {"game_id": "0022500617", "tipoff_utc": "2026-01-20T01:30:00Z", "home_team": "Denver Nuggets", "home_tricode": "DEN", "away_team": "Los Angeles Lakers", "away_tricode": "LAL", "home_score": 107, "away_score": 115, "is_final": true, "rich": {"period": 4, "highlight_url": "https://www.youtube.com/watch?v=bJooVVfYjMk", "po_round": "", "series_text": "", "series_game_number": "", "cup_subtype": "", "cup_sub_label": "", "is_play_in": false, "away_wins": 26, "away_losses": 16, "home_wins": 29, "home_losses": 15}}, {"game_id": "0022500618", "tipoff_utc": "2026-01-20T03:00:00Z", "home_team": "Golden State Warriors", "home_tricode": "GSW", "away_team": "Toronto Raptors", "away_tricode": "TOR", "home_score": 127, "away_score": 145, "is_final": true, "rich": {"period": 4, "highlight_url": null, "po_round": "", "series_text": "", "series_game_number": "", "cup_subtype": "", "cup_sub_label": "", "is_play_in": false, "away_wins": 26, "away_losses": 19, "home_wins": 25, "home_losses": 20}}, {"game_id": "0022500619", "tipoff_utc": "2026-01-20T03:30:00Z", "home_team": "Sacramento Kings", "home_tricode": "SAC", "away_team": "Miami Heat", "away_tricode": "MIA", "home_score": 117, "away_score": 130, "is_final": true, "rich": {"period": 4, "highlight_url": "https://www.youtube.com/watch?v=bJooVVfYjMk", "po_round": "", "series_text": "", "series_game_number": "", "cup_subtype": "", "cup_sub_label": "", "is_play_in": false, "away_wins": 23, "away_losses": 21, "home_wins": 12, "home_losses": 32}}]</script></div>
+        <div class="schedule-tab" data-simulated-today="2026-01-20"><div class="pager-nav schedule-nav"><button type="button" class="pager-arrow schedule-prev" aria-label="יום הבא">‹</button><div class="schedule-date-label" dir="rtl"></div><button type="button" class="pager-arrow schedule-next" aria-label="יום קודם">›</button><button type="button" class="schedule-cal-toggle" aria-label="לוח שנה">📅</button></div><div class="schedule-calendar" dir="rtl" hidden></div><div class="schedule-games"></div><script type="application/json" class="schedule-data">[{"game_id": "0022509000", "tipoff_utc": "2025-12-31T00:00:00Z", "home_team": "Golden State Warriors", "home_tricode": "GSW", "away_team": "Los Angeles Lakers", "away_tricode": "LAL", "home_score": 100, "away_score": 95, "is_final": true}, {"game_id": "0022509001", "tipoff_utc": "2026-01-03T01:00:00Z", "home_team": "Boston Celtics", "home_tricode": "BOS", "away_team": "Golden State Warriors", "away_tricode": "GSW", "home_score": 105, "away_score": 98, "is_final": true}, {"game_id": "0022509002", "tipoff_utc": "2026-01-06T02:00:00Z", "home_team": "Miami Heat", "home_tricode": "MIA", "away_team": "Boston Celtics", "away_tricode": "BOS", "home_score": 110, "away_score": 101, "is_final": true}, {"game_id": "0022509003", "tipoff_utc": "2026-01-09T00:00:00Z", "home_team": "Milwaukee Bucks", "home_tricode": "MIL", "away_team": "Miami Heat", "away_tricode": "MIA", "home_score": 115, "away_score": 104, "is_final": true}, {"game_id": "0022509004", "tipoff_utc": "2026-01-12T01:00:00Z", "home_team": "Denver Nuggets", "home_tricode": "DEN", "away_team": "Milwaukee Bucks", "away_tricode": "MIL", "home_score": 120, "away_score": 107, "is_final": true}, {"game_id": "0022509005", "tipoff_utc": "2026-01-15T02:00:00Z", "home_team": "Phoenix Suns", "home_tricode": "PHX", "away_team": "Denver Nuggets", "away_tricode": "DEN", "home_score": 100, "away_score": 110, "is_final": true}, {"game_id": "0022509006", "tipoff_utc": "2026-01-18T00:00:00Z", "home_team": "New York Knicks", "home_tricode": "NYK", "away_team": "Phoenix Suns", "away_tricode": "PHX", "home_score": 105, "away_score": 113, "is_final": true}, {"game_id": "0022509007", "tipoff_utc": "2026-01-21T01:00:00Z", "home_team": "Philadelphia 76ers", "home_tricode": "PHI", "away_team": "New York Knicks", "away_tricode": "NYK", "home_score": 110, "away_score": 96, "is_final": true}, {"game_id": "0022509008", "tipoff_utc": "2026-01-24T02:00:00Z", "home_team": "Dallas Mavericks", "home_tricode": "DAL", "away_team": "Philadelphia 76ers", "away_tricode": "PHI", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509009", "tipoff_utc": "2026-01-27T00:00:00Z", "home_team": "Oklahoma City Thunder", "home_tricode": "OKC", "away_team": "Dallas Mavericks", "away_tricode": "DAL", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509010", "tipoff_utc": "2026-01-30T01:00:00Z", "home_team": "Minnesota Timberwolves", "home_tricode": "MIN", "away_team": "Oklahoma City Thunder", "away_tricode": "OKC", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509011", "tipoff_utc": "2026-02-02T02:00:00Z", "home_team": "Los Angeles Lakers", "home_tricode": "LAL", "away_team": "Minnesota Timberwolves", "away_tricode": "MIN", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509012", "tipoff_utc": "2026-02-05T00:00:00Z", "home_team": "Golden State Warriors", "home_tricode": "GSW", "away_team": "Los Angeles Lakers", "away_tricode": "LAL", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509013", "tipoff_utc": "2026-02-08T01:00:00Z", "home_team": "Boston Celtics", "home_tricode": "BOS", "away_team": "Golden State Warriors", "away_tricode": "GSW", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509014", "tipoff_utc": "2026-02-11T02:00:00Z", "home_team": "Miami Heat", "home_tricode": "MIA", "away_team": "Boston Celtics", "away_tricode": "BOS", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509015", "tipoff_utc": "2026-02-14T00:00:00Z", "home_team": "Milwaukee Bucks", "home_tricode": "MIL", "away_team": "Miami Heat", "away_tricode": "MIA", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509016", "tipoff_utc": "2026-02-17T01:00:00Z", "home_team": "Denver Nuggets", "home_tricode": "DEN", "away_team": "Milwaukee Bucks", "away_tricode": "MIL", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509017", "tipoff_utc": "2026-02-20T02:00:00Z", "home_team": "Phoenix Suns", "home_tricode": "PHX", "away_team": "Denver Nuggets", "away_tricode": "DEN", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509018", "tipoff_utc": "2026-02-23T00:00:00Z", "home_team": "New York Knicks", "home_tricode": "NYK", "away_team": "Phoenix Suns", "away_tricode": "PHX", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509019", "tipoff_utc": "2026-02-26T01:00:00Z", "home_team": "Philadelphia 76ers", "home_tricode": "PHI", "away_team": "New York Knicks", "away_tricode": "NYK", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509020", "tipoff_utc": "2026-03-01T02:00:00Z", "home_team": "Dallas Mavericks", "home_tricode": "DAL", "away_team": "Philadelphia 76ers", "away_tricode": "PHI", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022509021", "tipoff_utc": "2026-03-04T00:00:00Z", "home_team": "Oklahoma City Thunder", "home_tricode": "OKC", "away_team": "Dallas Mavericks", "away_tricode": "DAL", "home_score": null, "away_score": null, "is_final": false}, {"game_id": "0022500613", "tipoff_utc": "2026-01-20T00:00:00Z", "home_team": "Philadelphia 76ers", "home_tricode": "PHI", "away_team": "Phoenix Suns", "away_tricode": "PHX", "home_score": 110, "away_score": 116, "is_final": true, "rich": {"period": 4, "highlight_url": "https://www.youtube.com/watch?v=bJooVVfYjMk", "po_round": "", "series_text": "", "series_game_number": "", "cup_subtype": "", "cup_sub_label": "", "is_play_in": false, "away_wins": 27, "away_losses": 17, "home_wins": 23, "home_losses": 19}}, {"game_id": "0022500614", "tipoff_utc": "2026-01-20T00:00:00Z", "home_team": "Chicago Bulls", "home_tricode": "CHI", "away_team": "LA Clippers", "away_tricode": "LAC", "home_score": 138, "away_score": 110, "is_final": true, "rich": {"period": 4, "highlight_url": null, "po_round": "", "series_text": "", "series_game_number": "", "cup_subtype": "", "cup_sub_label": "", "is_play_in": false, "away_wins": 19, "away_losses": 24, "home_wins": 21, "home_losses": 22}}, {"game_id": "0022500615", "tipoff_utc": "2026-01-20T00:30:00Z", "home_team": "Houston Rockets", "home_tricode": "HOU", "away_team": "San Antonio Spurs", "away_tricode": "SAS", "home_score": 111, "away_score": 106, "is_final": true, "rich": {"period": 4, "highlight_url": "https://www.youtube.com/watch?v=bJooVVfYjMk", "po_round": "", "series_text": "", "series_game_number": "", "cup_subtype": "", "cup_sub_label": "", "is_play_in": false, "away_wins": 30, "away_losses": 14, "home_wins": 26, "home_losses": 15}}, {"game_id": "0022500616", "tipoff_utc": "2026-01-20T01:00:00Z", "home_team": "Utah Jazz", "home_tricode": "UTA", "away_team": "Minnesota Timberwolves", "away_tricode": "MIN", "home_score": 127, "away_score": 122, "is_final": true, "rich": {"period": 4, "highlight_url": null, "po_round": "", "series_text": "", "series_game_number": "", "cup_subtype": "", "cup_sub_label": "", "is_play_in": false, "away_wins": 27, "away_losses": 17, "home_wins": 15, "home_losses": 29}}, {"game_id": "0022500617", "tipoff_utc": "2026-01-20T01:30:00Z", "home_team": "Denver Nuggets", "home_tricode": "DEN", "away_team": "Los Angeles Lakers", "away_tricode": "LAL", "home_score": 107, "away_score": 115, "is_final": true, "rich": {"period": 4, "highlight_url": "https://www.youtube.com/watch?v=bJooVVfYjMk", "po_round": "", "series_text": "", "series_game_number": "", "cup_subtype": "", "cup_sub_label": "", "is_play_in": false, "away_wins": 26, "away_losses": 16, "home_wins": 29, "home_losses": 15}}, {"game_id": "0022500618", "tipoff_utc": "2026-01-20T03:00:00Z", "home_team": "Golden State Warriors", "home_tricode": "GSW", "away_team": "Toronto Raptors", "away_tricode": "TOR", "home_score": 127, "away_score": 145, "is_final": true, "rich": {"period": 4, "highlight_url": null, "po_round": "", "series_text": "", "series_game_number": "", "cup_subtype": "", "cup_sub_label": "", "is_play_in": false, "away_wins": 26, "away_losses": 19, "home_wins": 25, "home_losses": 20}}, {"game_id": "0022500619", "tipoff_utc": "2026-01-20T03:30:00Z", "home_team": "Sacramento Kings", "home_tricode": "SAC", "away_team": "Miami Heat", "away_tricode": "MIA", "home_score": 117, "away_score": 130, "is_final": true, "rich": {"period": 4, "highlight_url": "https://www.youtube.com/watch?v=bJooVVfYjMk", "po_round": "", "series_text": "", "series_game_number": "", "cup_subtype": "", "cup_sub_label": "", "is_play_in": false, "away_wins": 23, "away_losses": 21, "home_wins": 12, "home_losses": 32}}]</script></div>
       </div>
     </details>
 
@@ -2199,6 +2276,8 @@
       }
       var label = wrap.querySelector(".schedule-date-label");
       var gamesEl = wrap.querySelector(".schedule-games");
+      var calEl = wrap.querySelector(".schedule-calendar");
+      var calToggle = wrap.querySelector(".schedule-cal-toggle");
       // Named by screen position (left/right), not prev/next - the button
       // that goes to the previous day sits on the right (glyph '›'), the
       // one that goes to the next day sits on the left (glyph '‹'), by
@@ -2208,6 +2287,8 @@
       var rightBtn = wrap.querySelector(".schedule-next");
       var IL_TZ = "Asia/Jerusalem";
       var WEEKDAYS = ["יום ראשון", "יום שני", "יום שלישי", "יום רביעי", "יום חמישי", "יום שישי", "יום שבת"];
+      var DOW_SHORT = ["א", "ב", "ג", "ד", "ה", "ו", "ש"];
+      var MONTHS = ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"];
 
       function ilDateKey(isoUtc) {
         return new Date(isoUtc).toLocaleDateString("en-CA", { timeZone: IL_TZ });
@@ -2346,6 +2427,101 @@
       // a swipe.
       rightBtn.addEventListener("click", function() { swipeTo(-1); }); // yesterday
       leftBtn.addEventListener("click", function() { swipeTo(1); }); // tomorrow
+
+      // Month-at-a-glance jump-to-date view (backlog item 7) - a plain grid
+      // for whichever month currentKey is in when opened, days with games
+      // marked by a small orange badge showing the count, tapping one jumps
+      // straight there instead of stepping day by day. Bounded to the
+      // real min/max months this season actually has data for, not a fixed
+      // Oct-June range - a real season's data naturally falls in that
+      // window anyway, and this way it's never wrong for an odd schedule.
+      var calMonthKey = null; // "YYYY-MM", set when the calendar is opened
+      var calOpen = false;
+
+      function monthKeyOf(dayKey) { return dayKey.slice(0, 7); }
+
+      function clampMonthKey(mk) {
+        var lo = monthKeyOf(minKey), hi = monthKeyOf(maxKey);
+        if (mk < lo) return lo;
+        if (mk > hi) return hi;
+        return mk;
+      }
+
+      function shiftMonthKey(mk, delta) {
+        var parts = mk.split("-").map(Number);
+        var d = new Date(parts[0], parts[1] - 1 + delta, 1);
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+      }
+
+      function renderCalendar() {
+        var parts = calMonthKey.split("-").map(Number);
+        var year = parts[0], month = parts[1]; // 1-indexed month
+        var first = new Date(year, month - 1, 1);
+        var daysInMonth = new Date(year, month, 0).getDate();
+        // getDay() is 0=Sunday already matching DOW_SHORT's own order, and
+        // the grid's first column (rightmost, dir=rtl) is Sunday too - no
+        // day-of-week rotation needed for the leading blank cells.
+        var leadingBlanks = first.getDay();
+        var today = todayKey();
+
+        var monthLo = monthKeyOf(minKey), monthHi = monthKeyOf(maxKey);
+        var head = '<div class="schedule-calendar-head">' +
+          '<button type="button" class="pager-arrow" id="calPrevMonth"' +
+          (calMonthKey <= monthLo ? " disabled" : "") + '>‹</button>' +
+          '<span class="schedule-calendar-month">' + MONTHS[month - 1] + " " + year + '</span>' +
+          '<button type="button" class="pager-arrow" id="calNextMonth"' +
+          (calMonthKey >= monthHi ? " disabled" : "") + '>›</button>' +
+          '</div>';
+
+        var dow = DOW_SHORT.map(function(d) { return '<div class="schedule-calendar-dow">' + d + '</div>'; }).join("");
+
+        var cells = [];
+        for (var i = 0; i < leadingBlanks; i++) {
+          cells.push('<div class="schedule-calendar-day empty"></div>');
+        }
+        for (var day = 1; day <= daysInMonth; day++) {
+          var dayKey = year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+          var count = (byDate[dayKey] || []).length;
+          var cls = "schedule-calendar-day" + (count ? " has-games" : "") + (dayKey === today ? " is-today" : "");
+          var badge = count ? '<span class="cal-count">' + count + '</span>' : "";
+          cells.push('<button type="button" class="' + cls + '" data-day-key="' + dayKey + '"' +
+            (count ? "" : " disabled") + '>' + day + badge + '</button>');
+        }
+
+        calEl.innerHTML = head + '<div class="schedule-calendar-grid">' + dow + cells.join("") + '</div>';
+
+        calEl.querySelector("#calPrevMonth").addEventListener("click", function() {
+          calMonthKey = clampMonthKey(shiftMonthKey(calMonthKey, -1));
+          renderCalendar();
+        });
+        calEl.querySelector("#calNextMonth").addEventListener("click", function() {
+          calMonthKey = clampMonthKey(shiftMonthKey(calMonthKey, 1));
+          renderCalendar();
+        });
+        Array.prototype.forEach.call(calEl.querySelectorAll(".has-games"), function(cell) {
+          cell.addEventListener("click", function() {
+            currentKey = cell.dataset.dayKey;
+            closeCalendar();
+            render();
+          });
+        });
+      }
+
+      function openCalendar() {
+        calMonthKey = clampMonthKey(monthKeyOf(currentKey));
+        calOpen = true;
+        gamesEl.hidden = true;
+        calEl.hidden = false;
+        renderCalendar();
+      }
+      function closeCalendar() {
+        calOpen = false;
+        calEl.hidden = true;
+        gamesEl.hidden = false;
+      }
+      calToggle.addEventListener("click", function() {
+        if (calOpen) closeCalendar(); else openCalendar();
+      });
 
       // Swipe, same spirit as the bracket pagers (initPlayoffBracketPager/
       // initCupBracketPager) - finger-follow during the drag, then either

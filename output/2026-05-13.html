@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-28T12:26:40.580064+00:00">
+<meta name="app-version" content="2026-08-28T12:44:06.039874+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -677,6 +677,83 @@
     font-size: 0.9375rem;
     font-weight: 700;
     color: var(--text-heading);
+  }
+  .schedule-cal-toggle {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Month-at-a-glance jump-to-date view (backlog item 7) - a plain grid,
+     one cell per day of the currently-shown month, days outside that month
+     left blank (not "bleeding" into neighboring months' numbers, to keep
+     it uncluttered). Replaces .schedule-games while open; the day nav row
+     above it stays visible throughout (its own arrows step by single day,
+     independent of which month the calendar happens to be showing). */
+  .schedule-calendar-head {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .schedule-calendar-month {
+    min-width: 7em;
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-heading);
+  }
+  .schedule-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+  }
+  .schedule-calendar-dow {
+    text-align: center;
+    font-size: 0.625rem;
+    color: var(--text-muted);
+    padding-bottom: 2px;
+  }
+  .schedule-calendar-day {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: var(--text-body);
+    border-radius: 6px;
+    background: var(--card-bg);
+    border: none;
+    font-family: inherit;
+    cursor: default;
+  }
+  .schedule-calendar-day.empty { background: transparent; }
+  .schedule-calendar-day.has-games { cursor: pointer; color: var(--text-heading); font-weight: 700; }
+  .schedule-calendar-day.is-today { box-shadow: inset 0 0 0 1.5px var(--accent); }
+  .schedule-calendar-day .cal-count {
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 2px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--card-bg);
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   /* pan-y (not none): a day with many games still has to scroll vertically
      normally - only horizontal panning is taken over by initScheduleTab()'s
@@ -2201,6 +2278,8 @@
       }
       var label = wrap.querySelector(".schedule-date-label");
       var gamesEl = wrap.querySelector(".schedule-games");
+      var calEl = wrap.querySelector(".schedule-calendar");
+      var calToggle = wrap.querySelector(".schedule-cal-toggle");
       // Named by screen position (left/right), not prev/next - the button
       // that goes to the previous day sits on the right (glyph '›'), the
       // one that goes to the next day sits on the left (glyph '‹'), by
@@ -2210,6 +2289,8 @@
       var rightBtn = wrap.querySelector(".schedule-next");
       var IL_TZ = "Asia/Jerusalem";
       var WEEKDAYS = ["יום ראשון", "יום שני", "יום שלישי", "יום רביעי", "יום חמישי", "יום שישי", "יום שבת"];
+      var DOW_SHORT = ["א", "ב", "ג", "ד", "ה", "ו", "ש"];
+      var MONTHS = ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"];
 
       function ilDateKey(isoUtc) {
         return new Date(isoUtc).toLocaleDateString("en-CA", { timeZone: IL_TZ });
@@ -2348,6 +2429,101 @@
       // a swipe.
       rightBtn.addEventListener("click", function() { swipeTo(-1); }); // yesterday
       leftBtn.addEventListener("click", function() { swipeTo(1); }); // tomorrow
+
+      // Month-at-a-glance jump-to-date view (backlog item 7) - a plain grid
+      // for whichever month currentKey is in when opened, days with games
+      // marked by a small orange badge showing the count, tapping one jumps
+      // straight there instead of stepping day by day. Bounded to the
+      // real min/max months this season actually has data for, not a fixed
+      // Oct-June range - a real season's data naturally falls in that
+      // window anyway, and this way it's never wrong for an odd schedule.
+      var calMonthKey = null; // "YYYY-MM", set when the calendar is opened
+      var calOpen = false;
+
+      function monthKeyOf(dayKey) { return dayKey.slice(0, 7); }
+
+      function clampMonthKey(mk) {
+        var lo = monthKeyOf(minKey), hi = monthKeyOf(maxKey);
+        if (mk < lo) return lo;
+        if (mk > hi) return hi;
+        return mk;
+      }
+
+      function shiftMonthKey(mk, delta) {
+        var parts = mk.split("-").map(Number);
+        var d = new Date(parts[0], parts[1] - 1 + delta, 1);
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+      }
+
+      function renderCalendar() {
+        var parts = calMonthKey.split("-").map(Number);
+        var year = parts[0], month = parts[1]; // 1-indexed month
+        var first = new Date(year, month - 1, 1);
+        var daysInMonth = new Date(year, month, 0).getDate();
+        // getDay() is 0=Sunday already matching DOW_SHORT's own order, and
+        // the grid's first column (rightmost, dir=rtl) is Sunday too - no
+        // day-of-week rotation needed for the leading blank cells.
+        var leadingBlanks = first.getDay();
+        var today = todayKey();
+
+        var monthLo = monthKeyOf(minKey), monthHi = monthKeyOf(maxKey);
+        var head = '<div class="schedule-calendar-head">' +
+          '<button type="button" class="pager-arrow" id="calPrevMonth"' +
+          (calMonthKey <= monthLo ? " disabled" : "") + '>‹</button>' +
+          '<span class="schedule-calendar-month">' + MONTHS[month - 1] + " " + year + '</span>' +
+          '<button type="button" class="pager-arrow" id="calNextMonth"' +
+          (calMonthKey >= monthHi ? " disabled" : "") + '>›</button>' +
+          '</div>';
+
+        var dow = DOW_SHORT.map(function(d) { return '<div class="schedule-calendar-dow">' + d + '</div>'; }).join("");
+
+        var cells = [];
+        for (var i = 0; i < leadingBlanks; i++) {
+          cells.push('<div class="schedule-calendar-day empty"></div>');
+        }
+        for (var day = 1; day <= daysInMonth; day++) {
+          var dayKey = year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+          var count = (byDate[dayKey] || []).length;
+          var cls = "schedule-calendar-day" + (count ? " has-games" : "") + (dayKey === today ? " is-today" : "");
+          var badge = count ? '<span class="cal-count">' + count + '</span>' : "";
+          cells.push('<button type="button" class="' + cls + '" data-day-key="' + dayKey + '"' +
+            (count ? "" : " disabled") + '>' + day + badge + '</button>');
+        }
+
+        calEl.innerHTML = head + '<div class="schedule-calendar-grid">' + dow + cells.join("") + '</div>';
+
+        calEl.querySelector("#calPrevMonth").addEventListener("click", function() {
+          calMonthKey = clampMonthKey(shiftMonthKey(calMonthKey, -1));
+          renderCalendar();
+        });
+        calEl.querySelector("#calNextMonth").addEventListener("click", function() {
+          calMonthKey = clampMonthKey(shiftMonthKey(calMonthKey, 1));
+          renderCalendar();
+        });
+        Array.prototype.forEach.call(calEl.querySelectorAll(".has-games"), function(cell) {
+          cell.addEventListener("click", function() {
+            currentKey = cell.dataset.dayKey;
+            closeCalendar();
+            render();
+          });
+        });
+      }
+
+      function openCalendar() {
+        calMonthKey = clampMonthKey(monthKeyOf(currentKey));
+        calOpen = true;
+        gamesEl.hidden = true;
+        calEl.hidden = false;
+        renderCalendar();
+      }
+      function closeCalendar() {
+        calOpen = false;
+        calEl.hidden = true;
+        gamesEl.hidden = false;
+      }
+      calToggle.addEventListener("click", function() {
+        if (calOpen) closeCalendar(); else openCalendar();
+      });
 
       // Swipe, same spirit as the bracket pagers (initPlayoffBracketPager/
       // initCupBracketPager) - finger-follow during the drag, then either
