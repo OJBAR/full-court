@@ -2097,7 +2097,45 @@ TEMPLATE = """<!DOCTYPE html>
       buttons.forEach(function(btn) {{
         btn.setAttribute("aria-pressed", btn.getAttribute("data-fontsize") === size ? "true" : "false");
       }});
+      // Font size changes which names overflow - re-check on the next
+      // frame so this runs after the browser has actually reflowed at the
+      // new font-size, not against stale (pre-change) measurements.
+      if (typeof checkTeamTruncation === "function") {{
+        requestAnimationFrame(checkTeamTruncation);
+      }}
     }}
+
+    // A team name that visually overflows its column (long English name,
+    // narrow phone, or a large a11y font size) falls back to the 3-letter
+    // tricode instead - only knowable per-viewer at runtime (render.py has
+    // no idea what screen/font this will actually render on), so this
+    // re-measures and re-decides on every event that could change either
+    // the available width or the text size. Always resets to the full name
+    // first, then re-measures - so a team that no longer overflows (screen
+    // widened, font shrunk back down) correctly switches back, instead of
+    // staying stuck on the tricode once ever swapped.
+    function checkTeamTruncation() {{
+      var els = document.querySelectorAll(".standing-team[data-tricode]");
+      els.forEach(function(el) {{
+        var full = el.getAttribute("data-fullname");
+        if (full && el.textContent !== full) el.textContent = full;
+      }});
+      els.forEach(function(el) {{
+        if (el.offsetParent === null) return; // hidden (tab/details closed) - re-checked once it opens
+        var tricode = el.getAttribute("data-tricode");
+        if (tricode && el.scrollWidth > el.clientWidth + 1) {{
+          el.textContent = tricode;
+        }}
+      }});
+    }}
+    window.addEventListener("resize", checkTeamTruncation);
+    // native <details> toggle (desktop/wide layout, no tabs-mode promotion)
+    // - "toggle" doesn't bubble, so this has to listen in the capture phase
+    // to catch it via delegation instead of binding one listener per tab.
+    document.addEventListener("toggle", function(e) {{
+      if (e.target && e.target.tagName === "DETAILS") checkTeamTruncation();
+    }}, true);
+    document.addEventListener("DOMContentLoaded", checkTeamTruncation);
 
     function copyEmailAddress(btn) {{
       var original = btn.textContent;
@@ -2318,6 +2356,14 @@ TEMPLATE = """<!DOCTYPE html>
         section.classList.add("app-screen-active");
         main.insertBefore(section, main.firstChild);
         main.scrollIntoView({{ behavior: "smooth", block: "start" }});
+        // Promoting a section to the active screen is this layout's only
+        // way of actually revealing a standings/Cup-group table's real
+        // width (tabs-mode sections start closed) - the native "toggle"
+        // listener never fires here since .open is set directly, not via a
+        // user click on <summary>.
+        if (typeof checkTeamTruncation === "function") {{
+          requestAnimationFrame(checkTeamTruncation);
+        }}
       }}
       // Listens on the whole header, not just the logo <img> itself, so it
       // always fires regardless of exactly where within the logo area the
@@ -2908,10 +2954,24 @@ def _build_standings_html(standings: list[dict]) -> str:
             streak = str(team.get("strCurrentStreak", "")).strip()
             streak_class = "win" if streak.startswith("W") else "loss" if streak.startswith("L") else ""
             boundary_class = " boundary" if rank in (6, 10) else ""
+            fullname = f'{team["TeamCity"]} {team["TeamName"]}'
+            tricode = team.get("Tricode", "")
+            # data-fullname/data-tricode feed checkTeamTruncation() (JS): a
+            # name that actually overflows its column on this specific
+            # viewer's screen gets swapped to the 3-letter code at runtime -
+            # only possible to know per-viewer (font, zoom, device width),
+            # never at render time. aria-label keeps screen readers hearing
+            # the full name regardless of which text is visually shown.
+            team_span = (
+                f'<span class="standing-team" data-fullname="{html.escape(fullname)}" '
+                f'data-tricode="{html.escape(tricode)}" aria-label="{html.escape(fullname)}">{html.escape(fullname)}</span>'
+                if tricode
+                else f'<span class="standing-team">{html.escape(fullname)}</span>'
+            )
             rows.append(
                 f'<div class="standing-row{boundary_class}">'
                 f'<span class="standing-rank">{rank}</span>'
-                f'<span class="standing-team">{html.escape(team["TeamCity"])} {html.escape(team["TeamName"])}</span>'
+                f"{team_span}"
                 f'<span class="standing-record">{team["WINS"]}-{team["LOSSES"]}</span>'
                 f'<span class="standing-streak {streak_class}">{html.escape(streak)}</span>'
                 "</div>"
@@ -3654,9 +3714,17 @@ def _build_cup_group_standings_html(cup_group_standings: list[dict]) -> str:
                     if team["tricode"] == wildcard_tricode
                     else ""
                 )
+                fullname = team["name"]
+                tricode = team.get("tricode", "")
+                team_span = (
+                    f'<span class="standing-team" data-fullname="{html.escape(fullname)}" '
+                    f'data-tricode="{html.escape(tricode)}" aria-label="{html.escape(fullname)}">{html.escape(fullname)}</span>{badge}'
+                    if tricode
+                    else f'<span class="standing-team">{html.escape(fullname)}</span>{badge}'
+                )
                 rows.append(
                     f'<div class="standing-row{boundary_class}">'
-                    f'<span class="standing-team">{html.escape(team["name"])}{badge}</span>'
+                    f"{team_span}"
                     f'<span class="standing-record">{team["wins"]}-{team["losses"]}</span>'
                     f'<span class="standing-diff">{diff_str}</span>'
                     "</div>"

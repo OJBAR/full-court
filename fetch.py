@@ -771,10 +771,27 @@ def fetch_for_date(
         print(f"Warning: could not fetch season schedule ({e}) - continuing without it.")
         this_date_schedule = []
 
+    # LeagueStandingsV3 (get_standings, above) has no tricode column of its
+    # own - same join-on-full-name join used by compute_standings_as_of and
+    # _attach_next_game_preview, so every standings row gets a "Tricode" key
+    # here too (render.py's truncated-team-name fallback needs it). Falls
+    # back to no key at all if the schedule fetch above failed - render.py
+    # degrades gracefully (no truncation fallback) rather than crashing.
+    standings_records = standings.to_dict(orient="records")
+    if this_date_schedule:
+        tricode_by_fullname = {}
+        for g in this_date_schedule:
+            tricode_by_fullname[g["home_team"]] = g["home_tricode"]
+            tricode_by_fullname[g["away_team"]] = g["away_tricode"]
+        for row in standings_records:
+            tricode = tricode_by_fullname.get(f"{row['TeamCity']} {row['TeamName']}")
+            if tricode:
+                row["Tricode"] = tricode
+
     return {
         "date": date_str,
         "games": games,
-        "standings": standings.to_dict(orient="records"),
+        "standings": standings_records,
         "is_playoffs": is_playoffs,
         "playoff_series": playoff_series,
         "is_cup_knockout": is_cup_knockout,
