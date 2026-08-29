@@ -2546,6 +2546,20 @@ TEMPLATE = """<!DOCTYPE html>
       var currentKey = pickInitialKey();
 
       function render() {{
+        // <main> is the real scroll container here (see fitToScreen()'s own
+        // comment - the fixed title bar/day-nav are pinned to the viewport,
+        // not to <main>, so scrolling main internally doesn't move them).
+        // Switching days (swipe, arrows, or a calendar jump - every path
+        // ends up here) used to leave whatever scrollTop the OLD day's list
+        // was at untouched: scroll down partway into a full day, then swipe
+        // to the next one, and it landed mid-list on the NEW day instead of
+        // at its own top (confirmed - the next day's games showed cut off
+        // partway down, not starting from game 1). Every render always
+        // starts the day it's showing from its own top now, regardless of
+        // where the previous one was scrolled to.
+        var mainEl = document.querySelector("main");
+        if (mainEl) mainEl.scrollTop = 0;
+
         label.textContent = formatLabel(currentKey);
         rightBtn.disabled = !!minKey && currentKey <= minKey; // yesterday
         leftBtn.disabled = !!maxKey && currentKey >= maxKey; // tomorrow
