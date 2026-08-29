@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-08-29T07:14:41.629526+00:00">
+<meta name="app-version" content="2026-08-29T07:38:53.788080+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -1750,19 +1750,33 @@
         var gap = parseFloat(getComputedStyle(track).gap || "0") || 0;
         return firstCol.getBoundingClientRect().width + gap;
       }
-      // A round's own .bracket-pair::after connector stub (25px, or 33px
-      // for a round-2 pair) reaches PAST the column's own measured width,
-      // into the gap - column-width+gap alone lands the pan exactly at the
-      // column's edge, leaving a few px of that now-disconnected stub still
-      // poking into view past the strip viewport's own clip edge. This is a
-      // FLAT one-time extra (added once, not per step - see its one caller
-      // below) since it only ever needs to clear the single trailing stub
-      // at whatever the current step's own edge is, not accumulate with
-      // every step taken; folding it into unitShift() itself (multiplied by
-      // step) overshot at step 2, clipping content that should stay
-      // visible. 0 at step 0 - there's no previous round's stub to clear
-      // yet there.
-      var STUB_CLEAR_PX = 45;
+      // Real root cause of both the connector-stub nub AND the NBA Finals
+      // box's own right-edge cutoff (measured directly, not guessed): each
+      // .strip-viewport's CSS max-width (316px = 2 columns + 1 gap, the
+      // "show 2 rounds at once" design) is only ever a CEILING - on some
+      // real screen widths the viewport actually renders a few px
+      // NARROWER than that (its container has less room to give). The
+      // fixed-width .bracket-column (146px, never shrinks) doesn't follow
+      // that shrink, so step*unitShift() - which assumes every viewport is
+      // always the full 2-column width - overshoots at the LAST step: the
+      // final track's trailing column doesn't quite fit in the now-smaller
+      // remaining space, and its own right edge (or, before, just the
+      // previous round's connector stub) pokes out past the real clip
+      // edge by exactly that shortfall.
+      // maxNaturalContentRight(): the widest track's total un-shifted
+      // width (children.length columns, no gap after the last one) -
+      // computed from unitShift() alone (no live DOM measurement needed,
+      // so this is exact, not an approximation).
+      function maxNaturalContentRight() {
+        var gap = tracks[0] ? (parseFloat(getComputedStyle(tracks[0]).gap || "0") || 0) : 0;
+        var unit = unitShift();
+        var widest = 0;
+        tracks.forEach(function(track) {
+          var n = track.children.length;
+          if (n) widest = Math.max(widest, n * unit - gap);
+        });
+        return widest;
+      }
 
       function setTracks(px, animate) {
         tracks.forEach(function(track) {
@@ -1814,16 +1828,21 @@
       }
 
       function totalShift() {
-        // Reverted to plain step * unitShift() (no extra stub-clearing
-        // offset) - two attempts at compensating for the connector stub's
-        // small cosmetic overhang (per-step-multiplied, then flat) both
-        // introduced worse, real content clipping (the NBA Finals box's own
-        // right edge cut off at step 2) instead of just hiding the stub.
-        // The stub nub is a known, deferred cosmetic issue - see CLAUDE.md
-        // backlog - not worth re-risking real clipping to chase further
-        // without being able to properly re-derive the Finals track's own
-        // width math first.
-        return step * unitShift();
+        var plain = step * unitShift();
+        // Only the LAST step ever needs the correction above: at earlier
+        // steps the next column is deliberately still off-screen (nothing
+        // trailing needs to sit flush against the clip edge yet), so
+        // extra shift there only cuts content that was fine - confirmed
+        // exactly this way by the two earlier, reverted attempts (a flat
+        // and a per-step-multiplied offset), both applied unconditionally
+        // and both broke steps 0/1 while fixing step 2.
+        if (step !== maxStep) return plain;
+        var viewport = wrap.querySelector(".strip-viewport");
+        if (!viewport) return plain;
+        var viewportWidth = viewport.getBoundingClientRect().width;
+        if (!viewportWidth) return plain;
+        var needed = maxNaturalContentRight() - viewportWidth;
+        return Math.max(plain, needed);
       }
 
       function render(animate) {
