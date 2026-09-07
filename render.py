@@ -40,6 +40,28 @@ TEMPLATE = """<!DOCTYPE html>
     --text-heading: #2E2A1E;
     --text-body: #4A4530;
     --text-muted: #93876A;
+    /* One shared easing curve for every swipe/pager/tab-entrance animation
+       in the app (referenced via var(), including from inline JS-set
+       .style.transition strings - custom properties resolve there too) -
+       a snappier "ease-out, no overshoot" deceleration (inspired by iOS's
+       own standard curve) instead of the generic "ease" keyword that was
+       here before. No overshoot on purpose: several of these animations
+       (the bracket pager especially) already fought real pixel-precision
+       clipping bugs this session - an overshoot curve would visually
+       re-expose exactly that kind of edge case mid-bounce. */
+    --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  }}
+  /* Smooth color cross-fade on theme toggle (light/dark) instead of an
+     instant flash - scoped to color-related properties only, so it never
+     fights an element's own transform-based animation (schedule swipe,
+     bracket pager, etc. each set their own specific "transition" inline,
+     which fully overrides this rule for that element while it's active -
+     no conflict, just two different properties transitioning on two
+     different kinds of elements). */
+  body, .standing-row, .standings-block, .bracket-match, .bracket-column,
+  .schedule-nav, details.tab-section, summary, .header, .a11y-panel,
+  .game-block, .cup-group, .conference {{
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
   }}
   @media (prefers-color-scheme: dark) {{
     :root:not([data-theme="light"]) {{
@@ -622,7 +644,7 @@ TEMPLATE = """<!DOCTYPE html>
     background: var(--text-muted);
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s var(--ease-standard);
     pointer-events: none;
   }}
   .bracket-pager[data-step="2"] .nba-finals-connector {{
@@ -659,7 +681,7 @@ TEMPLATE = """<!DOCTYPE html>
   .pager-viewport {{ overflow: hidden; touch-action: pan-y; }}
   .pager-track {{
     display: flex;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s var(--ease-standard);
   }}
   .pager-page {{ flex: 0 0 100%; min-width: 0; }}
   .pager-nav {{
@@ -872,7 +894,7 @@ TEMPLATE = """<!DOCTYPE html>
     justify-content: flex-start;
     gap: 24px;
     padding: 4px 4px 12px;
-    transition: transform 0.35s ease;
+    transition: transform 0.35s var(--ease-standard);
   }}
   /* The Cup pager's own viewport used to be scaled down by
      initFitToWidth()'s CSS zoom, then briefly switched to real native
@@ -1086,7 +1108,7 @@ TEMPLATE = """<!DOCTYPE html>
     align-items: center;
     justify-content: center;
     z-index: 200;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s var(--ease-standard);
   }}
   .splash-screen.visible {{ display: flex; }}
   .splash-screen.fade-out {{ opacity: 0; }}
@@ -1272,6 +1294,9 @@ TEMPLATE = """<!DOCTYPE html>
     flex-direction: column;
     justify-content: safe center;
   }}
+  :root.tabs-mode details.tab-section.app-screen-active > .details-body.screen-enter {{
+    opacity: 0;
+  }}
   /* The schedule tab opts out of the centering above: its own
      .details-body gets an explicit min-height in JS (see
      initScheduleTab()'s fitToScreen()) specifically so a swipe can reach
@@ -1386,13 +1411,36 @@ TEMPLATE = """<!DOCTYPE html>
   .install-banner-hint a {{ color: var(--accent); font-weight: 700; }}
 
   @media (prefers-reduced-motion: no-preference) {{
-    .wrapper {{ animation: fc-fade-in 0.3s ease; }}
+    .wrapper {{ animation: fc-fade-in 0.3s var(--ease-standard); }}
     @keyframes fc-fade-in {{
       from {{ opacity: 0; }}
       to {{ opacity: 1; }}
     }}
     button:active, .app-home-big-btn:active, summary:active {{ transform: scale(0.96); }}
-    button, .app-home-big-btn {{ transition: transform 0.1s ease; }}
+    button, .app-home-big-btn {{ transition: transform 0.1s var(--ease-standard); }}
+    /* Fades a promoted tab screen in (see showSection()'s .screen-enter
+       toggle in JS) instead of an instant snap. Opacity ONLY, deliberately
+       never transform - a transform on this element (or the <details>
+       above it) would make the browser treat the schedule tab's own
+       position:fixed summary/nav bars as anchored to THIS element instead
+       of the viewport for as long as the transform is present (a
+       transformed ancestor creates a new containing block for fixed
+       descendants, per spec) - exactly the class of bug the whole sticky/
+       fixed positioning work this session was about. Opacity never
+       creates a containing block, so this is safe regardless of tab. */
+    :root.tabs-mode details.tab-section.app-screen-active > .details-body {{
+      transition: opacity 0.28s var(--ease-standard);
+    }}
+    /* Settings panel (and the accessibility-statement panel, same markup)
+       pop in on open instead of appearing instantly - an `animation`
+       (not transition) so it just replays automatically every time the
+       element's `hidden` attribute is removed and it re-enters the render
+       tree, no JS class-toggling needed. */
+    .a11y-panel {{ animation: fc-panel-pop 0.22s var(--ease-standard); }}
+    @keyframes fc-panel-pop {{
+      from {{ opacity: 0; transform: scale(0.94); }}
+      to {{ opacity: 1; transform: scale(1); }}
+    }}
   }}
 </style>
 </head>
@@ -1640,7 +1688,7 @@ TEMPLATE = """<!DOCTYPE html>
         }}, {{ passive: true }});
 
         viewport.addEventListener("touchend", function(e) {{
-          track.style.transition = "transform 0.3s ease";
+          track.style.transition = "transform 0.3s var(--ease-standard)";
           if (dragging) {{
             var deltaX = e.changedTouches[0].clientX - startX;
             var threshold = 50;
@@ -1717,7 +1765,7 @@ TEMPLATE = """<!DOCTYPE html>
 
       function setTracks(px, animate) {{
         tracks.forEach(function(track) {{
-          track.style.transition = animate ? "transform 0.35s ease" : "none";
+          track.style.transition = animate ? "transform 0.35s var(--ease-standard)" : "none";
           track.style.transform = "translateX(-" + px + "px)";
         }});
       }}
@@ -1840,7 +1888,7 @@ TEMPLATE = """<!DOCTYPE html>
       // Same custom drag mechanism as the playoff bracket's own pager
       // (initPlayoffBracketPager, see there for the general shape) -
       // JS-tracked touchmove following the finger 1:1, one controlled CSS
-      // transition (0.35s ease) to settle at the end. This pager tried
+      // transition (0.35s var(--ease-standard)) to settle at the end. This pager tried
       // real native scrolling instead for a while, specifically to dodge
       // bugs from combining a CSS transition on transform with
       // initFitToWidth()'s CSS zoom (confirmed directly on a real device
@@ -1871,7 +1919,7 @@ TEMPLATE = """<!DOCTYPE html>
 
       function setTracks(px, animate) {{
         tracks.forEach(function(track) {{
-          track.style.transition = animate ? "transform 0.35s ease" : "none";
+          track.style.transition = animate ? "transform 0.35s var(--ease-standard)" : "none";
           track.style.transform = "translateX(-" + px + "px)";
         }});
       }}
@@ -2000,7 +2048,7 @@ TEMPLATE = """<!DOCTYPE html>
         body.style.overflow = "hidden";
         body.style.maxHeight = "0px";
         body.getBoundingClientRect();
-        body.style.transition = "max-height 0.25s ease";
+        body.style.transition = "max-height 0.25s var(--ease-standard)";
         body.style.maxHeight = target + "px";
         body.addEventListener("transitionend", function done() {{
           body.style.maxHeight = "";
@@ -2016,7 +2064,7 @@ TEMPLATE = """<!DOCTYPE html>
         body.style.overflow = "hidden";
         body.style.maxHeight = body.scrollHeight + "px";
         body.getBoundingClientRect();
-        body.style.transition = "max-height 0.25s ease";
+        body.style.transition = "max-height 0.25s var(--ease-standard)";
         body.style.maxHeight = "0px";
         body.addEventListener("transitionend", function done() {{
           section.open = false;
@@ -2189,7 +2237,7 @@ TEMPLATE = """<!DOCTYPE html>
       var deltaX = (headerRect.left + headerRect.width / 2) - (splashRect.left + splashRect.width / 2);
       var deltaY = (headerRect.top + headerRect.height / 2) - (splashRect.top + splashRect.height / 2);
 
-      splashLogo.style.transition = "transform 0.5s ease";
+      splashLogo.style.transition = "transform 0.5s var(--ease-standard)";
       void splash.offsetWidth; // force reflow so the transition applies to the change below, not the initial state
       splashLogo.style.transform = "translate(" + deltaX + "px, " + deltaY + "px) scale(" + scale + ")";
 
@@ -2382,6 +2430,18 @@ TEMPLATE = """<!DOCTYPE html>
         // user click on <summary>.
         if (typeof checkTeamTruncation === "function") {{
           requestAnimationFrame(checkTeamTruncation);
+        }}
+        // Fade the newly promoted screen in (see the .screen-enter CSS
+        // above) - starts hidden, then removed a frame later so the
+        // browser actually paints the opacity:0 state first; toggling the
+        // class off in the very same frame it was added would just skip
+        // straight to the end state with no visible transition at all.
+        var enteringBody = section.querySelector(":scope > .details-body");
+        if (enteringBody) {{
+          enteringBody.classList.add("screen-enter");
+          requestAnimationFrame(function() {{
+            requestAnimationFrame(function() {{ enteringBody.classList.remove("screen-enter"); }});
+          }});
         }}
       }}
       // Listens on the whole header, not just the logo <img> itself, so it
@@ -2865,7 +2925,7 @@ TEMPLATE = """<!DOCTYPE html>
       function monthSwipeTo(direction) {{
         if (!changeMonth(direction)) return;
         var myToken = ++monthSwipeToken;
-        calEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
+        calEl.style.transition = "transform 0.2s var(--ease-standard), opacity 0.2s var(--ease-standard)";
         calEl.style.transform = "translateX(" + (direction * 60) + "px)";
         calEl.style.opacity = "0";
         window.setTimeout(function() {{
@@ -2875,7 +2935,7 @@ TEMPLATE = """<!DOCTYPE html>
           calEl.style.transform = "translateX(" + (direction * -60) + "px)";
           calEl.style.opacity = "0";
           void calEl.offsetWidth;
-          calEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
+          calEl.style.transition = "transform 0.2s var(--ease-standard), opacity 0.2s var(--ease-standard)";
           calEl.style.transform = "translateX(0)";
           calEl.style.opacity = "1";
         }}, 200);
@@ -2888,7 +2948,7 @@ TEMPLATE = """<!DOCTYPE html>
       function swipeTo(direction) {{
         currentKey = addDays(currentKey, direction);
         var myToken = ++swipeToken;
-        gamesEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
+        gamesEl.style.transition = "transform 0.2s var(--ease-standard), opacity 0.2s var(--ease-standard)";
         gamesEl.style.transform = "translateX(" + (direction * 60) + "px)";
         gamesEl.style.opacity = "0";
         window.setTimeout(function() {{
@@ -2898,7 +2958,7 @@ TEMPLATE = """<!DOCTYPE html>
           gamesEl.style.transform = "translateX(" + (direction * -60) + "px)";
           gamesEl.style.opacity = "0";
           void gamesEl.offsetWidth; // force reflow so the next line animates
-          gamesEl.style.transition = "transform 0.2s ease, opacity 0.2s ease";
+          gamesEl.style.transition = "transform 0.2s var(--ease-standard), opacity 0.2s var(--ease-standard)";
           gamesEl.style.transform = "translateX(0)";
           gamesEl.style.opacity = "1";
         }}, 200);
