@@ -829,35 +829,6 @@ TEMPLATE = """<!DOCTYPE html>
     align-items: center;
     justify-content: center;
   }}
-  /* Mirrors .schedule-cal-toggle exactly (same size/shape/position, just
-     the opposite corner) - always visible regardless of which day is on
-     screen, since browsing history via this tab (see the brief-link
-     below) is exactly the situation where you can end up several days
-     away from the actual latest real brief. A regular browser tab still
-     has its own back button for that; a PWA installed standalone (from
-     the home screen icon) has no browser chrome at all, so there'd
-     otherwise be no way back to today's brief except a system-level
-     swipe/back gesture most people won't think to try. index.html always
-     mirrors the latest real brief (see render.save()), so this link never
-     needs to know which date that actually is. */
-  .schedule-home-link {{
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    font-size: 15px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-  }}
   /* The global button:active {{ transform: scale(0.96) }} (see the a11y/tap-
      feedback rules below) would otherwise REPLACE this button's own resting
      transform (translateY(-50%), needed since it's position:absolute and
@@ -2503,7 +2474,16 @@ TEMPLATE = """<!DOCTYPE html>
       // Listens on the whole header, not just the logo <img> itself, so it
       // always fires regardless of exactly where within the logo area the
       // tap lands, rather than requiring a precise hit on the image.
-      document.querySelector(".header").addEventListener("click", showHome);
+      // Real navigation to index.html (the latest real brief - see
+      // render.save()), not the local in-page showHome() - this is also
+      // "home" from a day reached via the schedule tab's "סיכום הלילה"
+      // link (a genuinely different page/file), where local showHome()
+      // would only reset THAT old page's own tab view, not actually get
+      // you back to today's brief. Harmless on today's own page too:
+      // index.html is byte-for-byte the same content as this page then.
+      document.querySelector(".header").addEventListener("click", function() {{
+        location.href = "index.html";
+      }});
 
       if (summaryDiv) {{
         var bigBtn = document.createElement("button");
@@ -3248,7 +3228,6 @@ def _build_schedule_html(season_schedule: list[dict], simulated_today: str | Non
         '<div class="schedule-date-label" dir="rtl"></div>'
         '<button type="button" class="pager-arrow schedule-next" aria-label="יום קודם">›</button>'
         '<button type="button" class="schedule-cal-toggle" aria-label="לוח שנה">📅</button>'
-        '<a class="schedule-home-link" href="index.html" aria-label="לבריף האחרון">🏠</a>'
         "</div>"
         '<div class="schedule-calendar" dir="rtl" hidden></div>'
         '<div class="schedule-games"></div>'
