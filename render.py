@@ -329,6 +329,21 @@ TEMPLATE = """<!DOCTYPE html>
     border: 1px solid var(--accent);
     border-radius: 999px;
   }}
+  /* Appended once at the end of a day's whole game list (see render()'s
+     own comment) - not per-game like .game-link above, so styled as its
+     own full-width row instead of a small inline pill. */
+  .schedule-brief-link {{
+    display: block;
+    text-align: center;
+    margin-top: 12px;
+    padding: 10px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-decoration: none;
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+  }}
 
   .conference h3 {{
     font-size: 0.8125rem;
@@ -813,6 +828,35 @@ TEMPLATE = """<!DOCTYPE html>
     display: flex;
     align-items: center;
     justify-content: center;
+  }}
+  /* Mirrors .schedule-cal-toggle exactly (same size/shape/position, just
+     the opposite corner) - always visible regardless of which day is on
+     screen, since browsing history via this tab (see the brief-link
+     below) is exactly the situation where you can end up several days
+     away from the actual latest real brief. A regular browser tab still
+     has its own back button for that; a PWA installed standalone (from
+     the home screen icon) has no browser chrome at all, so there'd
+     otherwise be no way back to today's brief except a system-level
+     swipe/back gesture most people won't think to try. index.html always
+     mirrors the latest real brief (see render.save()), so this link never
+     needs to know which date that actually is. */
+  .schedule-home-link {{
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
   }}
   /* The global button:active {{ transform: scale(0.96) }} (see the a11y/tap-
      feedback rules below) would otherwise REPLACE this button's own resting
@@ -2504,6 +2548,18 @@ TEMPLATE = """<!DOCTYPE html>
       }} catch (e) {{
         return;
       }}
+      // Every other real brief that already has its own page on disk (see
+      // _available_brief_dates()) - lets a past (or future-published)
+      // day's row grow a "סיכום הלילה, DD/MM" link straight to that day's
+      // own real page, turning this tab into a de facto season archive
+      // with no separate archive page to build or keep in sync.
+      var briefDatesEl = wrap.querySelector(".schedule-brief-dates");
+      var briefDates = {{}};
+      if (briefDatesEl) {{
+        try {{
+          JSON.parse(briefDatesEl.textContent).forEach(function(d) {{ briefDates[d] = true; }});
+        }} catch (e) {{}}
+      }}
       var label = wrap.querySelector(".schedule-date-label");
       var navEl = wrap.querySelector(".schedule-nav");
       var gamesEl = wrap.querySelector(".schedule-games");
@@ -2677,6 +2733,19 @@ TEMPLATE = """<!DOCTYPE html>
             '<span class="team' + (homeWon ? " winner" : "") + '">' + g.home_tricode + '</span>' +
             '</div><div class="game-links"><a class="game-link" href="' + gameUrl(g) + '" target="_blank" rel="noopener">דף המשחק</a></div></div>';
         }}).join("");
+
+        // This whole tab already lets you browse to any day in the season
+        // (swipe/arrows/calendar) - the only thing missing to make it a
+        // real season archive, no separate page needed, is a way to reach
+        // THAT day's own actual summary once you're looking at its scores.
+        // Only shown for a day that (a) genuinely has its own real brief
+        // on disk (briefDates - never guessed) and (b) isn't this page's
+        // own date, which already shows its summary as the main tab above.
+        if (briefDates[currentKey]) {{
+          var parts = currentKey.split("-");
+          var dm = parts[2] + "." + parts[1];
+          gamesEl.innerHTML += '<a class="schedule-brief-link" href="' + currentKey + '.html">סיכום הלילה, ' + dm + '</a>';
+        }}
       }}
 
       // Same animated slide as a swipe (see swipeTo() below), not an
@@ -3107,7 +3176,35 @@ def _build_standings_html(standings: list[dict]) -> str:
     return _build_pager_html(pages)
 
 
-def _build_schedule_html(season_schedule: list[dict], simulated_today: str | None = None) -> str:
+_DATE_FILENAME_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.html$")
+
+
+def _available_brief_dates(exclude_date: str) -> list[str]:
+    """
+    Every other real brief that already exists on disk (output/{date}.html),
+    for the schedule tab's own "סיכום הלילה, DD/MM" link - see
+    initScheduleTab()'s renderBriefLink(). exclude_date is this page's own
+    date: no need to link a page to itself, that night's summary is already
+    the page you're on. A plain directory scan at render time - correct for
+    real production specifically BECAUSE real briefs only ever get written
+    once, for "yesterday", the same night this function runs (see
+    scheduler.py) - so every file this finds genuinely already existed
+    before today's own render, never a future date sneaking in. (A batch
+    rebuild across many historical dates at once - the comprehensive/
+    curated demo builds - doesn't share that guarantee, but harmlessly just
+    links demo days to each other instead, nothing broken.)
+    """
+    if not OUTPUT_DIR.is_dir():
+        return []
+    dates = []
+    for path in OUTPUT_DIR.glob("*.html"):
+        m = _DATE_FILENAME_RE.match(path.name)
+        if m and m.group(1) != exclude_date:
+            dates.append(m.group(1))
+    return sorted(dates)
+
+
+def _build_schedule_html(season_schedule: list[dict], simulated_today: str | None = None, own_date: str | None = None) -> str:
     """
     A day-by-day season schedule browser: past days show final scores,
     future days show the tip-off time - one flat game list (see
@@ -3142,6 +3239,7 @@ def _build_schedule_html(season_schedule: list[dict], simulated_today: str | Non
     # "</" could otherwise prematurely close this <script> tag if it ever
     # appeared inside a team name/city string.
     payload = json.dumps(season_schedule, ensure_ascii=False).replace("</", "<\\/")
+    brief_dates_payload = json.dumps(_available_brief_dates(own_date or ""), ensure_ascii=False)
     sim_attr = f' data-simulated-today="{html.escape(simulated_today)}"' if simulated_today else ""
     return (
         f'<div class="schedule-tab"{sim_attr}>'
@@ -3150,10 +3248,12 @@ def _build_schedule_html(season_schedule: list[dict], simulated_today: str | Non
         '<div class="schedule-date-label" dir="rtl"></div>'
         '<button type="button" class="pager-arrow schedule-next" aria-label="יום קודם">›</button>'
         '<button type="button" class="schedule-cal-toggle" aria-label="לוח שנה">📅</button>'
+        '<a class="schedule-home-link" href="index.html" aria-label="לבריף האחרון">🏠</a>'
         "</div>"
         '<div class="schedule-calendar" dir="rtl" hidden></div>'
         '<div class="schedule-games"></div>'
         f'<script type="application/json" class="schedule-data">{payload}</script>'
+        f'<script type="application/json" class="schedule-brief-dates">{brief_dates_payload}</script>'
         "</div>"
     )
 
@@ -3913,7 +4013,7 @@ def _build_secondary_section(data: dict) -> str:
     """
     sections = [(
         "לוח התוצאות",
-        _build_schedule_html(data.get("season_schedule", []), data.get("demo_today")),
+        _build_schedule_html(data.get("season_schedule", []), data.get("demo_today"), data.get("date")),
     )]
 
     if data.get("is_playoffs"):
