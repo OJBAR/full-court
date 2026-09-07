@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-09-07T16:34:46.194380+00:00">
+<meta name="app-version" content="2026-09-07T16:53:55.413898+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -25,13 +25,17 @@
     /* One shared easing curve for every swipe/pager/tab-entrance animation
        in the app (referenced via var(), including from inline JS-set
        .style.transition strings - custom properties resolve there too) -
-       a snappier "ease-out, no overshoot" deceleration (inspired by iOS's
-       own standard curve) instead of the generic "ease" keyword that was
-       here before. No overshoot on purpose: several of these animations
-       (the bracket pager especially) already fought real pixel-precision
-       clipping bugs this session - an overshoot curve would visually
-       re-expose exactly that kind of edge case mid-bounce. */
-    --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+       replaces the generic "ease" keyword that was here before. No
+       overshoot on purpose: several of these animations (the bracket
+       pager especially) already fought real pixel-precision clipping bugs
+       this session - an overshoot curve would visually re-expose exactly
+       that kind of edge case mid-bounce.
+       Started at a more aggressive ease-out (0.22,1,0.36,1) - its near-
+       instant initial velocity read as "too fast" once actually used on
+       the bracket pager (confirmed by feedback right after shipping it).
+       This is Material Design's own "standard" curve instead - eases in
+       AND out, no early speed-spike, at the same durations as before. */
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   }
   /* Smooth color cross-fade on theme toggle (light/dark) instead of an
      instant flash - scoped to color-related properties only, so it never
