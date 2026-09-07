@@ -42,6 +42,7 @@ Eastern, קובע איזה לילה משחקים הכלי בכלל שולף (ה�
 ```
 full-court/
 ├── CLAUDE.md                    # קובץ זה
+├── NIGHT_CHECKLIST.md           # מה זה אומר "לילה גמור" - צ'קליסט כללי + לפי סוג יום
 ├── config.py                    # timezone (US_EASTERN + ISRAEL) + season-string helpers
 ├── fetch.py                     # שליפת games/box_scores/standings/playoff_series/cup/play_in
 ├── storylines.py                # זיהוי סיפורים מעניינים מהנתונים הגולמיים
