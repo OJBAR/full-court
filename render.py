@@ -1072,19 +1072,6 @@ TEMPLATE = """<!DOCTYPE html>
   .a11y-statement-body p {{ margin: 0 0 10px 0; }}
   .a11y-statement-body p:last-child {{ margin-bottom: 0; }}
   .a11y-statement-body ul {{ margin: 0 0 10px 0; padding-right: 20px; }}
-
-  .footer {{
-    margin-top: 28px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 0.75rem;
-  }}
-  .footer a {{
-    color: var(--accent);
-    text-decoration: none;
-  }}
   .beta-note {{
     margin-top: 8px;
     font-size: 0.6875rem;
@@ -1157,8 +1144,7 @@ TEMPLATE = """<!DOCTYPE html>
   /* The page shell itself is pinned to exactly one screen's height and
      never scrolls - only the active screen's own content area (inside
      <main>) scrolls, and only when it's genuinely taller than the
-     available space. This is also why the footer (contact/beta links)
-     is hidden here - there's no page-level scroll left to reach it by. */
+     available space. */
   :root.tabs-mode html,
   :root.tabs-mode body {{
     height: 100%;
@@ -1227,7 +1213,6 @@ TEMPLATE = """<!DOCTYPE html>
     display: flex;
     flex-direction: column;
   }}
-  :root.tabs-mode .footer {{ display: none; }}
   :root.tabs-mode main > .summary {{
     display: none;
   }}
@@ -1527,10 +1512,6 @@ TEMPLATE = """<!DOCTYPE html>
 
       {secondary_section_html}
     </main>
-
-    <footer class="footer">
-      made by Ofek Barel
-    </footer>
   </div>
 
   <div class="a11y-overlay" id="settings-overlay" hidden onclick="if (event.target === this) closeSettingsOverlays()">
@@ -1594,8 +1575,8 @@ TEMPLATE = """<!DOCTYPE html>
       <div class="a11y-statement-body" dir="rtl">
         <p>
           Full Court הוא אתר עצמאי שמסכם את ליל המשחקים ב-NBA, וניתן להתקנה כאפליקציה
-          (PWA) ישירות למסך הבית. נעשה מאמץ להנגיש אותו לכלל הקוראים, כולל אנשים עם
-          מוגבלות:
+          (PWA) ישירות למסך הבית. האתר אינו רשמי ואינו קשור ל-NBA. נעשה מאמץ להנגיש
+          אותו לכלל הקוראים, כולל אנשים עם מוגבלות:
         </p>
         <ul>
           <li>מבנה סמנטי (landmarks) המאפשר ניווט נוח בעזרת קוראי מסך.</li>
