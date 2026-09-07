@@ -22,6 +22,28 @@ TEMPLATE = """<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>FULL COURT - {display_date}</title>
+<!-- Open Graph / Twitter Card: without these, a link pasted into a Facebook
+     group (or any other platform) renders as a bare URL - no title, no
+     description, no preview image, meaningfully less likely to get a
+     click. og:description is a real excerpt of that night's actual
+     Claude-written summary (see render(), where og_description is built),
+     not generic boilerplate - a genuine preview of what's on the page,
+     not just a placeholder. Absolute URLs required by the spec (relative
+     ones are explicitly not guaranteed to resolve correctly by crawlers),
+     so these are the only place in the whole file a hardcoded full domain
+     appears - everywhere else deliberately uses relative paths so the
+     exact same file works from any host (GitHub Pages today, a custom
+     domain later without a find-and-replace). -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Full Court">
+<meta property="og:title" content="FULL COURT - {display_date}">
+<meta property="og:description" content="{og_description}">
+<meta property="og:url" content="https://ojbar.github.io/full-court/{date_str}.html">
+<meta property="og:image" content="https://ojbar.github.io/full-court/assets/icon-512.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="FULL COURT - {display_date}">
+<meta name="twitter:description" content="{og_description}">
+<meta name="twitter:image" content="https://ojbar.github.io/full-court/assets/icon-512.png">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
@@ -3017,6 +3039,24 @@ def _paragraphs_to_html(summary: str) -> str:
     return "\n      ".join(f"<p>{html.escape(p)}</p>" for p in paragraphs)
 
 
+def _og_description(summary: str, limit: int = 200) -> str:
+    """
+    A real excerpt of the night's own Claude-written summary, for the
+    og:description/twitter:description meta tags - a genuine preview of
+    what's actually on the page, not generic boilerplate repeated on every
+    single night's link. Collapses to one line (a multi-line attribute
+    value is legal HTML but renders unpredictably across platforms), cut
+    at the last whole word within the limit rather than mid-word, with a
+    "…" marker only when actually truncated.
+    """
+    text = _strip_markdown(summary).strip()
+    text = " ".join(text.split())  # collapse all whitespace/newlines to single spaces
+    if len(text) <= limit:
+        return html.escape(text)
+    cut = text[:limit].rsplit(" ", 1)[0]
+    return html.escape(cut + "…")
+
+
 def _build_standings_html(standings: list[dict]) -> str:
     if not standings:
         return '<p style="color:var(--text-muted); font-size:0.875rem;">אין נתוני טבלה זמינים.</p>'
@@ -3911,6 +3951,8 @@ def render(data: dict, summary: str) -> str:
     night_label = f"הלילה בין {_HEBREW_WEEKDAYS[date_obj.weekday()]} ל{_HEBREW_WEEKDAYS[next_day.weekday()]}"
     return TEMPLATE.format(
         display_date=display_date,
+        date_str=date_str,
+        og_description=_og_description(summary),
         page_date_label=f"{display_date}, {night_label}",
         app_version=datetime.now(timezone.utc).isoformat(),
         summary_html=_paragraphs_to_html(summary),
