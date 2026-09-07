@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-09-07T17:17:02.887600+00:00">
+<meta name="app-version" content="2026-09-07T17:40:48.928220+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -584,6 +584,21 @@
 
   .bracket-conf-block { margin-bottom: 18px; }
   .bracket-conf-block:last-child { margin-bottom: 0; }
+  /* The Play-In bracket has no pager of its own, and its columns are
+     sized by content (flex-shrink:0, no fixed width - see the
+     .bracket-pager/.cup-bracket-pager-scoped 146px rule above, explicitly
+     NOT applied here) - so on a narrow phone the decider match can be
+     wider than the screen. Used to fix this with a JS zoom-to-fit
+     (initFitToWidth(), now removed - see its own comment for why: zoom
+     turned out to under-report its own container's real overflow, so the
+     "fix" could still leave the decider match genuinely unreachable, with
+     no indication anything was wrong). Plain overflow-x:auto instead -
+     natural sizing, and if it's ever wider than the screen it's a normal,
+     reliable horizontal scroll, not a silent zoom miscalculation - even
+     the few px of overflow still possible at a narrow width (measured:
+     ~1px at 320px) is a real, working scroll now, not an untouchable
+     dead end. */
+  .play-in-bracket { overflow-x: auto; }
   /* The NBA Finals match is a real 4th track (see
      _bracket_nba_finals_track_html), not a separately-faded overlay - it
      has its own .strip-viewport, so it's clipped and only becomes visible
@@ -1634,36 +1649,22 @@
       }
     })();
 
-    (function initFitToWidth() {
-      // Scales an element to fill the real available width instead of a
-      // fixed guess (which can overflow narrower phones sideways, or look
-      // small on wider ones) - measures its true natural width at zoom:1,
-      // then computes a zoom that's guaranteed to fit (capped so it never
-      // gets absurdly large on a very narrow parent). Runs before the
-      // pager init functions below so their own column-width measurements
-      // already reflect the final zoomed size, not the pre-zoom one.
-      function fit(el, maxScale) {
-        if (!el) return;
-        el.style.zoom = 1;
-        var parent = el.parentElement;
-        if (!parent) return;
-        var available = parent.clientWidth;
-        var natural = el.scrollWidth;
-        if (!natural || !available) return;
-        var scale = Math.min(available / natural, maxScale);
-        if (scale > 0.05) { el.style.zoom = scale; }
-      }
-
-      // The Cup bracket used to be scaled here too, but it shares the exact
-      // same column width (146px) and viewport constraint (max-width:316px)
-      // as the playoff bracket's own pager - which was never scaled and
-      // fits fine - so there was never actually a real overflow reason for
-      // it to be smaller. Removed entirely (not just left unused) since it
-      // was also the whole source of a long chain of zoom-related pager
-      // bugs (see initCupBracketPager()) - simplest fix once the real
-      // problem (it never needed shrinking to begin with) was clear.
-      fit(document.querySelector(".play-in-bracket"), 1.25);
-    })();
+    // initFitToWidth() used to live here: a JS zoom-to-fit for the Play-In
+    // bracket (measure natural width, compute a CSS `zoom` guaranteed to
+    // shrink it into the real available space). Removed entirely, not
+    // just tuned further - zoom is already flagged elsewhere in this file
+    // as unreliable under layout measurement (see the Cup bracket's own
+    // history), confirmed directly here too: a descendant (the decider
+    // match's score) painted well past the viewport edge while the
+    // zoomed container's own scrollWidth/clientWidth insisted there was
+    // no overflow at all, and scrollLeft genuinely wouldn't move either
+    // (no scrollable region by the container's own accounting) even
+    // though the content visibly did overflow. No amount of safety-margin
+    // tuning is trustworthy against a measurement that can be simply
+    // wrong. See .play-in-bracket's own overflow-x:auto in the CSS
+    // instead - natural, un-zoomed sizing plus a real scroll container
+    // guarantees content is always at least reachable by swipe, with no
+    // zoom quirks to fight.
 
     (function initPagers() {
       // Generic horizontal pager: used for the playoff bracket (2 rounds at
