@@ -4,6 +4,8 @@ import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from config import ISRAEL, US_EASTERN
+
 OUTPUT_DIR = Path(__file__).parent / "output"
 
 _HEBREW_WEEKDAYS = {
@@ -2533,12 +2535,15 @@ TEMPLATE = """<!DOCTYPE html>
       // day's row grow a "סיכום הלילה, DD/MM" link straight to that day's
       // own real page, turning this tab into a de facto season archive
       // with no separate archive page to build or keep in sync.
+      // {{israel_day: filename_date}} - NOT the same value on both sides:
+      // a brief's filename is its US-Eastern night, but this tab's own
+      // calendar (and currentKey below) buckets by Israel calendar day -
+      // see _available_brief_dates()'s own docstring for why looking this
+      // up by the wrong one of the two silently finds nothing.
       var briefDatesEl = wrap.querySelector(".schedule-brief-dates");
       var briefDates = {{}};
       if (briefDatesEl) {{
-        try {{
-          JSON.parse(briefDatesEl.textContent).forEach(function(d) {{ briefDates[d] = true; }});
-        }} catch (e) {{}}
+        try {{ briefDates = JSON.parse(briefDatesEl.textContent); }} catch (e) {{}}
       }}
       var label = wrap.querySelector(".schedule-date-label");
       var navEl = wrap.querySelector(".schedule-nav");
@@ -2721,10 +2726,17 @@ TEMPLATE = """<!DOCTYPE html>
         // Only shown for a day that (a) genuinely has its own real brief
         // on disk (briefDates - never guessed) and (b) isn't this page's
         // own date, which already shows its summary as the main tab above.
-        if (briefDates[currentKey]) {{
+        var briefFilename = briefDates[currentKey];
+        if (briefFilename) {{
+          // The label shows the Israel day you're actually looking at
+          // (currentKey) - the link target is the file's own US-Eastern
+          // name, which can genuinely be a different calendar date (see
+          // this whole variable's own comment above); no reason to
+          // surface that filename-vs-displayed-day distinction to a
+          // viewer who just wants "that night's summary".
           var parts = currentKey.split("-");
           var dm = parts[2] + "." + parts[1];
-          gamesEl.innerHTML += '<a class="schedule-brief-link" href="' + currentKey + '.html">סיכום הלילה, ' + dm + '</a>';
+          gamesEl.innerHTML += '<a class="schedule-brief-link" href="' + briefFilename + '.html">סיכום הלילה, ' + dm + '</a>';
         }}
       }}
 
@@ -3159,29 +3171,66 @@ def _build_standings_html(standings: list[dict]) -> str:
 _DATE_FILENAME_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.html$")
 
 
-def _available_brief_dates(exclude_date: str) -> list[str]:
+def _et_date(tipoff_utc: str) -> str:
+    """US Eastern calendar date of one game's tipoff - see config.US_EASTERN."""
+    dt = datetime.fromisoformat(tipoff_utc.replace("Z", "+00:00"))
+    return dt.astimezone(US_EASTERN).strftime("%Y-%m-%d")
+
+
+def _available_brief_dates(season_schedule: list[dict], exclude_date: str) -> dict[str, str]:
     """
     Every other real brief that already exists on disk (output/{date}.html),
     for the schedule tab's own "סיכום הלילה, DD/MM" link - see
-    initScheduleTab()'s renderBriefLink(). exclude_date is this page's own
-    date: no need to link a page to itself, that night's summary is already
-    the page you're on. A plain directory scan at render time - correct for
-    real production specifically BECAUSE real briefs only ever get written
-    once, for "yesterday", the same night this function runs (see
-    scheduler.py) - so every file this finds genuinely already existed
-    before today's own render, never a future date sneaking in. (A batch
-    rebuild across many historical dates at once - the comprehensive/
-    curated demo builds - doesn't share that guarantee, but harmlessly just
-    links demo days to each other instead, nothing broken.)
+    initScheduleTab()'s render(). Returns {israel_day: filename_date}, NOT
+    a flat list of filenames - these two can genuinely differ and callers
+    need both: a brief's filename is always its US-Eastern "yesterday"
+    (see config.last_night_game_date), but the schedule tab's own calendar
+    buckets games by ISRAEL calendar day (config.ISRAEL's own docstring:
+    a late-evening ET tipoff already lands on the next Israel day) - a
+    lookup keyed by the raw filename date would miss that day's own
+    calendar cell entirely for any night whose games actually landed one
+    Israel-day later than the ET filename suggests (confirmed live: a
+    real Play-In night's file existed on disk and was in the plain list,
+    but its calendar cell showed no games at all - a viewer could never
+    even click into the day this fed a link for). exclude_date is this
+    page's own filename date - no need to link a page to itself.
+
+    A plain directory scan at render time - correct for real production
+    specifically BECAUSE real briefs only ever get written once, for
+    "yesterday", the same night this function runs (see scheduler.py) - so
+    every file this finds genuinely already existed before today's own
+    render, never a future date sneaking in. (A batch rebuild across many
+    historical dates at once - the comprehensive/curated demo builds -
+    doesn't share that guarantee, but harmlessly just links demo days to
+    each other instead, nothing broken.)
     """
     if not OUTPUT_DIR.is_dir():
-        return []
-    dates = []
+        return {}
+    filenames = []
     for path in OUTPUT_DIR.glob("*.html"):
         m = _DATE_FILENAME_RE.match(path.name)
         if m and m.group(1) != exclude_date:
-            dates.append(m.group(1))
-    return sorted(dates)
+            filenames.append(m.group(1))
+    if not filenames:
+        return {}
+
+    # One pass over the whole season builds et_date -> real israel_day for
+    # every game at once, instead of re-scanning season_schedule per
+    # filename - any single game from a given ET night gives the right
+    # answer (they're all the same real game night, landing on the same
+    # Israel day), so the first one found per et_date wins.
+    et_to_israel_day: dict[str, str] = {}
+    for entry in season_schedule:
+        et_day = _et_date(entry["tipoff_utc"])
+        if et_day not in et_to_israel_day:
+            dt = datetime.fromisoformat(entry["tipoff_utc"].replace("Z", "+00:00"))
+            et_to_israel_day[et_day] = dt.astimezone(ISRAEL).strftime("%Y-%m-%d")
+
+    result = {}
+    for filename_date in filenames:
+        israel_day = et_to_israel_day.get(filename_date, filename_date)
+        result[israel_day] = filename_date
+    return result
 
 
 def _build_schedule_html(season_schedule: list[dict], simulated_today: str | None = None, own_date: str | None = None) -> str:
@@ -3219,7 +3268,7 @@ def _build_schedule_html(season_schedule: list[dict], simulated_today: str | Non
     # "</" could otherwise prematurely close this <script> tag if it ever
     # appeared inside a team name/city string.
     payload = json.dumps(season_schedule, ensure_ascii=False).replace("</", "<\\/")
-    brief_dates_payload = json.dumps(_available_brief_dates(own_date or ""), ensure_ascii=False)
+    brief_dates_payload = json.dumps(_available_brief_dates(season_schedule, own_date or ""), ensure_ascii=False)
     sim_attr = f' data-simulated-today="{html.escape(simulated_today)}"' if simulated_today else ""
     return (
         f'<div class="schedule-tab"{sim_attr}>'
