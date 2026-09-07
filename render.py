@@ -1447,6 +1447,9 @@ TEMPLATE = """<!DOCTYPE html>
     }}
   }}
 </style>
+<!-- Cloudflare Web Analytics - cookie-free, no personal data collected -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{{"token": "9452f93d2201455da949f2161ab17484"}}'></script>
+<!-- End Cloudflare Web Analytics -->
 </head>
 <body>
   <div id="splash-screen" class="splash-screen">
