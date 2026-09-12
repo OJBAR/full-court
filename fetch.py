@@ -511,18 +511,43 @@ def get_season_schedule(date_str: str) -> list[dict]:
     # "N" = not postponed; a postponed game has no real date to show it under.
     schedule_df = schedule_df[schedule_df["postponedStatus"] == "N"]
 
+    def _team_field(city, name, tricode) -> tuple[str, str]:
+        # A Cup knockout slot whose matchup isn't decided yet (still
+        # waiting on group stage results) comes back from the API with
+        # genuinely missing team fields (NaN, a float - not even an empty
+        # string) - confirmed live, real quarterfinal/semifinal rows for
+        # the 2026-27 season already look like this in September, weeks
+        # before the group stage that determines them even starts. Left
+        # as NaN, this breaks two ways at once: json.dumps() emits the bare
+        # (invalid-JSON) token "NaN" - so the embedded schedule payload
+        # fails to parse in the browser and the ENTIRE schedule tab goes
+        # blank, not just this one game - and even if it parsed,
+        # g.home_tricode.toLowerCase() (gameUrl() in the JS) would throw on
+        # a non-string. "TBD" is a real, honest placeholder (matches how
+        # the NBA's own schedule pages describe these slots), not a guess
+        # at who's actually playing.
+        if isinstance(tricode, str) and isinstance(city, str) and isinstance(name, str):
+            return f"{city} {name}", tricode
+        return "TBD", "TBD"
+
     games = []
     for _, game in schedule_df.iterrows():
         is_final = int(game["gameStatus"]) == 3
         game_id = game["gameId"]
+        home_team, home_tricode = _team_field(
+            game["homeTeam_teamCity"], game["homeTeam_teamName"], game["homeTeam_teamTricode"]
+        )
+        away_team, away_tricode = _team_field(
+            game["awayTeam_teamCity"], game["awayTeam_teamName"], game["awayTeam_teamTricode"]
+        )
         games.append(
             {
                 "game_id": game_id,
                 "tipoff_utc": game["gameDateTimeUTC"],
-                "home_team": f"{game['homeTeam_teamCity']} {game['homeTeam_teamName']}",
-                "home_tricode": game["homeTeam_teamTricode"],
-                "away_team": f"{game['awayTeam_teamCity']} {game['awayTeam_teamName']}",
-                "away_tricode": game["awayTeam_teamTricode"],
+                "home_team": home_team,
+                "home_tricode": home_tricode,
+                "away_team": away_team,
+                "away_tricode": away_tricode,
                 "home_score": int(game["homeTeam_score"]) if is_final else None,
                 "away_score": int(game["awayTeam_score"]) if is_final else None,
                 "is_final": is_final,

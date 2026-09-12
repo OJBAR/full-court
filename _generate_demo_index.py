@@ -1,17 +1,21 @@
 """
-The 5-demo "beta" browsing page linked from every real page's footer
-("גרסת בטא · מעבר בין דמואים"). Replaces the old 11-demo lineup (a mix of
-real data and entirely fabricated playoff/cup/Play-In scenarios) - all 5 of
-these are real 2025-26 season data with a real Claude-written summary, built
-by _build_curated_demos.py (see that file's own docstring for exactly which
-5 dates and why). This script only builds the browsing/index page itself,
-reading each date's already-rendered output/{date}.html for its metadata -
-run _build_curated_demos.py first if any of these 5 pages don't exist yet.
+The 5-demo "beta" browsing page linked from the settings panel
+("מעבר בין דמואים"). Replaces the old 11-demo lineup (a mix of real data
+and entirely fabricated playoff/cup/Play-In scenarios) - all 5 of these
+are real 2025-26 season data with a real Claude-written summary, built by
+_build_curated_demos.py into output/demos/ - its own directory, entirely
+separate from output/{date}.html (a real brief's own path) and
+output/index.html (the real "latest brief" pointer), so building/rebuilding
+demos never touches either (see _build_curated_demos.py's own docstring).
+This script only builds the browsing/index page itself, reading each
+date's already-rendered output/demos/{date}.html for its metadata - run
+_build_curated_demos.py first if any of these 5 pages don't exist yet.
 """
 from pathlib import Path
 
 REPO_DIR = Path(__file__).parent
 OUTPUT_DIR = REPO_DIR / "output"
+DEMOS_DIR = OUTPUT_DIR / "demos"
 
 # Keep in sync with _build_curated_demos.py's own CURATED_DATES - mirrored
 # here (not imported) since this script only needs the date+label pairs,
@@ -27,12 +31,12 @@ CURATED = [
 
 rows = []
 for date_str, category in CURATED:
-    if not (OUTPUT_DIR / f"{date_str}.html").exists():
+    if not (DEMOS_DIR / f"{date_str}.html").exists():
         continue
     rows.append((date_str, category))
 
 items_html = "\n".join(
-    f'<li><a href="{date}.html">{date}</a><span class="tabs"> - {category}</span></li>'
+    f'<li><a href="demos/{date}.html">{date}</a><span class="tabs"> - {category}</span></li>'
     for date, category in rows
 )
 

@@ -40,12 +40,19 @@ schedule enrichment reuse the exact same functions
 _generate_comprehensive_demo.py already has for this - identical mechanism,
 just wired to 5 dates with a real summary instead of 212 with a filler one.
 
-Writes straight to output/{date}.html via render.save() - the same call the
-old demo*.py scripts always used. Note this ALSO overwrites output/
-index.html (save()'s own documented behavior, the real "latest brief"
-pointer) - pre-existing, unchanged behavior of every demo script that came
-before this one, not something new introduced here; harmless while
-scheduler.py's real nightly runs stay disabled (see CLAUDE.md's backlog).
+Writes to output/demos/{date}.html - its OWN directory, deliberately
+separate from output/{date}.html (where a real brief lands) and NOT via
+render.save() (which would also overwrite output/index.html, the real
+"latest brief" pointer - these 5 pages have nothing to do with that
+anymore). output/demos/ carries its own manifest.json + assets/ (copies of
+the real ones) so the template's own relative paths ("assets/...",
+"manifest.json") resolve correctly one directory down without any
+template changes - see output/demos/manifest.json's own start_url.
+data["brief_search_dir"] points each page's own "סיכום הלילה" archive
+links at this same directory (so the 5 demos link to each other, never to
+a real brief or the comprehensive dev demo), and since CURATED_DATES is
+already in chronological order, before_date keeps each one only linking
+to the ones before it - the first demo (earliest date) links to none.
 """
 import json
 from pathlib import Path
@@ -53,12 +60,13 @@ from pathlib import Path
 from fetch import get_season_schedule, get_standings, compute_standings_as_of
 from storylines import find_storylines
 from summarize import summarize
-from render import save
+from render import render
 from _generate_comprehensive_demo import _il_today, enrich_full_history, load_highlight_cache
 
 REPO_DIR = Path(__file__).parent
 DATA_CACHE_DIR = REPO_DIR / "_comprehensive_cache"
 SUMMARY_CACHE_PATH = DATA_CACHE_DIR / "_curated_summaries.json"
+DEMOS_DIR = REPO_DIR / "output" / "demos"
 SEASON = "2025-26"
 
 CURATED_DATES = [
@@ -100,6 +108,7 @@ def build():
         data["demo_today"] = _il_today(data["season_schedule"], date_str)
         data["standings"] = compute_standings_as_of(date_str, base_schedule, standings_meta)
         enrich_full_history(data["season_schedule"], date_str, highlight_cache, data["standings"])
+        data["brief_search_dir"] = DEMOS_DIR
 
         if date_str in summary_cache:
             print(f"  reusing cached real summary (no Claude call)...")
@@ -112,7 +121,9 @@ def build():
             summary_cache[date_str] = summary
             SUMMARY_CACHE_PATH.write_text(json.dumps(summary_cache, ensure_ascii=False), encoding="utf-8")
 
-        output_path = save(data, summary)
+        DEMOS_DIR.mkdir(parents=True, exist_ok=True)
+        output_path = DEMOS_DIR / f"{date_str}.html"
+        output_path.write_text(render(data, summary), encoding="utf-8")
         print(f"  saved: {output_path}")
 
     print("Done.")

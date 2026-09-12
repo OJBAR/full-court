@@ -3187,19 +3187,23 @@ def _available_brief_dates(
     Every other real brief that already exists on disk (output/{date}.html
     by default - see search_dir below) for the schedule tab's own
     "סיכום הלילה, DD/MM" link - see initScheduleTab()'s render(). search_dir
-    lets the comprehensive dev demo point this at its OWN directory
-    (output/comprehensive/) instead, so its 212 pages link to each other -
-    the default stays plain output/ so real briefs and the 5 curated demos
-    never pick up links into that hidden, dev-only directory by accident.
+    lets a batch demo build point this at its OWN directory instead, so its
+    pages link to each other without ever touching real briefs: the 5
+    curated demos use output/demos/, the comprehensive dev demo uses
+    output/comprehensive/. The default stays plain output/ so real briefs
+    never pick up links into either of those directories by accident.
 
-    before_date, used only by that same dev demo, excludes any filename
-    date >= it - unlike real production (where a file for date_str only
-    ever gets written once, so nothing "in date_str's future" can already
-    be on disk when it renders), the comprehensive demo writes all 212
-    pages in one batch, so without this a page for an EARLY date would
-    happily link to a night from months later - a page is meant to show
-    what a viewer would have seen browsing on that page's own date, which
-    can't include nights that, on that date, hadn't happened yet.
+    before_date, used by both of those batch demos (passed as their own
+    date, matching exclude_date), excludes any filename date >= it - unlike
+    real production (where a file for date_str only ever gets written
+    once, so nothing "in date_str's future" can already be on disk when it
+    renders), a batch build writes every page in one shot, so without this
+    an early-date page would happily link to a night from months later - a
+    page is meant to show what a viewer would have seen browsing on that
+    page's own date, which can't include nights that, on that date, hadn't
+    happened yet. (The 5 curated demos happen to already be listed
+    chronologically, so this also means the very first one links to none
+    of the others - correct, nothing real came before it either.)
 
     Returns {israel_day: filename_date}, NOT
     a flat list of filenames - these two can genuinely differ and callers
@@ -3219,11 +3223,9 @@ def _available_brief_dates(
     specifically BECAUSE real briefs only ever get written once, for
     "yesterday", the same night this function runs (see scheduler.py) - so
     every file this finds genuinely already existed before today's own
-    render, never a future date sneaking in on its own. (The 5 curated
-    demos don't share that guarantee - built in one batch, spread across
-    the whole season - but harmlessly just link to each other regardless
-    of order, nothing broken; before_date is what keeps the OTHER batch
-    build, the comprehensive demo, honest about this instead.)
+    render, never a future date sneaking in on its own. Both batch demos
+    (built all at once, not one real night at a time) rely on before_date
+    instead to get that same guarantee.
     """
     if not search_dir.is_dir():
         return {}
