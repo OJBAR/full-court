@@ -297,6 +297,13 @@ def build():
         data["demo_today"] = _il_today(data["season_schedule"], date_str)
         data["standings"] = compute_standings_as_of(date_str, base_schedule, standings_meta)
         enrich_full_history(data["season_schedule"], date_str, highlight_cache, data["standings"])
+        # Points the schedule tab's "סיכום הלילה" archive links at THIS
+        # directory instead of the default output/ (see
+        # render._available_brief_dates's own search_dir param) - lets all
+        # 212 of these pages link to each other. Real briefs and the 5
+        # curated demos never set this, so they stay scoped to plain
+        # output/ and never link into this hidden, dev-only directory.
+        data["brief_search_dir"] = COMPREHENSIVE_DIR
 
         html = render(data, FILLER_SUMMARY)
         (COMPREHENSIVE_DIR / f"{date_str}.html").write_text(html, encoding="utf-8")

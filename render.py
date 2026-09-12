@@ -3177,11 +3177,31 @@ def _et_date(tipoff_utc: str) -> str:
     return dt.astimezone(US_EASTERN).strftime("%Y-%m-%d")
 
 
-def _available_brief_dates(season_schedule: list[dict], exclude_date: str) -> dict[str, str]:
+def _available_brief_dates(
+    season_schedule: list[dict],
+    exclude_date: str,
+    search_dir: Path = OUTPUT_DIR,
+    before_date: str | None = None,
+) -> dict[str, str]:
     """
-    Every other real brief that already exists on disk (output/{date}.html),
-    for the schedule tab's own "סיכום הלילה, DD/MM" link - see
-    initScheduleTab()'s render(). Returns {israel_day: filename_date}, NOT
+    Every other real brief that already exists on disk (output/{date}.html
+    by default - see search_dir below) for the schedule tab's own
+    "סיכום הלילה, DD/MM" link - see initScheduleTab()'s render(). search_dir
+    lets the comprehensive dev demo point this at its OWN directory
+    (output/comprehensive/) instead, so its 212 pages link to each other -
+    the default stays plain output/ so real briefs and the 5 curated demos
+    never pick up links into that hidden, dev-only directory by accident.
+
+    before_date, used only by that same dev demo, excludes any filename
+    date >= it - unlike real production (where a file for date_str only
+    ever gets written once, so nothing "in date_str's future" can already
+    be on disk when it renders), the comprehensive demo writes all 212
+    pages in one batch, so without this a page for an EARLY date would
+    happily link to a night from months later - a page is meant to show
+    what a viewer would have seen browsing on that page's own date, which
+    can't include nights that, on that date, hadn't happened yet.
+
+    Returns {israel_day: filename_date}, NOT
     a flat list of filenames - these two can genuinely differ and callers
     need both: a brief's filename is always its US-Eastern "yesterday"
     (see config.last_night_game_date), but the schedule tab's own calendar
@@ -3199,17 +3219,18 @@ def _available_brief_dates(season_schedule: list[dict], exclude_date: str) -> di
     specifically BECAUSE real briefs only ever get written once, for
     "yesterday", the same night this function runs (see scheduler.py) - so
     every file this finds genuinely already existed before today's own
-    render, never a future date sneaking in. (A batch rebuild across many
-    historical dates at once - the comprehensive/curated demo builds -
-    doesn't share that guarantee, but harmlessly just links demo days to
-    each other instead, nothing broken.)
+    render, never a future date sneaking in on its own. (The 5 curated
+    demos don't share that guarantee - built in one batch, spread across
+    the whole season - but harmlessly just link to each other regardless
+    of order, nothing broken; before_date is what keeps the OTHER batch
+    build, the comprehensive demo, honest about this instead.)
     """
-    if not OUTPUT_DIR.is_dir():
+    if not search_dir.is_dir():
         return {}
     filenames = []
-    for path in OUTPUT_DIR.glob("*.html"):
+    for path in search_dir.glob("*.html"):
         m = _DATE_FILENAME_RE.match(path.name)
-        if m and m.group(1) != exclude_date:
+        if m and m.group(1) != exclude_date and (before_date is None or m.group(1) < before_date):
             filenames.append(m.group(1))
     if not filenames:
         return {}
@@ -3233,7 +3254,12 @@ def _available_brief_dates(season_schedule: list[dict], exclude_date: str) -> di
     return result
 
 
-def _build_schedule_html(season_schedule: list[dict], simulated_today: str | None = None, own_date: str | None = None) -> str:
+def _build_schedule_html(
+    season_schedule: list[dict],
+    simulated_today: str | None = None,
+    own_date: str | None = None,
+    brief_search_dir: Path | None = None,
+) -> str:
     """
     A day-by-day season schedule browser: past days show final scores,
     future days show the tip-off time - one flat game list (see
@@ -3268,7 +3294,22 @@ def _build_schedule_html(season_schedule: list[dict], simulated_today: str | Non
     # "</" could otherwise prematurely close this <script> tag if it ever
     # appeared inside a team name/city string.
     payload = json.dumps(season_schedule, ensure_ascii=False).replace("</", "<\\/")
-    brief_dates_payload = json.dumps(_available_brief_dates(season_schedule, own_date or ""), ensure_ascii=False)
+    # A custom brief_search_dir is only ever set by the comprehensive dev
+    # demo (see its own render() call) - that's also the one case where
+    # "don't link to a night that hadn't happened yet as of this page's
+    # own date" actually needs enforcing (see _available_brief_dates's own
+    # before_date docstring); real briefs and the 5 curated demos don't
+    # need it; own_date being the cutoff exactly matches exclude_date, so
+    # this never fights that existing self-exclusion.
+    brief_dates_payload = json.dumps(
+        _available_brief_dates(
+            season_schedule,
+            own_date or "",
+            brief_search_dir or OUTPUT_DIR,
+            before_date=own_date if brief_search_dir else None,
+        ),
+        ensure_ascii=False,
+    )
     sim_attr = f' data-simulated-today="{html.escape(simulated_today)}"' if simulated_today else ""
     return (
         f'<div class="schedule-tab"{sim_attr}>'
@@ -4041,7 +4082,12 @@ def _build_secondary_section(data: dict) -> str:
     """
     sections = [(
         "לוח התוצאות",
-        _build_schedule_html(data.get("season_schedule", []), data.get("demo_today"), data.get("date")),
+        _build_schedule_html(
+            data.get("season_schedule", []),
+            data.get("demo_today"),
+            data.get("date"),
+            data.get("brief_search_dir"),
+        ),
     )]
 
     if data.get("is_playoffs"):
