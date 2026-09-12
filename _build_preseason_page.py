@@ -51,6 +51,12 @@ def build():
         "is_cup_knockout": False,
         "is_cup_groups": False,
         "is_play_in": False,
+        # This page is ONLY ever saved to output/index.html, never also to
+        # its own output/{date}.html the way a real brief's save() does -
+        # og:url has to point at the actual root URL instead of claiming a
+        # dated page that doesn't exist (see render()'s own comment on
+        # this key).
+        "og_url_path": "",
     }
     summary = (
         "עונת 2026-27 עוד לא התחילה - המשחק הראשון נפתח ב-20.10.2026. ברגע שהעונה "

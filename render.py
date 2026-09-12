@@ -40,7 +40,7 @@ TEMPLATE = """<!DOCTYPE html>
 <meta property="og:site_name" content="Full Court">
 <meta property="og:title" content="FULL COURT - {display_date}">
 <meta property="og:description" content="{og_description}">
-<meta property="og:url" content="https://ojbar.github.io/full-court/{date_str}.html">
+<meta property="og:url" content="https://ojbar.github.io/full-court/{og_url_path}">
 <meta property="og:image" content="https://ojbar.github.io/full-court/assets/icon-512.png">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="FULL COURT - {display_date}">
@@ -4125,9 +4125,29 @@ def render(data: dict, summary: str) -> str:
     display_date = date_obj.strftime("%d/%m/%Y")
     next_day = date_obj + timedelta(days=1)
     night_label = f"הלילה בין {_HEBREW_WEEKDAYS[date_obj.weekday()]} ל{_HEBREW_WEEKDAYS[next_day.weekday()]}"
+    # og:url needs the REAL published path this exact HTML actually ends up
+    # at - not always just "{date_str}.html" at the site root:
+    # - A page saved under output/demos/ or output/comprehensive/ (see
+    #   data["brief_search_dir"], the same flag that scopes its own
+    #   archive links to that directory) lives at a different URL than a
+    #   real brief ever will, and the two can even collide on the exact
+    #   same date_str once real briefs exist.
+    # - A page that's ONLY ever saved as output/index.html - never also to
+    #   its own output/{date}.html - has no dated URL to point at all (see
+    #   _build_preseason_page.py, which sets data["og_url_path"] = "" for
+    #   exactly this reason instead of claiming a page that doesn't exist).
+    # data["og_url_path"], when a caller sets it explicitly, wins outright;
+    # otherwise it's derived from brief_search_dir the same as before.
+    if "og_url_path" in data:
+        og_url_path = data["og_url_path"]
+    else:
+        brief_search_dir = data.get("brief_search_dir")
+        url_prefix = Path(brief_search_dir).relative_to(OUTPUT_DIR).as_posix() + "/" if brief_search_dir else ""
+        og_url_path = f"{url_prefix}{date_str}.html"
     return TEMPLATE.format(
         display_date=display_date,
         date_str=date_str,
+        og_url_path=og_url_path,
         og_description=_og_description(summary),
         page_date_label=f"{display_date}, {night_label}",
         app_version=datetime.now(timezone.utc).isoformat(),
