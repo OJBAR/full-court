@@ -99,8 +99,8 @@ page = f"""<!DOCTYPE html>
 </style>
 </head>
 <body>
-  <img class="logo-img logo-light" src="demos/assets/logo_light.png" alt="Full Court">
-  <img class="logo-img logo-dark" src="demos/assets/logo_dark.png" alt="Full Court">
+  <img class="logo-img logo-light" src="demos/assets/logo_light_sm.png" alt="Full Court">
+  <img class="logo-img logo-dark" src="demos/assets/logo_dark_sm.png" alt="Full Court">
   <h1>דמואים</h1>
   <p class="note">5 לילות אמיתיים מהעונה שעברה - נתונים וסיכומים אמיתיים, אחד לכל סוג יום.</p>
   <ul>

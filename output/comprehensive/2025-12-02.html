@@ -34,7 +34,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-09-16T11:44:26.631290+00:00">
+<meta name="app-version" content="2026-09-16T12:04:10.566784+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -261,8 +261,14 @@
      writeup on this). No local copy: unlike the PWA icons, these aren't
      shipped as an asset, so a network hiccup just quietly hides an <img>
      (onerror below) rather than breaking the row. */
-  .team-logo { display: block; width: 22px; height: 22px; margin: 0 auto 2px; }
-  .standing-team-logo { width: 18px; height: 18px; flex-shrink: 0; }
+  /* Inline, next to the tricode - not stacked above it - so the logo+code
+     form a single-line unit and the score in the middle of the row lines
+     up against that unit's own vertical center (.game-row's
+     align-items:flex-start then keeps that shared line at the top,
+     matching the .team-record line that may follow below it - see that
+     rule's own comment). */
+  .team-logo { display: inline-block; width: 18px; height: 18px; vertical-align: middle; margin-inline-end: 4px; }
+  .standing-team-logo { display: block; width: 18px; height: 18px; flex-shrink: 0; margin: 0; }
   .team-record {
     display: block;
     font-size: 0.5938rem;
@@ -1523,8 +1529,15 @@
   <div class="wrapper">
     <button class="settings-toggle" id="settings-toggle" onclick="openSettingsPanel()" aria-haspopup="dialog" aria-expanded="false" aria-label="פתח הגדרות">⚙️</button>
     <header class="header">
-      <img class="logo-img logo-light" src="../assets/logo_light.png" alt="Full Court">
-      <img class="logo-img logo-dark" src="../assets/logo_dark.png" alt="Full Court">
+      <!-- Deliberately the "_sm" variant, not the same full-res file the
+           splash screen uses above - downscaling that 973px-wide source
+           down to the header's ~146px renders visibly soft in Chromium
+           (a real browser quirk: a single-step downscale much past ~3x
+           loses sharpness). _sm is pre-shrunk once via Lanczos to a size
+           close to what the header actually needs at 3x-retina, so the
+           browser only has a small remaining downscale to do. -->
+      <img class="logo-img logo-light" src="../assets/logo_light_sm.png" alt="Full Court">
+      <img class="logo-img logo-dark" src="../assets/logo_dark_sm.png" alt="Full Court">
       <div class="header-text">
         <h1>סיכום הלילה ב-NBA</h1>
         <div class="date">02/12/2025, הלילה בין שלישי לרביעי</div>
