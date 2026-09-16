@@ -34,7 +34,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-09-16T12:37:54.900909+00:00">
+<meta name="app-version" content="2026-09-16T12:48:17.257217+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -252,25 +252,31 @@
     font-size: 0.9375rem;
     position: relative;
   }
-  .team { width: 4.5em; color: var(--text-muted); text-align: center; }
+  /* Wider than the text strictly needs - the game-row's own dead space
+     (either side of the centered away-score-home group) goes toward a
+     bigger logo+name unit instead of sitting empty. justify-content:center
+     on .game-row keeps the whole group centered as this grows, same as
+     before. */
+  .team { width: 6.5em; color: var(--text-muted); text-align: center; font-size: 1.0625rem; }
   .team.winner { color: var(--text-heading); font-weight: 700; }
   /* Loaded straight from cdn.nba.com - the same CDN NBA.com's own site
      serves its logos from, not a third-party mirror (see CLAUDE.md's
      writeup on this). No local copy: unlike the PWA icons, these aren't
      shipped as an asset, so a network hiccup just quietly hides an <img>
      (onerror below) rather than breaking the row. */
-  /* Fixed light backdrop, deliberately not theme-aware: team logos are
-     drawn assuming a light background (several are mostly dark/black -
+  /* Fixed light-cream backdrop, deliberately not theme-aware: team logos
+     are drawn assuming a light background (several are mostly dark/black -
      BKN, SAS - and vanish against the dark theme without this), so the
-     chip stays the same light color in both themes rather than following
-     --card-bg/--bg. */
+     chip stays the same color in both themes rather than following
+     --card-bg/--bg. Matches the light theme's own --bg, so on a light
+     screen it blends in rather than reading as a separate white patch. */
   .team-logo {
-    display: block; box-sizing: border-box; width: 20px; height: 20px; margin: 0 auto 2px;
-    background: #F5F1E6; border-radius: 50%; padding: 2px;
+    display: block; box-sizing: border-box; width: 30px; height: 30px; margin: 0 auto 3px;
+    background: #EFEAD8; border-radius: 50%; padding: 3px;
   }
   .standing-team-logo {
     display: block; box-sizing: border-box; width: 18px; height: 18px; flex-shrink: 0; margin: 0;
-    background: #F5F1E6; border-radius: 50%; padding: 2px;
+    background: #EFEAD8; border-radius: 50%; padding: 2px;
   }
   .team-record {
     display: block;
