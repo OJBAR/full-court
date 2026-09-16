@@ -78,6 +78,12 @@ page = f"""<!DOCTYPE html>
     margin: 0;
     padding: 24px 16px;
   }}
+  .logo-img {{ height: 40px; width: auto; display: block; margin: 0 auto 10px; }}
+  .logo-dark {{ display: none; }}
+  @media (prefers-color-scheme: dark) {{
+    .logo-light {{ display: none; }}
+    .logo-dark {{ display: block; }}
+  }}
   h1 {{ font-size: 18px; color: var(--text-heading); text-align: center; }}
   p.note {{ color: var(--text-muted); font-size: 13px; text-align: center; }}
   ul {{ list-style: none; padding: 0; max-width: 480px; margin: 20px auto 0; }}
@@ -93,6 +99,8 @@ page = f"""<!DOCTYPE html>
 </style>
 </head>
 <body>
+  <img class="logo-img logo-light" src="demos/assets/logo_light.png" alt="Full Court">
+  <img class="logo-img logo-dark" src="demos/assets/logo_dark.png" alt="Full Court">
   <h1>דמואים</h1>
   <p class="note">5 לילות אמיתיים מהעונה שעברה - נתונים וסיכומים אמיתיים, אחד לכל סוג יום.</p>
   <ul>

@@ -530,6 +530,12 @@ def get_season_schedule(date_str: str) -> list[dict]:
             return f"{city} {name}", tricode
         return "TBD", "TBD"
 
+    def _team_id_field(team_id):
+        # Same NaN case as _team_field above (undecided Cup knockout slot) -
+        # a non-real ID would render a broken <img src="...NaN..."> in the
+        # client, so None (rendered as no logo at all) instead of a guess.
+        return int(team_id) if isinstance(team_id, (int, float)) and not pd.isna(team_id) else None
+
     games = []
     for _, game in schedule_df.iterrows():
         is_final = int(game["gameStatus"]) == 3
@@ -546,8 +552,10 @@ def get_season_schedule(date_str: str) -> list[dict]:
                 "tipoff_utc": game["gameDateTimeUTC"],
                 "home_team": home_team,
                 "home_tricode": home_tricode,
+                "home_team_id": _team_id_field(game["homeTeam_teamId"]),
                 "away_team": away_team,
                 "away_tricode": away_tricode,
+                "away_team_id": _team_id_field(game["awayTeam_teamId"]),
                 "home_score": int(game["homeTeam_score"]) if is_final else None,
                 "away_score": int(game["awayTeam_score"]) if is_final else None,
                 "is_final": is_final,

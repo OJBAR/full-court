@@ -276,6 +276,13 @@ TEMPLATE = """<!DOCTYPE html>
   }}
   .team {{ width: 4.5em; color: var(--text-muted); text-align: center; }}
   .team.winner {{ color: var(--text-heading); font-weight: 700; }}
+  /* Loaded straight from cdn.nba.com - the same CDN NBA.com's own site
+     serves its logos from, not a third-party mirror (see CLAUDE.md's
+     writeup on this). No local copy: unlike the PWA icons, these aren't
+     shipped as an asset, so a network hiccup just quietly hides an <img>
+     (onerror below) rather than breaking the row. */
+  .team-logo {{ display: block; width: 22px; height: 22px; margin: 0 auto 2px; }}
+  .standing-team-logo {{ width: 18px; height: 18px; flex-shrink: 0; }}
   .team-record {{
     display: block;
     font-size: 0.5938rem;
@@ -2596,6 +2603,17 @@ TEMPLATE = """<!DOCTYPE html>
         return "https://www.nba.com/game/" + g.away_tricode.toLowerCase() + "-vs-" + g.home_tricode.toLowerCase() + "-" + g.game_id;
       }}
 
+      // teamId is null for a not-yet-decided Cup knockout slot (see
+      // fetch.get_season_schedule's _team_id_field) - no <img> at all then,
+      // same as the "TBD" text it sits next to. onerror hides the element
+      // instead of showing a broken-image icon if cdn.nba.com is ever
+      // unreachable for a viewer.
+      function teamLogo(teamId) {{
+        if (!teamId) return "";
+        return '<img class="team-logo" src="https://cdn.nba.com/logos/nba/' + teamId +
+          '/global/L/logo.svg" alt="" loading="lazy" onerror="this.remove()">';
+      }}
+
       // The "rich" row - same look as the old, now-removed results tab
       // (.team-record/.ot-tag/.game-sub/.game-links) - for a game this
       // brief actually fetched box scores/highlights for (see g.rich, set
@@ -2610,10 +2628,10 @@ TEMPLATE = """<!DOCTYPE html>
         // where the series score / seed context (the caption below) is the
         // relevant number instead.
         var showRecord = !r.po_round && !r.is_play_in;
-        function teamSpan(tricode, wins, losses, isWinner) {{
+        function teamSpan(tricode, teamId, wins, losses, isWinner) {{
           var record = (showRecord && wins != null && losses != null)
             ? '<span class="team-record">' + wins + '-' + losses + '</span>' : '';
-          return '<span class="team' + (isWinner ? " winner" : "") + '">' + tricode + record + '</span>';
+          return '<span class="team' + (isWinner ? " winner" : "") + '">' + teamLogo(teamId) + tricode + record + '</span>';
         }}
         // g.is_final can be false with rich data still attached - the
         // comprehensive demo attaches next-game team records (see
@@ -2633,9 +2651,9 @@ TEMPLATE = """<!DOCTYPE html>
         var otHtml = g.is_final && otCount > 0
           ? '<span class="ot-tag">' + (otCount === 1 ? "OT" : otCount + "OT") + '</span>' : '';
         var block = '<div class="game-row">' +
-          teamSpan(g.away_tricode, r.away_wins, r.away_losses, awayWon) +
+          teamSpan(g.away_tricode, g.away_team_id, r.away_wins, r.away_losses, awayWon) +
           mid +
-          teamSpan(g.home_tricode, r.home_wins, r.home_losses, homeWon) +
+          teamSpan(g.home_tricode, g.home_team_id, r.home_wins, r.home_losses, homeWon) +
           otHtml +
           '</div>';
         if (r.po_round) {{
@@ -2713,9 +2731,9 @@ TEMPLATE = """<!DOCTYPE html>
               '<span class="score' + (homeWon ? " winner" : "") + '">' + g.home_score + '</span>'
             : '<span class="score time">' + ilTimeStr(g.tipoff_utc) + '</span>';
           return '<div class="game-block"><div class="game-row">' +
-            '<span class="team' + (awayWon ? " winner" : "") + '">' + g.away_tricode + '</span>' +
+            '<span class="team' + (awayWon ? " winner" : "") + '">' + teamLogo(g.away_team_id) + g.away_tricode + '</span>' +
             mid +
-            '<span class="team' + (homeWon ? " winner" : "") + '">' + g.home_tricode + '</span>' +
+            '<span class="team' + (homeWon ? " winner" : "") + '">' + teamLogo(g.home_team_id) + g.home_tricode + '</span>' +
             '</div><div class="game-links"><a class="game-link" href="' + gameUrl(g) + '" target="_blank" rel="noopener">דף המשחק</a></div></div>';
         }}).join("");
 
@@ -3140,6 +3158,11 @@ def _build_standings_html(standings: list[dict]) -> str:
             boundary_class = " boundary" if rank in (6, 10) else ""
             fullname = f'{team["TeamCity"]} {team["TeamName"]}'
             tricode = team.get("Tricode", "")
+            logo_img = (
+                f'<img class="team-logo standing-team-logo" '
+                f'src="https://cdn.nba.com/logos/nba/{team["TeamID"]}/global/L/logo.svg" '
+                f'alt="" loading="lazy" onerror="this.remove()">'
+            )
             # data-fullname/data-tricode feed checkTeamTruncation() (JS): a
             # name that actually overflows its column on this specific
             # viewer's screen gets swapped to the 3-letter code at runtime -
@@ -3155,6 +3178,7 @@ def _build_standings_html(standings: list[dict]) -> str:
             rows.append(
                 f'<div class="standing-row{boundary_class}">'
                 f'<span class="standing-rank">{rank}</span>'
+                f"{logo_img}"
                 f"{team_span}"
                 f'<span class="standing-record">{team["WINS"]}-{team["LOSSES"]}</span>'
                 f'<span class="standing-streak {streak_class}">{html.escape(streak)}</span>'
