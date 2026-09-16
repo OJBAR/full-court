@@ -290,13 +290,19 @@ TEMPLATE = """<!DOCTYPE html>
      chip stays the same color in both themes rather than following
      --card-bg/--bg. Matches the light theme's own --bg, so on a light
      screen it blends in rather than reading as a separate white patch. */
+  /* Padding sized so a logo whose own artwork runs edge-to-edge in its
+     square canvas (BUL, HOU, PHX, POR - confirmed clipped at the old,
+     tighter padding) still lands fully inside the circular mask: a square
+     inscribed corner-to-corner in a circle needs to be no more than
+     ~0.71x the circle's own diameter (size/sqrt(2)) to avoid the mask
+     cutting its corners. */
   .team-logo {{
     display: block; box-sizing: border-box; width: 30px; height: 30px; margin: 0 auto 3px;
-    background: #EFEAD8; border-radius: 50%; padding: 3px;
+    background: #EFEAD8; border-radius: 50%; padding: 5px;
   }}
   .standing-team-logo {{
     display: block; box-sizing: border-box; width: 18px; height: 18px; flex-shrink: 0; margin: 0;
-    background: #EFEAD8; border-radius: 50%; padding: 2px;
+    background: #EFEAD8; border-radius: 50%; padding: 3px;
   }}
   .team-record {{
     display: block;
