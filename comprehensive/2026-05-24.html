@@ -34,7 +34,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-09-16T12:04:17.341305+00:00">
+<meta name="app-version" content="2026-09-16T12:12:53.994559+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -242,13 +242,11 @@
   .game-block:last-child { border-bottom: none; margin-bottom: 0; }
   .game-row {
     display: flex;
-    /* Top-aligned, not centered: .team is taller than .score when a
-       record is shown (name line + record line below it) - centering
-       would line up .score against the midpoint of that whole two-line
-       block instead of against just the team name, throwing the two out
-       of alignment. Top-aligning keeps the name and score on the same
-       line regardless, with the record simply continuing below. */
-    align-items: flex-start;
+    /* Centered, not top-aligned: the score sits at the vertical middle of
+       the row - between the card's top border and its links row below -
+       regardless of how tall the team unit (logo + name, plus a record
+       line for a rich row) grows. */
+    align-items: center;
     justify-content: center;
     padding-top: 8px;
     font-size: 0.9375rem;
@@ -261,13 +259,7 @@
      writeup on this). No local copy: unlike the PWA icons, these aren't
      shipped as an asset, so a network hiccup just quietly hides an <img>
      (onerror below) rather than breaking the row. */
-  /* Inline, next to the tricode - not stacked above it - so the logo+code
-     form a single-line unit and the score in the middle of the row lines
-     up against that unit's own vertical center (.game-row's
-     align-items:flex-start then keeps that shared line at the top,
-     matching the .team-record line that may follow below it - see that
-     rule's own comment). */
-  .team-logo { display: inline-block; width: 18px; height: 18px; vertical-align: middle; margin-inline-end: 4px; }
+  .team-logo { display: block; width: 20px; height: 20px; margin: 0 auto 2px; }
   .standing-team-logo { display: block; width: 18px; height: 18px; flex-shrink: 0; margin: 0; }
   .team-record {
     display: block;
