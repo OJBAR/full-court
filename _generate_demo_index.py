@@ -49,6 +49,9 @@ page = f"""<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Full Court - דמואים</title>
+<link rel="icon" type="image/png" href="demos/assets/favicon.png">
+<link rel="apple-touch-icon" href="demos/assets/icon-180.png">
+<link rel="manifest" href="demos/manifest.json">
 <style>
   :root {{
     --bg: #EFEAD8;
