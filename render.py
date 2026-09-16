@@ -279,8 +279,19 @@ TEMPLATE = """<!DOCTYPE html>
      writeup on this). No local copy: unlike the PWA icons, these aren't
      shipped as an asset, so a network hiccup just quietly hides an <img>
      (onerror below) rather than breaking the row. */
-  .team-logo {{ display: block; width: 20px; height: 20px; margin: 0 auto 2px; }}
-  .standing-team-logo {{ display: block; width: 18px; height: 18px; flex-shrink: 0; margin: 0; }}
+  /* Fixed light backdrop, deliberately not theme-aware: team logos are
+     drawn assuming a light background (several are mostly dark/black -
+     BKN, SAS - and vanish against the dark theme without this), so the
+     chip stays the same light color in both themes rather than following
+     --card-bg/--bg. */
+  .team-logo {{
+    display: block; box-sizing: border-box; width: 20px; height: 20px; margin: 0 auto 2px;
+    background: #F5F1E6; border-radius: 50%; padding: 2px;
+  }}
+  .standing-team-logo {{
+    display: block; box-sizing: border-box; width: 18px; height: 18px; flex-shrink: 0; margin: 0;
+    background: #F5F1E6; border-radius: 50%; padding: 2px;
+  }}
   .team-record {{
     display: block;
     font-size: 0.5938rem;
