@@ -1,5 +1,7 @@
-// Full Court - Service Worker (real site only, for now - see render.py's
-// service_worker_script for why demos/comprehensive don't register this).
+// Full Court - Service Worker. Identical copy lives in output/demos/ and
+// output/comprehensive/ too (a SW's scope defaults to the directory it's
+// served from, so each product needs its own file) - see render.py's
+// register_service_worker flag for which pages register it.
 //
 // Strategy: stale-while-revalidate for every same-origin GET. A repeat
 // visit gets an instant response from cache while a fresh copy is fetched
@@ -30,6 +32,12 @@ self.addEventListener("activate", function (event) {
 self.addEventListener("fetch", function (event) {
   const req = event.request;
   if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
+  // Cache-busting requests (checkForNewVersion()'s periodic check, and both
+  // its own and manualRefresh()'s "?_r=" reload) carry a unique timestamp
+  // query param every time - caching those would just grow the cache
+  // forever with entries that can never be matched again. Let the browser
+  // handle these directly instead of intercepting them.
+  if (/[?&](_v|_r)=/.test(req.url)) return;
 
   event.respondWith(
     caches.open(CACHE_NAME).then(function (cache) {
