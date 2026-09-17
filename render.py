@@ -4219,23 +4219,22 @@ def render(data: dict, summary: str) -> str:
         brief_search_dir = data.get("brief_search_dir")
         url_prefix = Path(brief_search_dir).relative_to(OUTPUT_DIR).as_posix() + "/" if brief_search_dir else ""
         og_url_path = f"{url_prefix}{date_str}.html"
-    # Only the real site registers a Service Worker for now (demos/
-    # comprehensive both set brief_search_dir - reused here rather than a
-    # new flag, since "has its own brief_search_dir" already means "not the
-    # real production site"). Each directory would need its own
-    # service-worker.js (a SW's scope defaults to the directory it's
-    # served from) - not built yet for demos/comprehensive, so registering
-    # there would just 404 silently. Real site only, for now.
+    # A SW's scope defaults to the directory it's served from, so each
+    # product directory that wants one needs its own copy of
+    # service-worker.js - real site and demos/ both have one; the
+    # comprehensive dev demo doesn't yet (data["register_service_worker"]
+    # = False there), so it stays opted out rather than registering and
+    # 404ing on a file that isn't there.
     service_worker_script = (
-        ""
-        if data.get("brief_search_dir")
-        else (
+        (
             '<script>\n'
             '    if ("serviceWorker" in navigator) {\n'
             '      navigator.serviceWorker.register("service-worker.js").catch(function() {});\n'
             '    }\n'
             '  </script>'
         )
+        if data.get("register_service_worker", True)
+        else ""
     )
     return TEMPLATE.format(
         display_date=display_date,
