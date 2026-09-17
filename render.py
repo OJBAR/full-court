@@ -173,10 +173,9 @@ TEMPLATE = """<!DOCTYPE html>
     padding: 24px 16px 40px;
     position: relative;
   }}
-  .settings-toggle {{
+  .settings-toggle, .share-toggle {{
     position: absolute;
     top: 24px;
-    right: 16px;
     width: 36px;
     height: 36px;
     border-radius: 999px;
@@ -189,6 +188,8 @@ TEMPLATE = """<!DOCTYPE html>
     align-items: center;
     justify-content: center;
   }}
+  .settings-toggle {{ right: 16px; }}
+  .share-toggle {{ left: 16px; }}
   .header {{
     text-align: center;
     padding-bottom: 20px;
@@ -1246,7 +1247,7 @@ TEMPLATE = """<!DOCTYPE html>
      .header, so shrinking the header left it too tall/low - it spilled
      past the header's bottom border instead of sitting inside it. Shrink
      and raise it to match the new compact header height. */
-  :root.tabs-mode .settings-toggle {{
+  :root.tabs-mode .settings-toggle, :root.tabs-mode .share-toggle {{
     width: 28px;
     height: 28px;
     top: 20px;
@@ -1562,6 +1563,7 @@ TEMPLATE = """<!DOCTYPE html>
   </script>
   <div class="wrapper">
     <button class="settings-toggle" id="settings-toggle" onclick="openSettingsPanel()" aria-haspopup="dialog" aria-expanded="false" aria-label="פתח הגדרות">⚙️</button>
+    <button class="share-toggle" id="share-toggle" onclick="shareThisBrief(this)" aria-label="שתף">📤</button>
     <header class="header">
       <!-- Deliberately the "_sm" variant, not the same full-res file the
            splash screen uses above - downscaling that 973px-wide source
@@ -2266,6 +2268,23 @@ TEMPLATE = """<!DOCTYPE html>
       if (e.target && e.target.tagName === "DETAILS") checkTeamTruncation();
     }}, true);
     document.addEventListener("DOMContentLoaded", checkTeamTruncation);
+
+    function shareThisBrief(btn) {{
+      var summaryEl = document.querySelector(".summary");
+      var firstLine = summaryEl ? summaryEl.textContent.trim().split(/\n|\. /)[0] : "";
+      var shareData = {{ title: document.title, text: firstLine, url: location.href }};
+      if (navigator.share) {{
+        navigator.share(shareData).catch(function() {{}});
+        return;
+      }}
+      // Desktop / unsupported browser fallback - same copy-and-confirm
+      // pattern as copyEmailAddress() below, no separate UI to build.
+      navigator.clipboard.writeText(location.href).then(function() {{
+        var original = btn.textContent;
+        btn.textContent = "✓";
+        setTimeout(function() {{ btn.textContent = original; }}, 1500);
+      }}).catch(function() {{}});
+    }}
 
     function copyEmailAddress(btn) {{
       var original = btn.textContent;
