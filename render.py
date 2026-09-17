@@ -290,19 +290,18 @@ TEMPLATE = """<!DOCTYPE html>
      chip stays the same color in both themes rather than following
      --card-bg/--bg. Matches the light theme's own --bg, so on a light
      screen it blends in rather than reading as a separate white patch. */
-  /* Padding sized so a logo whose own artwork runs edge-to-edge in its
-     square canvas (BUL, HOU, PHX, POR - confirmed clipped at the old,
-     tighter padding) still lands fully inside the circular mask: a square
-     inscribed corner-to-corner in a circle needs to be no more than
-     ~0.71x the circle's own diameter (size/sqrt(2)) to avoid the mask
-     cutting its corners. */
+  /* object-fit:contain matters here, not just cosmetics: unlike most
+     teams' 400x400 "primary" mark, a couple (Rockets confirmed - 151x200)
+     serve a non-square canvas, and without contain the default stretch-
+     to-fill distorted/off-centered the mark inside this circular slot,
+     which read as "cut off" the same as real clipping would. */
   .team-logo {{
     display: block; box-sizing: border-box; width: 30px; height: 30px; margin: 0 auto 3px;
-    background: #EFEAD8; border-radius: 50%; padding: 5px;
+    background: #EFEAD8; border-radius: 50%; padding: 4px; object-fit: contain;
   }}
   .standing-team-logo {{
     display: block; box-sizing: border-box; width: 18px; height: 18px; flex-shrink: 0; margin: 0;
-    background: #EFEAD8; border-radius: 50%; padding: 3px;
+    background: #EFEAD8; border-radius: 50%; padding: 2px; object-fit: contain;
   }}
   .team-record {{
     display: block;
@@ -2638,8 +2637,12 @@ TEMPLATE = """<!DOCTYPE html>
       // unreachable for a viewer.
       function teamLogo(teamId) {{
         if (!teamId) return "";
+        // "primary" (the team mark alone, square canvas for every team
+        // tested) - not "global" (some teams serve a wide wordmark logo
+        // there instead of the mark, e.g. Bulls - looked clipped once
+        // squeezed into this circular slot).
         return '<img class="team-logo" src="https://cdn.nba.com/logos/nba/' + teamId +
-          '/global/L/logo.svg" alt="" loading="lazy" onerror="this.remove()">';
+          '/primary/L/logo.svg" alt="" loading="lazy" onerror="this.remove()">';
       }}
 
       // The "rich" row - same look as the old, now-removed results tab
@@ -3188,7 +3191,7 @@ def _build_standings_html(standings: list[dict]) -> str:
             tricode = team.get("Tricode", "")
             logo_img = (
                 f'<img class="team-logo standing-team-logo" '
-                f'src="https://cdn.nba.com/logos/nba/{team["TeamID"]}/global/L/logo.svg" '
+                f'src="https://cdn.nba.com/logos/nba/{team["TeamID"]}/primary/L/logo.svg" '
                 f'alt="" loading="lazy" onerror="this.remove()">'
             )
             # data-fullname/data-tricode feed checkTeamTruncation() (JS): a
