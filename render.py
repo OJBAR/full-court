@@ -1561,6 +1561,7 @@ TEMPLATE = """<!DOCTYPE html>
         .catch(function() {{}});
     }})();
   </script>
+  {service_worker_script}
   <div class="wrapper">
     <button class="settings-toggle" id="settings-toggle" onclick="openSettingsPanel()" aria-haspopup="dialog" aria-expanded="false" aria-label="פתח הגדרות">⚙️</button>
     <button class="share-toggle" id="share-toggle" onclick="shareThisBrief(this)" aria-label="שתף">📤</button>
@@ -4218,6 +4219,24 @@ def render(data: dict, summary: str) -> str:
         brief_search_dir = data.get("brief_search_dir")
         url_prefix = Path(brief_search_dir).relative_to(OUTPUT_DIR).as_posix() + "/" if brief_search_dir else ""
         og_url_path = f"{url_prefix}{date_str}.html"
+    # Only the real site registers a Service Worker for now (demos/
+    # comprehensive both set brief_search_dir - reused here rather than a
+    # new flag, since "has its own brief_search_dir" already means "not the
+    # real production site"). Each directory would need its own
+    # service-worker.js (a SW's scope defaults to the directory it's
+    # served from) - not built yet for demos/comprehensive, so registering
+    # there would just 404 silently. Real site only, for now.
+    service_worker_script = (
+        ""
+        if data.get("brief_search_dir")
+        else (
+            '<script>\n'
+            '    if ("serviceWorker" in navigator) {\n'
+            '      navigator.serviceWorker.register("service-worker.js").catch(function() {});\n'
+            '    }\n'
+            '  </script>'
+        )
+    )
     return TEMPLATE.format(
         display_date=display_date,
         date_str=date_str,
@@ -4227,6 +4246,7 @@ def render(data: dict, summary: str) -> str:
         app_version=datetime.now(timezone.utc).isoformat(),
         summary_html=_paragraphs_to_html(summary),
         secondary_section_html=_build_secondary_section(data),
+        service_worker_script=service_worker_script,
     )
 
 
