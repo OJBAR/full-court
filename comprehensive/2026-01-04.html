@@ -34,7 +34,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-09-17T12:55:17.587941+00:00">
+<meta name="app-version" content="2026-09-17T12:59:47.785873+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -2296,8 +2296,7 @@
 
     function shareThisBrief(btn) {
       var summaryEl = document.querySelector(".summary");
-      var firstLine = summaryEl ? summaryEl.textContent.trim().split(/
-|\. /)[0] : "";
+      var firstLine = summaryEl ? summaryEl.textContent.trim().split(/\n|\. /)[0] : "";
       var shareData = { title: document.title, text: firstLine, url: location.href };
       if (navigator.share) {
         navigator.share(shareData).catch(function() {});
