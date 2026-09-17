@@ -2272,7 +2272,7 @@ TEMPLATE = """<!DOCTYPE html>
 
     function shareThisBrief(btn) {{
       var summaryEl = document.querySelector(".summary");
-      var firstLine = summaryEl ? summaryEl.textContent.trim().split(/\n|\. /)[0] : "";
+      var firstLine = summaryEl ? summaryEl.textContent.trim().split(/\\n|\. /)[0] : "";
       var shareData = {{ title: document.title, text: firstLine, url: location.href }};
       if (navigator.share) {{
         navigator.share(shareData).catch(function() {{}});
