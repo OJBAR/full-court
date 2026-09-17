@@ -34,7 +34,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Full Court">
-<meta name="app-version" content="2026-09-17T12:02:08.516246+00:00">
+<meta name="app-version" content="2026-09-17T12:39:09.327162+00:00">
 <style>
   :root {
     --bg: #EFEAD8;
@@ -1540,6 +1540,11 @@
         })
         .catch(function() {});
     })();
+  </script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js").catch(function() {});
+    }
   </script>
   <div class="wrapper">
     <button class="settings-toggle" id="settings-toggle" onclick="openSettingsPanel()" aria-haspopup="dialog" aria-expanded="false" aria-label="פתח הגדרות">⚙️</button>

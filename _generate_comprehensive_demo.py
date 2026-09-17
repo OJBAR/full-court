@@ -304,9 +304,9 @@ def build():
         # curated demos never set this, so they stay scoped to plain
         # output/ and never link into this hidden, dev-only directory.
         data["brief_search_dir"] = COMPREHENSIVE_DIR
-        # No service-worker.js in this directory yet - see render.py's own
-        # comment on this flag.
-        data["register_service_worker"] = False
+        # service-worker.js now lives in this directory too (own copy, own
+        # scope - see render.py's comment on this flag), so this can
+        # default True like every other product.
 
         html = render(data, FILLER_SUMMARY)
         (COMPREHENSIVE_DIR / f"{date_str}.html").write_text(html, encoding="utf-8")
