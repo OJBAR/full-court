@@ -297,11 +297,11 @@ TEMPLATE = """<!DOCTYPE html>
      which read as "cut off" the same as real clipping would. */
   .team-logo {{
     display: block; box-sizing: border-box; width: 30px; height: 30px; margin: 0 auto 3px;
-    background: #EFEAD8; border-radius: 50%; padding: 4px; object-fit: contain;
+    background: #EFEAD8; border-radius: 50%; padding: 1.5px; object-fit: contain;
   }}
   .standing-team-logo {{
     display: block; box-sizing: border-box; width: 18px; height: 18px; flex-shrink: 0; margin: 0;
-    background: #EFEAD8; border-radius: 50%; padding: 2px; object-fit: contain;
+    background: #EFEAD8; border-radius: 50%; padding: 1px; object-fit: contain;
   }}
   .team-record {{
     display: block;
