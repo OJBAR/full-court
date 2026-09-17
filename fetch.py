@@ -534,7 +534,14 @@ def get_season_schedule(date_str: str) -> list[dict]:
         # Same NaN case as _team_field above (undecided Cup knockout slot) -
         # a non-real ID would render a broken <img src="...NaN..."> in the
         # client, so None (rendered as no logo at all) instead of a guess.
-        return int(team_id) if isinstance(team_id, (int, float)) and not pd.isna(team_id) else None
+        # pd.isna() (not an isinstance check) on purpose - the column's
+        # dtype depends on whether ANY row anywhere in the season has a
+        # missing id, so this value can arrive as a plain Python int, a
+        # numpy.float64, or a numpy.int64 depending on the fetch; only
+        # float64 happens to satisfy isinstance(x, (int, float)), so that
+        # check silently dropped every logo whenever the column came back
+        # as int64 (a fully-decided season with no NaN anywhere).
+        return None if pd.isna(team_id) else int(team_id)
 
     games = []
     for _, game in schedule_df.iterrows():

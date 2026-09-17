@@ -4221,10 +4221,10 @@ def render(data: dict, summary: str) -> str:
         og_url_path = f"{url_prefix}{date_str}.html"
     # A SW's scope defaults to the directory it's served from, so each
     # product directory that wants one needs its own copy of
-    # service-worker.js - real site and demos/ both have one; the
-    # comprehensive dev demo doesn't yet (data["register_service_worker"]
-    # = False there), so it stays opted out rather than registering and
-    # 404ing on a file that isn't there.
+    # service-worker.js - real site, demos/, and comprehensive/ all have
+    # one today. data["register_service_worker"] defaults True; a future
+    # product without its own copy yet should set it False explicitly
+    # rather than registering and 404ing on a file that isn't there.
     service_worker_script = (
         (
             '<script>\n'
